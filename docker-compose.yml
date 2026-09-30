@@ -1,0 +1,62 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: sepa-postgres
+    environment:
+      POSTGRES_DB: sepa_db
+      POSTGRES_USER: sepa
+      POSTGRES_PASSWORD: sepa_pwd
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sepa -d sepa_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ai-module:
+    build: ./ai-module
+    container_name: sepa-ai
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: sepa_db
+      DB_USER: sepa
+      DB_PASSWORD: sepa_pwd
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  backend:
+    build: ./backend
+    container_name: sepa-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sepa_db
+      SPRING_DATASOURCE_USERNAME: sepa
+      SPRING_DATASOURCE_PASSWORD: sepa_pwd
+      AI_MODULE_URL: http://ai-module:8000
+      AI_ENABLED: "true"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ai-module:
+        condition: service_started
+
+  frontend:
+    build: ./frontend
+    container_name: sepa-frontend
+    environment:
+      VITE_API_URL: http://localhost:8080/api
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

@@ -1,0 +1,32 @@
+# Dépendances
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.pyc
+target/
+dist/
+build/
+
+# Environnement
+.env
+.env.local
+*.local
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Logs
+*.log
+logs/
+
+# Fichiers générés
+*.class
+uploads/
+generated-xml/
+
+# OS
+.DS_Store
+Thumbs.db

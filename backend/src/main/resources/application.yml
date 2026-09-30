@@ -1,0 +1,45 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: sepa-backend
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/sepa_db}
+    username: ${SPRING_DATASOURCE_USERNAME:sepa}
+    password: ${SPRING_DATASOURCE_PASSWORD:sepa_pwd}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:changez-cette-cle-secrete-tres-longue-pour-la-production-123456789}
+    expiration-ms: 86400000
+  ai-module:
+    url: ${AI_MODULE_URL:http://localhost:8000}
+  ai:
+    enabled: ${AI_ENABLED:true}
+    url: ${AI_MODULE_URL:http://localhost:8000}
+    timeout-ms: ${AI_TIMEOUT_MS:5000}
+    score-threshold: ${AI_SCORE_THRESHOLD:0.6}
+    history-months: ${AI_HISTORY_MONTHS:6}
+  storage:
+    xsd-dir: ${XSD_DIR:./uploads/xsd}
+    xml-dir: ${XML_DIR:./generated-xml}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    com.zina.sepa: DEBUG
