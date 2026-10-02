@@ -1,0 +1,27 @@
+commande git: 
+git add -A
+git commit -m "message"
+git push
+lancer application ;
+méthode Docker
+cd C:\Users\zelmorri\Desktop\projet-Zina-PFE
+docker compose up -d
+Vérifier que tout tourne
+docker compose ps
+**
+Accéder à l'application
+Service	URL
+Frontend (interface web)	http://localhost:5173
+Backend (API)	http://localhost:8080
+Module IA	http://localhost:8000
+Comptes de connexion : admin / admin123, rh / rh123, validateur / validateur123, auditeur / auditeur123.
+Si vous avez modifié du code (backend, frontend ou IA)
+docker compose up -d --build backend
+docker compose up -d --build frontend
+docker compose up -d --build ai-module
+oU bien tout reconstruire d'un coup :
+docker compose up -d --build
+Arrêter l'application
+docker compose down
+Voir les logs d'un service (en cas de problème)
+docker compose logs -f backend

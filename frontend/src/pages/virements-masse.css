@@ -1,0 +1,48 @@
+/* Styles de la fonctionnalité Virements de masse (fichier isolé, importé par la page). */
+
+.masse-bloc { background: #fff; border: 1px solid #e6e6e6; border-radius: 10px; padding: 16px; margin: 16px 0; }
+.masse-bloc h3 { margin: 0 0 12px; }
+.masse-bloc label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.masse-analyse { margin-top: 8px; }
+.masse-matricules { margin: 8px 0; }
+.masse-matricules-liste { display: flex; flex-wrap: wrap; gap: 6px; max-height: 160px; overflow: auto; margin: 6px 0; }
+.masse-chip { display: inline-flex; align-items: center; gap: 4px; border: 1px solid #e6e6e6; border-radius: 14px; padding: 2px 10px; font-size: 12px; }
+.masse-erreurs { cursor: pointer; }
+.masse-erreur-ligne:hover { background: #fff4e5; }
+.masse-bloc .muted { color: #999; font-style: italic; }
+
+/* Analyse XSD */
+.xsd-resume { display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; margin-bottom: 8px; }
+.xsd-recherche { padding: 6px; border: 1px solid #e6e6e6; border-radius: 6px; margin-bottom: 8px; width: 240px; }
+.xsd-arbre { max-height: 340px; overflow: auto; font-size: 13px; }
+.xsd-enfants { margin-left: 18px; border-left: 1px dashed #ddd; padding-left: 8px; }
+.xsd-ligne { display: flex; align-items: center; gap: 6px; padding: 2px 0; flex-wrap: wrap; }
+.xsd-toggle { background: none; border: none; color: #666; cursor: pointer; width: 18px; padding: 0; margin: 0; }
+.xsd-nom { font-weight: 600; }
+.xsd-badge { font-size: 11px; padding: 1px 6px; border-radius: 10px; color: #fff; }
+.xsd-badge--req { background: #c0392b; }
+.xsd-badge--opt { background: #999; }
+.xsd-badge--rep { background: #464feb; }
+.xsd-type { color: #1e7a44; font-family: monospace; font-size: 12px; }
+.xsd-contrainte { color: #8a4b00; background: #fff4e5; border-radius: 4px; padding: 0 5px; font-size: 11px; }
+
+/* Visionneuse XML */
+.xml-viewer { background: #1e2130; color: #e6e6e6; border-radius: 8px; padding: 8px 0; max-height: 460px; overflow: auto; font-family: 'Consolas', monospace; font-size: 12.5px; line-height: 1.5; margin-top: 10px; }
+.xml-line { display: flex; white-space: pre; }
+.xml-line--err { background: rgba(192, 57, 43, 0.28); }
+.xml-line--active { background: rgba(255, 140, 0, 0.35); }
+.xml-gutter { width: 44px; min-width: 44px; text-align: right; padding-right: 10px; color: #6b7280; user-select: none; }
+.xml-code { padding-right: 12px; }
+.xml-tag { color: #79c0ff; }
+.xml-attr { color: #ffa657; }
+.xml-val { color: #a5d6ff; }
+.xml-punct { color: #8b949e; }
+.xml-text { color: #e6e6e6; }
+
+/* Spinner local (évite de dépendre de styles.css) */
+.masse-bloc .spinner {
+  display: inline-block; width: 14px; height: 14px;
+  border: 2px solid #c7cbe0; border-top-color: #464feb; border-radius: 50%;
+  animation: masse-spin 0.8s linear infinite; vertical-align: middle;
+}
+@keyframes masse-spin { to { transform: rotate(360deg); } }

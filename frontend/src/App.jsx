@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard.jsx'
 import KpiDashboard from './pages/KpiDashboard.jsx'
 import Login from './pages/Login.jsx'
 import Transactions from './pages/Transactions.jsx'
+import VirementsMasse from './pages/VirementsMasse.jsx'
 import Users from './pages/Users.jsx'
 import Xsd from './pages/Xsd.jsx'
 
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="/kpi" element={<KpiDashboard />} />
         <Route path="/transactions" element={<Transactions />} />
         <Route path="/anomalies" element={<Anomalies />} />
+        <Route path="/virements-masse" element={<VirementsMasse />} />
         <Route path="/xsd" element={<Xsd />} />
         <Route path="/audit" element={<Audit />} />
         <Route path="/users" element={<Users />} />

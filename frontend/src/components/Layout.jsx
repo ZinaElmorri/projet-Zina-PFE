@@ -19,6 +19,7 @@ export default function Layout() {
           <Link to="/kpi">Indicateurs KPI</Link>
           <Link to="/transactions">Transactions</Link>
           <Link to="/anomalies">Anomalies</Link>
+          <Link to="/virements-masse">Virements de masse</Link>
           <Link to="/xsd">Schémas XSD</Link>
           <Link to="/audit">Journal d'audit</Link>
           {user?.role === 'ADMINISTRATEUR' && <Link to="/users">Utilisateurs</Link>}
