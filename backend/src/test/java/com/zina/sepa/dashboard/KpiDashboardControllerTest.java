@@ -32,11 +32,11 @@ class KpiDashboardControllerTest {
         when(transactionRepository.countClients(any(), any(), any(), any())).thenReturn(0L);
         when(transactionRepository.sumMontant(any(), any(), any(), any())).thenReturn(BigDecimal.ZERO);
         when(transactionRepository.countFichesParMois(any(), any(), any(), any())).thenReturn(List.of());
-        when(anomalieRepository.countErreursBloquantes(any(), any(), any(), any())).thenReturn(0L);
+        when(anomalieRepository.countErreursBloquantes(any(), any(), any(), any(), any(), any())).thenReturn(0L);
         when(anomalieRepository.anomaliesParType(any(), any())).thenReturn(List.of());
         when(anomalieRepository.anomaliesParStatut(any(), any())).thenReturn(List.of());
         when(anomalieRepository.topClients(any(), any(), any(), any())).thenReturn(List.of());
-        when(anomalieRepository.erreursParPeriodes(any(), any(), any(), any())).thenReturn(List.of());
+        when(anomalieRepository.erreursParMois(any(), any(), any(), any(), any(), any())).thenReturn(List.of());
 
         KpiDashboardService service = new KpiDashboardService(transactionRepository, anomalieRepository);
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new KpiDashboardController(service)).build();

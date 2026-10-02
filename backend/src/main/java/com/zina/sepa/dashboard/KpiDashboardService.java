@@ -34,8 +34,15 @@ import java.util.function.Supplier;
  * IBAN_PARTAGE) ne sont pas comptés comme erreurs.</p>
  *
  * <p><b>« Fiche générée »</b> : transaction au statut APPROUVEE sur la période (ce sont
- * les fiches consommées par la génération pain.001). Aucun enregistrement de lot/fichier
- * n'étant persisté, {@code lotsGeneres}/{@code lotsValidesXsd} sont indisponibles (null).</p>
+ * les fiches consommées par la génération pain.001).</p>
+ *
+ * <p><b>Taux d'erreur</b> = (nombre de fiches DISTINCTES, parmi les fiches générées de la
+ * période, ayant au moins une anomalie bloquante non IGNOREE) ÷ (nombre de fiches générées)
+ * × 100. Numérateur et dénominateur portent toujours sur la même période, les mêmes filtres
+ * (clientId) et la même population de transactions (APPROUVEE) : le taux est donc toujours
+ * compris entre 0 et 100 %, arrondi à 2 décimales, et vaut 0 s'il n'y a aucune fiche.
+ * Aucun enregistrement de lot/fichier n'étant persisté, {@code lotsGeneres}/{@code lotsValidesXsd}
+ * sont indisponibles (null).</p>
  */
 @Service
 public class KpiDashboardService {
@@ -74,7 +81,7 @@ public class KpiDashboardService {
         long clients = safe(() -> transactionRepository.countClients(
                 TransactionStatus.APPROUVEE, debut, fin, clientId), 0L);
         long nbErreurs = safe(() -> anomalieRepository.countErreursBloquantes(
-                periode, TYPES_BLOQUANTS, AnomalieStatut.IGNOREE, clientId), 0L);
+                debut, fin, TransactionStatus.APPROUVEE, TYPES_BLOQUANTS, AnomalieStatut.IGNOREE, clientId), 0L);
         BigDecimal montant = safe(() -> transactionRepository.sumMontant(
                 TransactionStatus.APPROUVEE, debut, fin, clientId), BigDecimal.ZERO);
 
@@ -153,9 +160,10 @@ public class KpiDashboardService {
 
         List<String> periodes = douzeMois.stream().map(m -> m.format(YM)).toList();
         Map<String, Long> erreursParMois = new LinkedHashMap<>();
-        for (Object[] r : anomalieRepository.erreursParPeriodes(
-                periodes, TYPES_BLOQUANTS, AnomalieStatut.IGNOREE, clientId)) {
-            erreursParMois.put((String) r[0], ((Number) r[1]).longValue());
+        for (Object[] r : anomalieRepository.erreursParMois(
+                debut, fin, TransactionStatus.APPROUVEE, TYPES_BLOQUANTS, AnomalieStatut.IGNOREE, clientId)) {
+            String cle = String.format("%04d-%02d", ((Number) r[0]).intValue(), ((Number) r[1]).intValue());
+            erreursParMois.put(cle, ((Number) r[2]).longValue());
         }
 
         List<EvolutionPoint> points = new ArrayList<>();
@@ -177,13 +185,17 @@ public class KpiDashboardService {
         return "REGLE";
     }
 
+    private static final BigDecimal CENT = BigDecimal.valueOf(100);
+
+    /** Taux borné à [0, 100] : le numérateur (fiches en erreur) est toujours un sous-ensemble du dénominateur. */
     private BigDecimal taux(long erreurs, long fiches) {
         if (fiches <= 0) {
             return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
         }
-        return BigDecimal.valueOf(erreurs)
-                .multiply(BigDecimal.valueOf(100))
+        BigDecimal pct = BigDecimal.valueOf(Math.min(erreurs, fiches))
+                .multiply(CENT)
                 .divide(BigDecimal.valueOf(fiches), 2, RoundingMode.HALF_UP);
+        return pct.min(CENT);
     }
 
     private YearMonth periode(String periode) {

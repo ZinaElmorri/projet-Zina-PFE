@@ -16,6 +16,7 @@ import java.util.List;
  */
 public interface DashboardTransactionRepository extends JpaRepository<Transaction, Long> {
 
+    // « Fiche générée » : transaction APPROUVEE sur la période (voir KpiDashboardService).
     @Query("select count(t) from Transaction t "
             + "where t.statut = :statut and t.creeLe >= :debut and t.creeLe < :fin "
             + "and (:clientId is null or t.clientId = :clientId)")

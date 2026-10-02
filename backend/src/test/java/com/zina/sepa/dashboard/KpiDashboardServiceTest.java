@@ -43,14 +43,14 @@ class KpiDashboardServiceTest {
         lenient().when(anomalieRepository.anomaliesParType(any(), any())).thenReturn(List.of());
         lenient().when(anomalieRepository.anomaliesParStatut(any(), any())).thenReturn(List.of());
         lenient().when(anomalieRepository.topClients(any(), any(), any(), any())).thenReturn(List.of());
-        lenient().when(anomalieRepository.erreursParPeriodes(any(), any(), any(), any())).thenReturn(List.of());
+        lenient().when(anomalieRepository.erreursParMois(any(), any(), any(), any(), any(), any())).thenReturn(List.of());
     }
 
     @Test
     void taux_erreur_2_sur_1100_vaut_0_18() {
         mocksVides();
         when(transactionRepository.countFiches(any(), any(), any(), any())).thenReturn(1100L);
-        when(anomalieRepository.countErreursBloquantes(any(), any(), any(), any())).thenReturn(2L);
+        when(anomalieRepository.countErreursBloquantes(any(), any(), any(), any(), any(), any())).thenReturn(2L);
 
         KpiResponse kpi = service().kpi(new DashboardFilter("2026-08", null, null, null));
 
@@ -63,7 +63,7 @@ class KpiDashboardServiceTest {
     void aucune_fiche_pas_de_division_par_zero() {
         mocksVides();
         when(transactionRepository.countFiches(any(), any(), any(), any())).thenReturn(0L);
-        when(anomalieRepository.countErreursBloquantes(any(), any(), any(), any())).thenReturn(0L);
+        when(anomalieRepository.countErreursBloquantes(any(), any(), any(), any(), any(), any())).thenReturn(0L);
 
         KpiResponse kpi = service().kpi(new DashboardFilter("2026-08", null, null, null));
 
@@ -71,10 +71,24 @@ class KpiDashboardServiceTest {
     }
 
     @Test
+    void taux_jamais_superieur_a_100_meme_si_le_numerateur_brut_depasse_le_denominateur() {
+        mocksVides();
+        when(transactionRepository.countFiches(any(), any(), any(), any())).thenReturn(2L);
+        // Valeur de repli défensive : même si la requête SQL (qui garantit normalement
+        // nbErreurs <= fiches) renvoyait une valeur aberrante, le taux reste borné.
+        when(anomalieRepository.countErreursBloquantes(any(), any(), any(), any(), any(), any())).thenReturn(45L);
+
+        KpiResponse kpi = service().kpi(new DashboardFilter("2026-08", null, null, null));
+
+        assertThat(kpi.tauxErreur()).isEqualByComparingTo("100.00");
+    }
+
+    @Test
     void erreurs_bloquantes_excluent_ignorees_et_avertissements() {
         mocksVides();
         when(transactionRepository.countFiches(any(), any(), any(), any())).thenReturn(10L);
-        when(anomalieRepository.countErreursBloquantes(any(), typesCaptor.capture(), eq(AnomalieStatut.IGNOREE), any()))
+        when(anomalieRepository.countErreursBloquantes(
+                any(), any(), any(), typesCaptor.capture(), eq(AnomalieStatut.IGNOREE), any()))
                 .thenReturn(1L);
 
         service().kpi(new DashboardFilter("2026-08", null, null, null));
@@ -86,15 +100,31 @@ class KpiDashboardServiceTest {
     }
 
     @Test
+    void numerateur_et_denominateur_portent_sur_les_memes_fiches_approuvees() {
+        mocksVides();
+        ArgumentCaptor<TransactionStatus> statutFichesCaptor = ArgumentCaptor.forClass(TransactionStatus.class);
+        ArgumentCaptor<TransactionStatus> statutErreursCaptor = ArgumentCaptor.forClass(TransactionStatus.class);
+        when(transactionRepository.countFiches(statutFichesCaptor.capture(), any(), any(), any())).thenReturn(1100L);
+        when(anomalieRepository.countErreursBloquantes(
+                any(), any(), statutErreursCaptor.capture(), any(), any(), any())).thenReturn(2L);
+
+        service().kpi(new DashboardFilter("2026-08", null, null, null));
+
+        assertThat(statutFichesCaptor.getValue()).isEqualTo(TransactionStatus.APPROUVEE);
+        assertThat(statutErreursCaptor.getValue()).isEqualTo(TransactionStatus.APPROUVEE);
+    }
+
+    @Test
     void filtre_par_client_est_transmis_aux_requetes() {
         mocksVides();
         ArgumentCaptor<String> clientCaptor = ArgumentCaptor.forClass(String.class);
         when(transactionRepository.countFiches(eq(TransactionStatus.APPROUVEE),
                 any(LocalDateTime.class), any(LocalDateTime.class), clientCaptor.capture())).thenReturn(5L);
-        when(anomalieRepository.countErreursBloquantes(any(), any(), any(), any())).thenReturn(0L);
+        when(anomalieRepository.countErreursBloquantes(any(), any(), any(), any(), any(), any())).thenReturn(0L);
 
         service().kpi(new DashboardFilter("2026-08", "CLIENT_42", null, null));
 
         assertThat(clientCaptor.getValue()).isEqualTo("CLIENT_42");
     }
 }
+

@@ -1,5 +1,6 @@
 package com.zina.sepa.dashboard;
 
+import com.zina.sepa.domain.enums.TransactionStatus;
 import com.zina.sepa.recommendation.Anomalie;
 import com.zina.sepa.recommendation.AnomalieStatut;
 import org.springframework.data.domain.Pageable;
@@ -7,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -16,11 +18,17 @@ import java.util.List;
  */
 public interface DashboardAnomalieRepository extends JpaRepository<Anomalie, Long> {
 
-    @Query("select count(a) from Anomalie a "
-            + "where a.periode = :periode and a.type in :types and a.statut <> :ignoree "
-            + "and (:clientId is null or exists (select 1 from Transaction t "
-            + "     where t.id = a.transactionId and t.clientId = :clientId))")
-    long countErreursBloquantes(@Param("periode") String periode,
+    // Fiches en erreur = fiches DISTINCTES (pas le nombre d'anomalies) parmi les fiches
+    // APPROUVEE de la même période (même population que countFiches), ayant au moins une
+    // anomalie bloquante non IGNOREE. Garantit taux = erreurs / fiches toujours <= 100 %.
+    @Query("select count(distinct a.transactionId) from Anomalie a, Transaction t "
+            + "where a.transactionId = t.id and t.statut = :statut "
+            + "and t.creeLe >= :debut and t.creeLe < :fin "
+            + "and a.type in :types and a.statut <> :ignoree "
+            + "and (:clientId is null or t.clientId = :clientId)")
+    long countErreursBloquantes(@Param("debut") LocalDateTime debut,
+                                @Param("fin") LocalDateTime fin,
+                                @Param("statut") TransactionStatus statut,
                                 @Param("types") Collection<String> types,
                                 @Param("ignoree") AnomalieStatut ignoree,
                                 @Param("clientId") String clientId);
@@ -50,13 +58,17 @@ public interface DashboardAnomalieRepository extends JpaRepository<Anomalie, Lon
                               @Param("clientId") String clientId,
                               Pageable pageable);
 
-    @Query("select a.periode, count(a) from Anomalie a "
-            + "where a.periode in :periodes and a.type in :types and a.statut <> :ignoree "
-            + "and (:clientId is null or exists (select 1 from Transaction t "
-            + "     where t.id = a.transactionId and t.clientId = :clientId)) "
-            + "group by a.periode")
-    List<Object[]> erreursParPeriodes(@Param("periodes") Collection<String> periodes,
-                                      @Param("types") Collection<String> types,
-                                      @Param("ignoree") AnomalieStatut ignoree,
-                                      @Param("clientId") String clientId);
+    // Variante mensuelle de countErreursBloquantes, pour l'évolution 12 mois (même règle).
+    @Query("select year(t.creeLe), month(t.creeLe), count(distinct a.transactionId) from Anomalie a, Transaction t "
+            + "where a.transactionId = t.id and t.statut = :statut "
+            + "and t.creeLe >= :debut and t.creeLe < :fin "
+            + "and a.type in :types and a.statut <> :ignoree "
+            + "and (:clientId is null or t.clientId = :clientId) "
+            + "group by year(t.creeLe), month(t.creeLe)")
+    List<Object[]> erreursParMois(@Param("debut") LocalDateTime debut,
+                                  @Param("fin") LocalDateTime fin,
+                                  @Param("statut") TransactionStatus statut,
+                                  @Param("types") Collection<String> types,
+                                  @Param("ignoree") AnomalieStatut ignoree,
+                                  @Param("clientId") String clientId);
 }
