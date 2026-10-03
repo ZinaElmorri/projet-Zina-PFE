@@ -32,7 +32,7 @@ export default function VirementsMasse() {
   const [matriculesOpt, setMatriculesOpt] = useState([])
   const [clientId, setClientId] = useState('')
   const [periode, setPeriode] = useState('')
-  const [rechMatricule, setRechMatricule] = useState('')
+  const [filtreMatricule, setFiltreMatricule] = useState('')
   const [matriculesSel, setMatriculesSel] = useState([])
 
   const [paiements, setPaiements] = useState([])
@@ -102,10 +102,26 @@ export default function VirementsMasse() {
     setSelection(s)
   }
 
-  const tousSelectionnes = paiements.length > 0 && selection.size === paiements.length
+  const lignesVisibles = () => paiements.filter(
+    (p) => !filtreMatricule ||
+      (p.matricule + ' ' + (p.nomBeneficiaire || '')).toLowerCase().includes(filtreMatricule.toLowerCase())
+  )
 
-  const basculerTout = () => {
-    setSelection(tousSelectionnes ? new Set() : new Set(paiements.map((p) => p.id)))
+  const tousSelectionnes = (() => {
+    const vis = lignesVisibles()
+    return vis.length > 0 && vis.every((p) => selection.has(p.id))
+  })()
+
+  const selectionnerTous = () => {
+    const s = new Set(selection)
+    lignesVisibles().forEach((p) => s.add(p.id))
+    setSelection(s)
+  }
+
+  const deselectionnerTous = () => {
+    const s = new Set(selection)
+    lignesVisibles().forEach((p) => s.delete(p.id))
+    setSelection(s)
   }
 
   const corpsRequete = () => ({
@@ -176,13 +192,11 @@ export default function VirementsMasse() {
 
   const copier = () => apercu && navigator.clipboard.writeText(apercu.xml)
 
-  const matriculesFiltres = matriculesOpt.filter(
-    (m) => !rechMatricule || (m.matricule + ' ' + (m.nom || '')).toLowerCase().includes(rechMatricule.toLowerCase())
-  )
+  const paiementsFiltres = lignesVisibles()
 
-  const totalPages = Math.max(1, Math.ceil(paiements.length / pageSize))
+  const totalPages = Math.max(1, Math.ceil(paiementsFiltres.length / pageSize))
   const pageSafe = Math.min(page, totalPages - 1)
-  const paiementsPage = paiements.slice(pageSafe * pageSize, pageSafe * pageSize + pageSize)
+  const paiementsPage = paiementsFiltres.slice(pageSafe * pageSize, pageSafe * pageSize + pageSize)
 
   return (
     <div>
@@ -237,38 +251,29 @@ export default function VirementsMasse() {
           <button onClick={rechercher}>Rechercher</button>
         </div>
 
-        {periode && matriculesOpt.length > 0 && (
-          <div className="masse-matricules">
-            <input placeholder="Filtrer matricule…" value={rechMatricule} onChange={(e) => setRechMatricule(e.target.value)} />
-            <div className="masse-matricules-liste">
-              {matriculesFiltres.map((m) => (
-                <label key={m.matricule} className="masse-chip">
-                  <input type="checkbox" checked={matriculesSel.includes(m.matricule)}
-                    onChange={(e) => setMatriculesSel(e.target.checked
-                      ? [...matriculesSel, m.matricule]
-                      : matriculesSel.filter((x) => x !== m.matricule))} />
-                  {m.matricule} — {m.nom}
-                </label>
-              ))}
-            </div>
-            <small className="muted">Aucun matricule coché = tous les salariés de la société sur la période.</small>
-          </div>
-        )}
-
         {paiements.length > 0 && (
           <>
             <div className="masse-table-bar">
               <p>
                 <strong>{selection.size}</strong> / {paiements.length} paiement(s) sélectionné(s) — Total {euro.format(total)}
               </p>
-              <label className="masse-pagesize">
-                Lignes par page
-                <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0) }}>
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                </select>
-              </label>
+              <div className="masse-table-actions">
+                <input
+                  placeholder="Saisir / filtrer un matricule…"
+                  value={filtreMatricule}
+                  onChange={(e) => { setFiltreMatricule(e.target.value); setPage(0) }}
+                />
+                <button type="button" onClick={selectionnerTous}>Tous</button>
+                <button type="button" className="secondary" onClick={deselectionnerTous}>Aucun</button>
+                <label className="masse-pagesize">
+                  Lignes par page
+                  <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0) }}>
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                  </select>
+                </label>
+              </div>
             </div>
             <table>
               <thead>
@@ -277,7 +282,7 @@ export default function VirementsMasse() {
                     <input
                       type="checkbox"
                       checked={tousSelectionnes}
-                      onChange={basculerTout}
+                      onChange={() => (tousSelectionnes ? deselectionnerTous() : selectionnerTous())}
                       title="Tout sélectionner / tout désélectionner"
                     />
                   </th>

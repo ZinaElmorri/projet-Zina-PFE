@@ -13,6 +13,8 @@
 
 /* Barre au-dessus du tableau des paiements (compteur + lignes par page) */
 .masse-table-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.masse-table-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.masse-table-actions input { padding: 4px 8px; border: 1px solid #e6e6e6; border-radius: 6px; }
 .masse-pagesize { flex-direction: row; align-items: center; gap: 6px; font-size: 13px; }
 .masse-pagesize select { padding: 2px 6px; }
 
