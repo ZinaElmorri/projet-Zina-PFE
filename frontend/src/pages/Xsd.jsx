@@ -4,7 +4,6 @@ import api from '../api/client'
 export default function Xsd() {
   const [schemas, setSchemas] = useState([])
   const [file, setFile] = useState(null)
-  const [elements, setElements] = useState([])
 
   const load = () => api.get('/xsd').then(({ data }) => setSchemas(data))
 
@@ -22,9 +21,11 @@ export default function Xsd() {
     load()
   }
 
-  const analyser = async (id) => {
-    const { data } = await api.get(`/xsd/${id}/elements`)
-    setElements(data)
+  const supprimer = async (id, nom) => {
+    if (window.confirm(`Êtes-vous sûr de vouloir supprimer le schéma "${nom}" ?`)) {
+      await api.delete(`/xsd/${id}`)
+      load()
+    }
   }
 
   return (
@@ -38,26 +39,19 @@ export default function Xsd() {
 
       <table>
         <thead>
-          <tr><th>ID</th><th>Nom</th><th>Version</th><th>Importé par</th><th>Actions</th></tr>
+          <tr><th>ID</th><th>Nom</th><th>Importé par</th><th>Actions</th></tr>
         </thead>
         <tbody>
           {schemas.map((s) => (
             <tr key={s.id}>
               <td>{s.id}</td>
               <td>{s.nom}</td>
-              <td>{s.version}</td>
               <td>{s.importePar}</td>
-              <td><button onClick={() => analyser(s.id)}>Analyser</button></td>
+              <td><button onClick={() => supprimer(s.id, s.nom)}>Supprimer</button></td>
             </tr>
           ))}
         </tbody>
       </table>
-
-      {elements.length > 0 && (
-        <div className="info">
-          <strong>Éléments détectés :</strong> {elements.join(', ')}
-        </div>
-      )}
     </div>
   )
 }

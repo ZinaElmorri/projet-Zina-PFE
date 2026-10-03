@@ -46,4 +46,16 @@ public class XsdController {
     public List<String> analyser(@PathVariable Long id) {
         return xsdService.analyserElements(id);
     }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMINISTRATEUR','GESTIONNAIRE_RH')")
+    public ResponseEntity<Void> supprimer(@PathVariable Long id,
+                                          HttpServletRequest request) {
+        XsdSchema schema = xsdService.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Schéma introuvable"));
+        xsdService.deleteById(id);
+        auditService.log(AuditAction.XSD_SUPPRIME,
+                "Suppression XSD " + schema.getNom() + " v" + schema.getVersion(), "SUCCES", request);
+        return ResponseEntity.ok().build();
+    }
 }

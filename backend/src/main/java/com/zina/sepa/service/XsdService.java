@@ -53,6 +53,10 @@ public class XsdService {
         return repository.findById(id);
     }
 
+    public void deleteById(Long id) {
+        repository.deleteById(id);
+    }
+
     /**
      * Analyse dynamique : extrait la liste des éléments décrits dans le schéma XSD.
      */
