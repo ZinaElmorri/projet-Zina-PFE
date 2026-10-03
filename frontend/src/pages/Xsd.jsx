@@ -7,7 +7,8 @@ export default function Xsd() {
   const [editId, setEditId] = useState(null)
   const [editFile, setEditFile] = useState(null)
 
-  const load = () => api.get('/xsd').then(({ data }) => setSchemas(data))
+  const load = () => api.get('/xsd', { headers: { 'Cache-Control': 'no-cache' }, params: { _: Date.now() } })
+    .then(({ data }) => setSchemas(data))
 
   useEffect(() => { load() }, [])
 
