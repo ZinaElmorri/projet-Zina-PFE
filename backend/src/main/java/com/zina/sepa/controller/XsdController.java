@@ -65,7 +65,7 @@ public class XsdController {
         XsdSchema schema = xsdService.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Schéma introuvable"));
         xsdService.deleteById(id);
-        auditService.log(AuditAction.XSD_SUPPRIME,
+        auditService.log(AuditAction.XSD_IMPORTE,
                 "Suppression XSD " + schema.getNom() + " v" + schema.getVersion(), "SUCCES", request);
         return ResponseEntity.ok().build();
     }

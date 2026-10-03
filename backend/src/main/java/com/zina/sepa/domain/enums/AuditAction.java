@@ -8,7 +8,6 @@ public enum AuditAction {
     LOGOUT,
     PAGE_VISITEE,
     XSD_IMPORTE,
-    XSD_SUPPRIME,
     XML_GENERE,
     TRANSACTION_CREEE,
     TRANSACTION_MODIFIEE,
