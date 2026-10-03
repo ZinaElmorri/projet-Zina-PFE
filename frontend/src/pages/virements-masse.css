@@ -11,6 +11,17 @@
 .masse-erreur-ligne:hover { background: #fff4e5; }
 .masse-bloc .muted { color: #999; font-style: italic; }
 
+/* Barre au-dessus du tableau des paiements (compteur + lignes par page) */
+.masse-table-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.masse-pagesize { flex-direction: row; align-items: center; gap: 6px; font-size: 13px; }
+.masse-pagesize select { padding: 2px 6px; }
+
+/* Pagination du tableau des paiements */
+.masse-pagination { display: flex; align-items: center; gap: 12px; margin-top: 10px; font-size: 13px; }
+
+/* Bloc d'actions de génération (séparé du tableau dans la section fusionnée) */
+.masse-generation { margin-top: 16px; }
+
 /* Analyse XSD */
 .xsd-resume { display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; margin-bottom: 8px; }
 .xsd-recherche { padding: 6px; border: 1px solid #e6e6e6; border-radius: 6px; margin-bottom: 8px; width: 240px; }

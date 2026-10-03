@@ -38,6 +38,8 @@ export default function VirementsMasse() {
   const [paiements, setPaiements] = useState([])
   const [total, setTotal] = useState(0)
   const [selection, setSelection] = useState(new Set())
+  const [page, setPage] = useState(0)
+  const [pageSize, setPageSize] = useState(10)
 
   const [apercu, setApercu] = useState(null)
   const [ligneActive, setLigneActive] = useState(null)
@@ -89,6 +91,7 @@ export default function VirementsMasse() {
     setTotal(data.total)
     // Sélectionne par défaut les lignes sans erreur de contrôle.
     setSelection(new Set(data.paiements.filter((p) => !p.enErreur).map((p) => p.id)))
+    setPage(0)
     setApercu(null)
     if (data.paiements.length === 0) setMessage('Aucun paiement trouvé pour ces filtres.')
   }
@@ -97,6 +100,12 @@ export default function VirementsMasse() {
     const s = new Set(selection)
     s.has(id) ? s.delete(id) : s.add(id)
     setSelection(s)
+  }
+
+  const tousSelectionnes = paiements.length > 0 && selection.size === paiements.length
+
+  const basculerTout = () => {
+    setSelection(tousSelectionnes ? new Set() : new Set(paiements.map((p) => p.id)))
   }
 
   const corpsRequete = () => ({
@@ -171,14 +180,18 @@ export default function VirementsMasse() {
     (m) => !rechMatricule || (m.matricule + ' ' + (m.nom || '')).toLowerCase().includes(rechMatricule.toLowerCase())
   )
 
+  const totalPages = Math.max(1, Math.ceil(paiements.length / pageSize))
+  const pageSafe = Math.min(page, totalPages - 1)
+  const paiementsPage = paiements.slice(pageSafe * pageSize, pageSafe * pageSize + pageSize)
+
   return (
     <div>
       <h2>Virements de masse SEPA</h2>
       {message && <div className="info">{message}</div>}
 
-      {/* 1. Paramètres */}
+      {/* Paramètres */}
       <section className="masse-bloc">
-        <h3>1. Paramètres</h3>
+        <h3>Paramètres</h3>
         <div className="inline-form">
           <label>Schéma XSD
             <select value={xsdId} onChange={(e) => choisirXsd(e.target.value)}>
@@ -205,9 +218,9 @@ export default function VirementsMasse() {
         )}
       </section>
 
-      {/* 2. Filtres */}
+      {/* Filtres et génération */}
       <section className="masse-bloc">
-        <h3>2. Filtres</h3>
+        <h3>Filtres et génération</h3>
         <div className="inline-form">
           <label>Société
             <select value={clientId} onChange={(e) => { setClientId(e.target.value); chargerFiltres(e.target.value, periode) }}>
@@ -244,13 +257,35 @@ export default function VirementsMasse() {
 
         {paiements.length > 0 && (
           <>
-            <p><strong>{selection.size}</strong> / {paiements.length} paiement(s) — Total {euro.format(total)}</p>
+            <div className="masse-table-bar">
+              <p>
+                <strong>{selection.size}</strong> / {paiements.length} paiement(s) sélectionné(s) — Total {euro.format(total)}
+              </p>
+              <label className="masse-pagesize">
+                Lignes par page
+                <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0) }}>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+              </label>
+            </div>
             <table>
               <thead>
-                <tr><th></th><th>Matricule</th><th>Nom</th><th>IBAN</th><th>BIC</th><th>Montant</th><th>Statut</th></tr>
+                <tr>
+                  <th>
+                    <input
+                      type="checkbox"
+                      checked={tousSelectionnes}
+                      onChange={basculerTout}
+                      title="Tout sélectionner / tout désélectionner"
+                    />
+                  </th>
+                  <th>Matricule</th><th>Nom</th><th>IBAN</th><th>BIC</th><th>Montant</th><th>Statut</th>
+                </tr>
               </thead>
               <tbody>
-                {paiements.map((p) => (
+                {paiementsPage.map((p) => (
                   <tr key={p.id} className={p.enErreur ? 'row-suspect' : undefined}>
                     <td><input type="checkbox" checked={selection.has(p.id)} onChange={() => basculer(p.id)} /></td>
                     <td>{p.matricule}</td>
@@ -263,14 +298,17 @@ export default function VirementsMasse() {
                 ))}
               </tbody>
             </table>
+            {totalPages > 1 && (
+              <div className="masse-pagination">
+                <button className="secondary" onClick={() => setPage(pageSafe - 1)} disabled={pageSafe === 0}>‹ Précédent</button>
+                <span>Page {pageSafe + 1} / {totalPages}</span>
+                <button className="secondary" onClick={() => setPage(pageSafe + 1)} disabled={pageSafe >= totalPages - 1}>Suivant ›</button>
+              </div>
+            )}
           </>
         )}
-      </section>
 
-      {/* 3. Aperçu et validation */}
-      <section className="masse-bloc">
-        <h3>3. Aperçu et validation</h3>
-        <div className="actions">
+        <div className="actions masse-generation">
           <button onClick={genererApercu} disabled={chargement}>Aperçu</button>
           <button className="secondary" onClick={copier} disabled={!apercu}>Copier</button>
           <button onClick={enregistrer} disabled={!apercu}>Générer et enregistrer</button>
@@ -308,9 +346,9 @@ export default function VirementsMasse() {
         )}
       </section>
 
-      {/* 4. Historique */}
+      {/* Historique */}
       <section className="masse-bloc">
-        <h3>4. Historique des fichiers générés</h3>
+        <h3>Historique des fichiers générés</h3>
         <table>
           <thead>
             <tr><th>Date</th><th>Fichier</th><th>Société</th><th>Période</th><th>Nb</th><th>Total</th><th>XSD</th><th>Statut</th><th>Par</th><th>Actions</th></tr>
