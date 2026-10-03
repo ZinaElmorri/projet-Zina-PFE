@@ -10,6 +10,12 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+  // Désactive le cache navigateur sur les GET (données toujours fraîches).
+  if ((config.method || 'get').toLowerCase() === 'get') {
+    config.headers['Cache-Control'] = 'no-cache'
+    config.headers['Pragma'] = 'no-cache'
+    config.params = { ...(config.params || {}), _t: Date.now() }
+  }
   return config
 })
 
