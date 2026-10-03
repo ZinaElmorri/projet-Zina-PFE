@@ -47,6 +47,17 @@ public class XsdController {
         return xsdService.analyserElements(id);
     }
 
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMINISTRATEUR','GESTIONNAIRE_RH')")
+    public ResponseEntity<XsdSchema> mettreAJour(@PathVariable Long id,
+                                                 @RequestParam("file") MultipartFile file,
+                                                 HttpServletRequest request) throws IOException {
+        XsdSchema schema = xsdService.mettreAJour(id, file);
+        auditService.log(AuditAction.XSD_IMPORTE,
+                "Mise a jour XSD " + schema.getNom() + " v" + schema.getVersion(), "SUCCES", request);
+        return ResponseEntity.ok(schema);
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRATEUR','GESTIONNAIRE_RH')")
     public ResponseEntity<Void> supprimer(@PathVariable Long id,

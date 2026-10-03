@@ -53,6 +53,14 @@ public class XsdService {
         return repository.findById(id);
     }
 
+    public XsdSchema mettreAJour(Long id, MultipartFile fichier) throws IOException {
+        XsdSchema schema = repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Schéma introuvable"));
+        schema.setContenu(new String(fichier.getBytes(), StandardCharsets.UTF_8));
+        schema.setVersion(schema.getVersion() + 1);
+        return repository.save(schema);
+    }
+
     public void deleteById(Long id) {
         repository.deleteById(id);
     }
