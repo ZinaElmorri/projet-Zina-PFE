@@ -61,6 +61,8 @@ export default function VirementsMasse() {
   const [historique, setHistorique] = useState([])
   const [message, setMessage] = useState('')
   const [chargement, setChargement] = useState(false)
+  const [controleIa, setControleIa] = useState(null)
+  const [analyseIaEnCours, setAnalyseIaEnCours] = useState(false)
 
   useEffect(() => {
     api.get('/masse/xsd').then(({ data }) => setXsdList(data))
@@ -118,6 +120,7 @@ export default function VirementsMasse() {
     if (clientId) params.clientId = clientId
     if (periode) params.periode = periode
     if (matriculesSel.length) params.matricules = matriculesSel.join(',')
+    setControleIa(null)
     try {
       const { data } = await api.get('/masse/paiements', { params })
       setPaiements(data.paiements)
@@ -131,6 +134,29 @@ export default function VirementsMasse() {
     } finally {
       operationEnCours.current = false
       setChargement(false)
+    }
+  }
+
+  const analyserIa = async () => {
+    if (operationEnCours.current) return
+    operationEnCours.current = true
+    setAnalyseIaEnCours(true)
+    setMessage('')
+    const params = {}
+    if (clientId) params.clientId = clientId
+    if (periode) params.periode = periode
+    if (matriculesSel.length) params.matricules = matriculesSel.join(',')
+    try {
+      const { data } = await api.post('/masse/analyse-ia', null, { params })
+      setPaiements(data.paiements.paiements)
+      setTotal(data.paiements.total)
+      setControleIa(data)
+      invaliderApercu()
+    } catch (e) {
+      setMessage('Contrôle IA impossible : ' + messageEchec(e))
+    } finally {
+      operationEnCours.current = false
+      setAnalyseIaEnCours(false)
     }
   }
 
@@ -383,6 +409,10 @@ export default function VirementsMasse() {
                 />
                 <button type="button" onClick={selectionnerTous}>Tous</button>
                 <button type="button" className="secondary" onClick={deselectionnerTous}>Aucun</button>
+                <button type="button" onClick={analyserIa} disabled={analyseIaEnCours || chargement}
+                        title="Détecte les montants inhabituels (modèle Isolation Forest) sans bloquer la génération">
+                  {analyseIaEnCours ? 'Contrôle IA en cours…' : 'Contrôle IA des montants'}
+                </button>
                 <label className="masse-pagesize">
                   Lignes par page
                   <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0) }}>
@@ -393,6 +423,17 @@ export default function VirementsMasse() {
                 </label>
               </div>
             </div>
+            {controleIa && (
+              !controleIa.disponible
+                ? <div className="ia-alert ia-alert--off">Contrôle IA indisponible pour le moment : la génération reste possible, les contrôles métier s'appliquent normalement.</div>
+                : controleIa.nbSuspects > 0
+                  ? <div className="ia-alert ia-alert--warn">
+                      Contrôle IA : <strong>{controleIa.nbSuspects}</strong> montant(s) suspect(s) sur {controleIa.nbAnalyses} paiement(s) analysé(s)
+                      <span className="ia-alert__model"> — modèle {controleIa.modelVersion}</span>.
+                      <p className="ia-alert__hint">Vérifiez ces paiements (colonne IA) avant de générer : ils resteront signalés en avertissement dans l’aperçu, sans bloquer le fichier.</p>
+                    </div>
+                  : <div className="ia-alert ia-alert--ok">Contrôle IA : aucun montant suspect sur {controleIa.nbAnalyses} paiement(s) analysé(s) <span className="ia-alert__model">— modèle {controleIa.modelVersion}</span>.</div>
+            )}
             <table>
               <thead>
                 <tr>
@@ -404,12 +445,12 @@ export default function VirementsMasse() {
                       title="Tout sélectionner / tout désélectionner"
                     />
                   </th>
-                  <th>Matricule</th><th>Nom</th><th>IBAN</th><th>BIC</th><th>Montant</th><th>Statut</th>
+                  <th>Matricule</th><th>Nom</th><th>IBAN</th><th>BIC</th><th>Montant</th><th>Statut</th><th>IA</th>
                 </tr>
               </thead>
               <tbody>
                 {paiementsPage.map((p) => (
-                  <tr key={p.id} className={p.enErreur ? 'row-suspect' : undefined}>
+                  <tr key={p.id} className={p.enErreur || p.suspectIa ? 'row-suspect' : undefined}>
                     <td><input type="checkbox" checked={selection.has(p.id)} onChange={() => basculer(p.id)} /></td>
                     <td>{p.matricule}</td>
                     <td>{p.nomBeneficiaire}</td>
@@ -417,6 +458,12 @@ export default function VirementsMasse() {
                     <td>{p.bic || '—'}</td>
                     <td>{euro.format(p.montant)}</td>
                     <td>{p.statut === 'BROUILLON' ? 'Non approuvé' : p.statut}{p.enErreur ? ` ⚠️ ${p.erreurControle}` : ''}</td>
+                    <td>
+                      {p.suspectIa
+                        ? <span className="badge-suspect" title={p.raisonsIa || ''}>Suspect {p.scoreIa != null ? p.scoreIa.toFixed(2).replace('.', ',') : ''}</span>
+                        : '—'}
+                      {p.suspectIa && p.raisonsIa && <div className="ia-reco">{p.raisonsIa}</div>}
+                    </td>
                   </tr>
                 ))}
               </tbody>

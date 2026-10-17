@@ -40,6 +40,14 @@ public class MassController {
         return service.paiements(clientId, periode, matricules, statuts);
     }
 
+    @PostMapping("/analyse-ia")
+    public AnalyseIaMasse analyseIa(@RequestParam(required = false) String clientId,
+                                    @RequestParam(required = false) String periode,
+                                    @RequestParam(required = false) List<String> matricules,
+                                    @RequestParam(required = false) List<String> statuts) {
+        return service.analyserIa(clientId, periode, matricules, statuts);
+    }
+
     @GetMapping("/xsd")
     public List<XsdUtilisable> xsd() {
         return service.xsdUtilisables();

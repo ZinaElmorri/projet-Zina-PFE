@@ -1,5 +1,7 @@
 package com.zina.sepa.masse;
 
+import com.zina.sepa.ai.AiAnomalyService;
+import com.zina.sepa.ai.dto.AnalyseResult;
 import com.zina.sepa.domain.entity.Transaction;
 import com.zina.sepa.domain.entity.XsdSchema;
 import com.zina.sepa.domain.enums.TransactionStatus;
@@ -46,6 +48,7 @@ class MassPaymentServiceTest {
     @Mock MassPaymentXmlGenerator generator;
     @Mock XsdErrorCollector errorCollector;
     @Mock FichierSepaGenereRepository fichierRepository;
+    @Mock AiAnomalyService aiAnomalyService;
 
     BusinessControlService businessControlService = new BusinessControlService();
     ObjectMapper objectMapper = new ObjectMapper();
@@ -53,7 +56,7 @@ class MassPaymentServiceTest {
     private MassPaymentService service() {
         return new MassPaymentService(paiementRepository, xsdSchemaRepository, businessControlService,
                 validationService, auditService, xsdReader, generator, errorCollector,
-                fichierRepository, objectMapper);
+                fichierRepository, objectMapper, aiAnomalyService);
     }
 
     private Transaction tx() {
@@ -206,6 +209,53 @@ class MassPaymentServiceTest {
             assertThat(apercu.avertissementsControleMetier()).hasSize(1)
                     .allMatch(avertissement -> avertissement.contains("EMP2") && avertissement.contains("Doublon"));
         }
+
+        @Test
+        void montant_suspect_ia_ajoute_un_avertissement_non_bloquant() {
+            preparerGeneration(List.of());
+            Transaction suspect = tx();
+            suspect.setSourceAnomalie("IA");
+            suspect.setScoreRisque(0.82);
+            suspect.setRaisonsAnomalie("Montant 3,7x la moyenne");
+            when(paiementRepository.findAllById(List.of(1L))).thenReturn(List.of(suspect));
+
+            var apercu = service().apercu(requete(), null);
+
+            assertThat(apercu.valideXsd()).isTrue();
+            assertThat(apercu.erreursControleMetier()).isEmpty();
+            assertThat(apercu.avertissementsControleMetier()).singleElement().satisfies(a -> assertThat(a)
+                    .startsWith("[emp EMP1]").contains("Montant suspect (IA, score 0,82)").contains("3,7x"));
+        }
+
+    @Test
+    void analyse_ia_signale_les_suspects_de_la_selection() {
+        Transaction normal = tx();
+        Transaction suspect = tx();
+        suspect.setId(2L);
+        suspect.setEmployeId("EMP2");
+        when(paiementRepository.filtrer(any(), any(), any(), any(), anyBoolean(), any()))
+                .thenReturn(List.of(normal, suspect));
+        when(aiAnomalyService.analyser(List.of(normal, suspect))).thenAnswer(invocation -> {
+            suspect.setSourceAnomalie("IA");
+            suspect.setScoreRisque(0.9);
+            suspect.setRaisonsAnomalie("IBAN modifié récemment");
+            return new AnalyseResult(true, "iforest-test", List.of());
+        });
+
+        var analyse = service().analyserIa("CLI1", "2026-08", List.of(), null);
+
+        assertThat(analyse.disponible()).isTrue();
+        assertThat(analyse.nbAnalyses()).isEqualTo(2);
+        assertThat(analyse.nbSuspects()).isEqualTo(1);
+        assertThat(analyse.paiements().paiements())
+                .filteredOn(p -> p.suspectIa())
+                .singleElement()
+                .satisfies(p -> {
+                    assertThat(p.matricule()).isEqualTo("EMP2");
+                    assertThat(p.scoreIa()).isEqualTo(0.9);
+                    assertThat(p.raisonsIa()).contains("IBAN");
+                });
+    }
 
             @Test
             void enregistrement_invalide_refuse_avant_persistance_et_audit() {

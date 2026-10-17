@@ -63,13 +63,25 @@ public final class MasseDto {
             String devise,
             String statut,
             boolean enErreur,
-            String erreurControle
+            String erreurControle,
+            boolean suspectIa,
+            Double scoreIa,
+            String raisonsIa
     ) {}
 
     public record PaiementsResponse(
             List<PaiementMasse> paiements,
             int nombre,
             BigDecimal total
+    ) {}
+
+    /** Résultat du contrôle IA sur la sélection (avertissement non bloquant). */
+    public record AnalyseIaMasse(
+            boolean disponible,
+            String modelVersion,
+            int nbAnalyses,
+            int nbSuspects,
+            PaiementsResponse paiements
     ) {}
 
     // --- Aperçu / génération / validation ---

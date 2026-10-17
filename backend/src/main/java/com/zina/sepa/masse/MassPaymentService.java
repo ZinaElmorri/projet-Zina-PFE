@@ -1,6 +1,8 @@
 package com.zina.sepa.masse;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zina.sepa.ai.AiAnomalyService;
+import com.zina.sepa.ai.dto.AnalyseResult;
 import com.zina.sepa.domain.entity.Transaction;
 import com.zina.sepa.domain.entity.XsdSchema;
 import com.zina.sepa.domain.enums.AuditAction;
@@ -34,6 +36,7 @@ public class MassPaymentService {
 
     private static final Set<TransactionStatus> STATUTS_AUTORISES =
             Set.of(TransactionStatus.APPROUVEE);
+    private static final String SOURCE_IA = "IA";
 
     private final MassePaiementRepository paiementRepository;
     private final XsdSchemaRepository xsdSchemaRepository;
@@ -45,6 +48,7 @@ public class MassPaymentService {
     private final XsdErrorCollector errorCollector;
     private final FichierSepaGenereRepository fichierRepository;
     private final ObjectMapper objectMapper;
+    private final AiAnomalyService aiAnomalyService;
 
     public MassPaymentService(MassePaiementRepository paiementRepository,
                               XsdSchemaRepository xsdSchemaRepository,
@@ -55,7 +59,8 @@ public class MassPaymentService {
                               MassPaymentXmlGenerator generator,
                               XsdErrorCollector errorCollector,
                               FichierSepaGenereRepository fichierRepository,
-                              ObjectMapper objectMapper) {
+                              ObjectMapper objectMapper,
+                              AiAnomalyService aiAnomalyService) {
         this.paiementRepository = paiementRepository;
         this.xsdSchemaRepository = xsdSchemaRepository;
         this.businessControlService = businessControlService;
@@ -66,6 +71,7 @@ public class MassPaymentService {
         this.errorCollector = errorCollector;
         this.fichierRepository = fichierRepository;
         this.objectMapper = objectMapper;
+        this.aiAnomalyService = aiAnomalyService;
     }
 
     // --- Filtres & paiements ---
@@ -91,17 +97,36 @@ public class MassPaymentService {
     }
 
     public PaiementsResponse paiements(String clientId, String periode, List<String> matricules, List<String> statuts) {
+        return reponsePaiements(filtrer(clientId, periode, matricules, statuts));
+    }
+
+    /** Lance la détection IA sur la sélection ; les suspects restent signalés sans bloquer la génération. */
+    public AnalyseIaMasse analyserIa(String clientId, String periode, List<String> matricules, List<String> statuts) {
         List<Transaction> transactions = filtrer(clientId, periode, matricules, statuts);
+        AnalyseResult resultat = aiAnomalyService.analyser(transactions);
+        PaiementsResponse paiements = reponsePaiements(transactions);
+        int suspects = (int) paiements.paiements().stream().filter(PaiementMasse::suspectIa).count();
+        return new AnalyseIaMasse(resultat.disponible(), resultat.modelVersion(), transactions.size(),
+                suspects, paiements);
+    }
+
+    private PaiementsResponse reponsePaiements(List<Transaction> transactions) {
         List<PaiementMasse> lignes = transactions.stream().map(t -> {
             String err = erreurControle(t);
+            boolean suspect = estSuspectIa(t);
             return new PaiementMasse(t.getId(), t.getEmployeId(), t.getNomBeneficiaire(),
                     masquer(t.getIban()), t.getBic(), t.getMontant(), t.getDevise(),
-                    t.getStatut() == null ? null : t.getStatut().name(), err != null, err);
+                    t.getStatut() == null ? null : t.getStatut().name(), err != null, err,
+                    suspect, suspect ? t.getScoreRisque() : null, suspect ? t.getRaisonsAnomalie() : null);
         }).collect(Collectors.toList());
         BigDecimal total = transactions.stream()
                 .map(t -> t.getMontant() == null ? BigDecimal.ZERO : t.getMontant())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         return new PaiementsResponse(lignes, lignes.size(), total);
+    }
+
+    private static boolean estSuspectIa(Transaction t) {
+        return SOURCE_IA.equals(t.getSourceAnomalie());
     }
 
     // --- XSD ---
@@ -208,6 +233,13 @@ public class MassPaymentService {
         }
 
         var controleMetier = businessControlService.controle(transactions);
+        List<String> avertissements = new ArrayList<>(controleMetier.avertissements());
+        transactions.stream().filter(MassPaymentService::estSuspectIa).forEach(t -> avertissements.add(
+                "[emp " + t.getEmployeId() + "] Montant suspect (IA, score "
+                        + String.format(java.util.Locale.FRANCE, "%.2f", t.getScoreRisque() == null ? 0.0 : t.getScoreRisque())
+                        + ") : " + (t.getRaisonsAnomalie() == null || t.getRaisonsAnomalie().isBlank()
+                        ? "montant inhabituel" : t.getRaisonsAnomalie())
+                        + ". Vérifiez la fiche de paie avant d'envoyer le fichier."));
 
         MassPaymentXmlGenerator.Genere genere = generator.generer(meta.namespace(), meta.version(),
                 transactions, req.nomDebiteur(), req.ibanDebiteur(), req.bicDebiteur(),
@@ -222,8 +254,8 @@ public class MassPaymentService {
         boolean valide = erreurs.isEmpty();
 
         ApercuResponse reponse = new ApercuResponse(genere.xml(), valide, erreurs, controleMetier.erreurs(),
-            controleMetier.avertissements(),
-            avertissementsXml(genere, controleMetier.avertissements()),
+            avertissements,
+            avertissementsXml(genere, avertissements),
             positionnerMetier(genere, controleMetier.erreurs(), false),
                 genere.nbTransactions(), genere.ctrlSum(), meta.version(), genere.msgId());
         return new Resultat(reponse, transactions, genere.msgId());
