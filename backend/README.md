@@ -35,7 +35,10 @@ Créé automatiquement au premier démarrage :
 | GET     | `/api/xsd/{id}/elements`        | authentifié                    | Analyser la structure XSD      |
 | POST    | `/api/transactions`             | ADMINISTRATEUR, GESTIONNAIRE_RH| Créer une transaction          |
 | POST    | `/api/transactions/controler`   | authentifié                    | Contrôles métier RH            |
-| POST    | `/api/transactions/analyser`    | authentifié                    | Détection d'anomalies (IA)     |
+| POST    | `/api/ai/detect`                | ADMIN, GESTIONNAIRE_RH, VALIDATEUR | Détection IA des montants suspects |
+| POST    | `/api/masse/analyse-ia`         | ADMIN, GESTIONNAIRE_RH, VALIDATEUR | Contrôle IA d'une sélection de virements de masse |
+| GET     | `/api/admin/ai/health`, `/metrics` | ADMIN, GESTIONNAIRE_RH, VALIDATEUR | État du module IA, métriques, retours utilisateurs |
+| POST    | `/api/admin/ai/train?source=`   | ADMINISTRATEUR                 | Réentraîner le modèle (synthetique / reel) |
 | POST    | `/api/transactions/generer`     | ADMINISTRATEUR, GESTIONNAIRE_RH| Générer le fichier SEPA XML    |
 | GET     | `/api/dashboard/stats`          | authentifié                    | Statistiques du tableau de bord|
 

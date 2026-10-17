@@ -4,7 +4,6 @@ import com.zina.sepa.domain.entity.Transaction;
 import com.zina.sepa.domain.enums.AuditAction;
 import com.zina.sepa.domain.enums.TransactionStatus;
 import com.zina.sepa.repository.TransactionRepository;
-import com.zina.sepa.service.AiClient;
 import com.zina.sepa.service.AuditService;
 import com.zina.sepa.service.BusinessControlService;
 import com.zina.sepa.service.XmlGenerationService;
@@ -35,12 +34,11 @@ class TransactionControllerTest {
 
     @Mock TransactionRepository repository;
     @Mock XmlGenerationService xmlGenerationService;
-    @Mock AiClient aiClient;
     @Mock AuditService auditService;
 
     private TransactionController controller() {
         return new TransactionController(repository, new BusinessControlService(), xmlGenerationService,
-                aiClient, auditService);
+                auditService);
     }
 
     private Transaction paiement() {
@@ -55,7 +53,7 @@ class TransactionControllerTest {
                 .isInstanceOf(IllegalStateException.class).hasMessageContaining(champ);
         assertThat(paiement.getStatut()).isEqualTo(TransactionStatus.BROUILLON);
         verify(repository, never()).save(any());
-        verifyNoInteractions(auditService, xmlGenerationService, aiClient);
+        verifyNoInteractions(auditService, xmlGenerationService);
     }
 
     @ParameterizedTest

@@ -3,7 +3,6 @@ package com.zina.sepa.controller;
 import com.zina.sepa.domain.entity.Transaction;
 import com.zina.sepa.domain.enums.AuditAction;
 import com.zina.sepa.domain.enums.TransactionStatus;
-import com.zina.sepa.dto.AnomalyScore;
 import com.zina.sepa.dto.TransactionRequest;
 import com.zina.sepa.dto.ValidationResult;
 import com.zina.sepa.repository.TransactionRepository;
@@ -24,18 +23,15 @@ public class TransactionController {
     private final TransactionRepository repository;
     private final BusinessControlService businessControlService;
     private final XmlGenerationService xmlGenerationService;
-    private final AiClient aiClient;
     private final AuditService auditService;
 
     public TransactionController(TransactionRepository repository,
                                  BusinessControlService businessControlService,
                                  XmlGenerationService xmlGenerationService,
-                                 AiClient aiClient,
                                  AuditService auditService) {
         this.repository = repository;
         this.businessControlService = businessControlService;
         this.xmlGenerationService = xmlGenerationService;
-        this.aiClient = aiClient;
         this.auditService = auditService;
     }
 
@@ -99,15 +95,6 @@ public class TransactionController {
                 "Contrôles métier : " + result.erreurs().size() + " erreur(s)",
                 result.valide() ? "SUCCES" : "ECHEC", request);
         return result;
-    }
-
-    /** Détection d'anomalies via le module IA. */
-    @PostMapping("/analyser")
-    public List<AnomalyScore> analyser(HttpServletRequest request) {
-        var scores = aiClient.analyser(repository.findAll());
-        auditService.log(AuditAction.ANOMALIE_DETECTEE,
-                scores.size() + " transaction(s) analysée(s)", "SUCCES", request);
-        return scores;
     }
 
     /** Génère le fichier SEPA pain.001 pour les transactions approuvées. */

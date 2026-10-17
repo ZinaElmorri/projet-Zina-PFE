@@ -52,13 +52,7 @@ export default function Transactions() {
       : `Erreurs : ${data.erreurs.join(', ')}`)
   }
 
-  const analyser = async () => {
-    await api.post('/transactions/analyser')
-    setMessage('Analyse IA terminée')
-    load()
-  }
-
-  // Détection IA des montants suspects (module additif).
+  // Détection IA des montants suspects (Isolation Forest).
   const analyserMontantsIA = async () => {
     setMessage('')
     const { data } = await api.post('/ai/detect')
@@ -104,29 +98,28 @@ export default function Transactions() {
 
       <div className="actions">
         <button onClick={controler}>Contrôles métier</button>
-        <button onClick={analyser}>Analyser (IA)</button>
-        <button onClick={analyserMontantsIA}>Analyser montants (IA)</button>
+        <button onClick={analyserMontantsIA}>Analyser (IA)</button>
       </div>
       {message && <div className="info">{message}</div>}
 
       {iaResult && !iaResult.disponible && (
-        <div className="ia-alert ia-alert--off">⚠️ Détection IA indisponible — le traitement continue sans anomalies IA.</div>
+        <div className="ia-alert ia-alert--off">Détection IA indisponible : le traitement continue avec les seuls contrôles métier.</div>
       )}
       {iaResult && iaResult.disponible && iaResult.suspects.length === 0 && (
-        <div className="ia-alert ia-alert--ok">✅ Aucun montant suspect détecté (modèle {iaResult.modelVersion}).</div>
+        <div className="ia-alert ia-alert--ok">Aucun montant suspect détecté (modèle {iaResult.modelVersion}).</div>
       )}
       {iaResult && iaResult.disponible && iaResult.suspects.length > 0 && (
         <div className="ia-alert ia-alert--warn">
-          <strong>⚠️ {iaResult.suspects.length} montant(s) suspect(s) détecté(s)</strong>
+          <strong>{iaResult.suspects.length} montant(s) suspect(s) détecté(s)</strong>
           <span className="ia-alert__model"> — modèle {iaResult.modelVersion}</span>
           <ul>
             {iaResult.suspects.map((s) => (
               <li key={s.id}>
                 Fiche #{s.id} — <strong>{s.employe} / {s.nom}</strong> :{' '}
                 <strong>{Number(s.montant).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} {s.devise}</strong>
-                {' '}(score {s.score}) — {s.raisons.join(' ; ')}
+                {' '}(score {Number(s.score).toFixed(2).replace('.', ',')}) — {s.raisons.join(' ; ')}
                 {s.recommandation && (
-                  <div className="ia-reco">💡 Recommandation : {s.recommandation}</div>
+                  <div className="ia-reco">Recommandation : {s.recommandation}</div>
                 )}
               </li>
             ))}
@@ -154,10 +147,10 @@ export default function Transactions() {
               <td>{t.montant} {t.devise}</td>
               <td>{t.statut === 'BROUILLON' ? 'Non approuvé' : t.statut}</td>
               <td>{t.niveauRisque || '—'}</td>
-              <td>{t.scoreRisque != null ? t.scoreRisque : '—'}</td>
+              <td>{t.scoreRisque != null ? Number(t.scoreRisque).toFixed(2).replace('.', ',') : '—'}</td>
               <td>
                 {t.sourceAnomalie === 'IA' ? (
-                  <span className="badge-suspect" title={t.raisonsAnomalie || ''}>⚠️ Montant suspect (IA)</span>
+                  <span className="badge-suspect" title={t.raisonsAnomalie || ''}>Montant suspect (IA)</span>
                 ) : (t.sourceAnomalie || '—')}
               </td>
               <td>

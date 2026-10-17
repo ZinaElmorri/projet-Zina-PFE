@@ -27,16 +27,13 @@ services:
     build: ./ai-module
     container_name: sepa-ai
     environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: sepa_db
-      DB_USER: sepa
-      DB_PASSWORD: sepa_pwd
+      AI_SCORE_THRESHOLD: "0.6"
+      AI_CONTAMINATION: "0.01"
     ports:
       - "8000:8000"
-    depends_on:
-      postgres:
-        condition: service_healthy
+    volumes:
+      # Conserve le modèle réentraîné et ses métriques entre deux reconstructions.
+      - ai-models:/app/app/montant_suspect/models
 
   backend:
     build: ./backend
@@ -72,3 +69,4 @@ services:
 
 volumes:
   pgdata:
+  ai-models:

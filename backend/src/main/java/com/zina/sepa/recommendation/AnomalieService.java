@@ -55,9 +55,15 @@ public class AnomalieService {
         List<Transaction> transactions = transactionRepository.findAll();
         List<Anomalie> courantes = new ArrayList<>();
         courantes.addAll(anomaliesReglesMetier(transactions));
-        courantes.addAll(anomaliesIa(transactions));
+        List<Anomalie> ia = anomaliesIa(transactions);
+        // IA indisponible : les anomalies IA existantes ne doivent pas être classées « corrigées ».
+        java.util.Set<String> typesNonEvalues = ia == null
+                ? java.util.Set.of(AnomalieType.MONTANT_SUSPECT) : java.util.Set.of();
+        if (ia != null) {
+            courantes.addAll(ia);
+        }
 
-        int nouvelles = reconcilier(courantes);
+        int nouvelles = reconcilier(courantes, typesNonEvalues);
         return new DetectionResume(
                 nouvelles,
                 anomalieRepository.countByStatut(AnomalieStatut.OUVERTE),
@@ -157,6 +163,7 @@ public class AnomalieService {
         return resultat;
     }
 
+    /** Renvoie null si l'IA n'a pas pu évaluer les transactions. */
     private List<Anomalie> anomaliesIa(List<Transaction> transactions) {
         List<Anomalie> resultat = new ArrayList<>();
         AnalyseResult ai;
@@ -164,10 +171,10 @@ public class AnomalieService {
             ai = aiAnomalyService.analyser(transactions);
         } catch (Exception e) {
             log.warn("Analyse IA indisponible pour la détection d'anomalies : {}", e.getMessage());
-            return resultat;
+            return null;
         }
         if (ai == null || !ai.disponible() || ai.resultats() == null) {
-            return resultat;
+            return null;
         }
         Map<Long, Transaction> parId = transactions.stream()
                 .filter(t -> t.getId() != null)
@@ -189,7 +196,7 @@ public class AnomalieService {
         return resultat;
     }
 
-    private int reconcilier(List<Anomalie> courantes) {
+    private int reconcilier(List<Anomalie> courantes, java.util.Set<String> typesNonEvalues) {
         Map<String, Anomalie> existantes = new LinkedHashMap<>();
         for (Anomalie a : anomalieRepository.findAll()) {
             if (a.getSignature() != null) {
@@ -215,6 +222,7 @@ public class AnomalieService {
                 existante.setMontant(courante.getMontant());
                 if (existante.getStatut() == AnomalieStatut.CORRIGEE) {
                     existante.setStatut(AnomalieStatut.OUVERTE);
+                    existante.setCorrigeePar(null);
                 }
                 if (existante.getRecommandation() == null) {
                     copierContexte(courante, existante);
@@ -227,8 +235,11 @@ public class AnomalieService {
         // Anomalies qui ne sont plus détectées : marquées CORRIGEE (IGNOREE conservée).
         for (Anomalie existante : existantes.values()) {
             if (!signaturesCourantes.contains(existante.getSignature())
-                    && existante.getStatut() == AnomalieStatut.OUVERTE) {
+                    && existante.getStatut() == AnomalieStatut.OUVERTE
+                    && !typesNonEvalues.contains(existante.getType())) {
                 existante.setStatut(AnomalieStatut.CORRIGEE);
+                existante.setCorrigeePar(null);
+                existante.setCorrigeeLe(LocalDateTime.now());
                 anomalieRepository.save(existante);
             }
         }

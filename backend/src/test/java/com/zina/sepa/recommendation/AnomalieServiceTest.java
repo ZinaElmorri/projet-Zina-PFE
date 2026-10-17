@@ -89,4 +89,21 @@ class AnomalieServiceTest {
 
         verify(anomalieRepository, atLeastOnce()).save(any(Anomalie.class));
     }
+
+    @Test
+    void ia_indisponible_ne_cloture_pas_les_anomalies_ia_ouvertes() {
+        Anomalie ia = Anomalie.builder().id(5L).signature("MONTANT_SUSPECT|7")
+                .type(AnomalieType.MONTANT_SUSPECT).statut(AnomalieStatut.OUVERTE).build();
+        Anomalie regle = Anomalie.builder().id(6L).signature("IBAN_INVALIDE|8")
+                .type(AnomalieType.IBAN_INVALIDE).statut(AnomalieStatut.OUVERTE).build();
+        when(transactionRepository.findAll()).thenReturn(List.of());
+        when(aiAnomalyService.analyser(any())).thenReturn(new AnalyseResult(false, null, List.of()));
+        when(anomalieRepository.findAll()).thenReturn(List.of(ia, regle));
+
+        service().detecter();
+
+        assertThat(ia.getStatut()).isEqualTo(AnomalieStatut.OUVERTE);
+        assertThat(regle.getStatut()).isEqualTo(AnomalieStatut.CORRIGEE);
+        assertThat(regle.getCorrigeePar()).isNull();
+    }
 }

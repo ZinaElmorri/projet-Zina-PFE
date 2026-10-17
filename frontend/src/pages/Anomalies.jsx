@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Pagination, Spin } from 'antd'
 import api from '../api/client'
+import { useAuth } from '../context/AuthContext.jsx'
 
 const TAILLE_PAGE = 50
+const ROLES_TRAITEMENT = ['ADMINISTRATEUR', 'GESTIONNAIRE_RH', 'VALIDATEUR']
 
 const STATUTS = [
   { key: '', label: 'Toutes' },
@@ -19,6 +21,8 @@ const pastille = (statut) => {
 }
 
 export default function Anomalies() {
+  const { user } = useAuth()
+  const peutTraiter = ROLES_TRAITEMENT.includes(user?.role)
   const [anomalies, setAnomalies] = useState([])
   const [filtre, setFiltre] = useState('')
   const [expanded, setExpanded] = useState({})
@@ -74,7 +78,7 @@ export default function Anomalies() {
             {s.label}
           </button>
         ))}
-        <button onClick={relancer}>Relancer la détection</button>
+        {peutTraiter && <button onClick={relancer}>Relancer la détection</button>}
       </div>
 
       <div className="info">
@@ -112,8 +116,8 @@ export default function Anomalies() {
               <td>{pastille(a.statut)}</td>
               <td>
                 <Link to="/transactions"><button className="secondary">Ouvrir la fiche</button></Link>
-                {a.statut !== 'CORRIGEE' && <button onClick={() => marquerCorrigee(a.id)}>Marquer corrigée</button>}
-                {a.statut !== 'IGNOREE' && <button className="secondary" onClick={() => ignorer(a.id)}>Ignorer</button>}
+                {peutTraiter && a.statut !== 'CORRIGEE' && <button onClick={() => marquerCorrigee(a.id)}>Marquer corrigée</button>}
+                {peutTraiter && a.statut !== 'IGNOREE' && <button className="secondary" onClick={() => ignorer(a.id)}>Ignorer</button>}
               </td>
             </tr>
           ))}
