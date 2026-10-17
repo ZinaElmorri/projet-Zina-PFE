@@ -63,7 +63,10 @@ a { text-decoration: none; color: var(--primary); }
 .app-user { cursor: pointer; padding: 4px 8px; border-radius: 6px; }
 .app-user:hover { background: #F4F6F9; }
 .app-content { padding: 24px; }
-.content-panel { background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 24px; }
+/* Sans min-width: 0, un tableau large élargit toute la page au lieu de défiler dans son bloc. */
+.app-shell > .ant-layout { min-width: 0; }
+.content-panel { background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 24px; overflow-x: auto; }
+.content-panel .masse-bloc { overflow-x: auto; }
 .page-header { margin-bottom: 16px; }
 
 /* Anciens styles : limités aux éléments hors antd (pages non encore migrées) */
