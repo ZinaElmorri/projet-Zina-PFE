@@ -1,48 +1,73 @@
 :root {
-  --primary: #464feb;
-  --border: #e6e6e6;
-  --bg: #f5f6fa;
-  --text: #1f2333;
+  --primary: #1F3A5F;
+  --border: #E5E9F0;
+  --bg: #F4F6F9;
+  --text: #1F2933;
 }
 
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-family: 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
   color: var(--text);
   background: var(--bg);
 }
 
 a { text-decoration: none; color: var(--primary); }
 
-/* Layout */
-.app { display: flex; min-height: 100vh; }
-
-.sidebar {
-  width: 220px;
-  background: #1f2333;
-  color: #fff;
-  padding: 24px 16px;
-}
-.sidebar .logo { color: #fff; margin: 0 0 24px; letter-spacing: 2px; }
-.sidebar nav { display: flex; flex-direction: column; gap: 12px; }
-.sidebar nav a { color: #c7cbe0; padding: 8px 12px; border-radius: 6px; }
-.sidebar nav a:hover { background: rgba(255,255,255,0.1); color: #fff; }
-
-.main { flex: 1; display: flex; flex-direction: column; }
-.topbar {
+/* Coquille antd (Layout) */
+.app-shell { min-height: 100vh; }
+.app-loading { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+.app-sider { position: sticky; top: 0; height: 100vh; overflow: auto; }
+.app-sider .ant-layout-sider-children { display: flex; flex-direction: column; }
+.app-brand {
+  height: 56px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  background: #fff;
-  padding: 12px 24px;
-  border-bottom: 1px solid var(--border);
+  gap: 12px;
+  padding: 0 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
 }
-.content { padding: 24px; }
+.ant-layout-sider-collapsed .app-brand { justify-content: center; padding: 0; }
+.app-brand__mark {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+}
+.app-brand__text { display: flex; flex-direction: column; line-height: 1.25; }
+.app-brand__name { font-weight: 600; font-size: 15px; }
+.app-brand__sub { font-size: 12px; color: rgba(255, 255, 255, 0.55); }
+.app-sider .ant-menu { padding: 8px 0; }
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.app-user { cursor: pointer; padding: 4px 8px; border-radius: 6px; }
+.app-user:hover { background: #F4F6F9; }
+.app-content { padding: 24px; }
+.content-panel { background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 24px; }
+.page-header { margin-bottom: 16px; }
 
-/* Boutons */
-button {
+/* Anciens styles : limités aux éléments hors antd (pages non encore migrées) */
+:where(button:not([class*="ant-"])) {
   background: var(--primary);
   color: #fff;
   border: none;
@@ -50,15 +75,16 @@ button {
   border-radius: 6px;
   cursor: pointer;
   margin-right: 6px;
+  font-family: inherit;
 }
-button:hover { opacity: 0.9; }
-button:disabled { background: #aab; cursor: not-allowed; }
+:where(button:not([class*="ant-"])):hover { opacity: 0.9; }
+:where(button:not([class*="ant-"])):disabled { background: #aab; cursor: not-allowed; }
 button.secondary { background: #6b7280; }
 
-/* Tableaux */
-table { width: 100%; border-collapse: collapse; background: #fff; margin-top: 16px; }
-tr th, tr td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; font-size: 14px; }
-tr th { background: #f5f5f5; }
+/* Tableaux (hors antd) */
+:where(table:not(.ant-table table)) { width: 100%; border-collapse: collapse; background: #fff; margin-top: 16px; }
+:where(table:not(.ant-table table)) :where(th, td) { border: 1px solid var(--border); padding: 8px 10px; text-align: left; font-size: 14px; }
+:where(table:not(.ant-table table)) th { background: #F7F9FC; }
 
 /* Formulaires */
 .inline-form { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
