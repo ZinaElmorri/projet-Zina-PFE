@@ -7,6 +7,8 @@ import Anomalies from './pages/Anomalies.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import KpiDashboard from './pages/KpiDashboard.jsx'
 import Login from './pages/Login.jsx'
+import Profil from './pages/Profil.jsx'
+import Register from './pages/Register.jsx'
 import Transactions from './pages/Transactions.jsx'
 import VirementsMasse from './pages/VirementsMasse.jsx'
 import Users from './pages/Users.jsx'
@@ -19,6 +21,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
       <Route
         element={
           <ProtectedRoute>
@@ -34,6 +37,7 @@ export default function App() {
         <Route path="/xsd" element={<Xsd />} />
         <Route path="/audit" element={<Audit />} />
         <Route path="/users" element={<Users />} />
+        <Route path="/profil" element={<Profil />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

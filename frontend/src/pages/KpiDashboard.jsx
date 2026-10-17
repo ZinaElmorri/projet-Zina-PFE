@@ -115,7 +115,7 @@ export default function KpiDashboard() {
 
   return (
     <div>
-      <h2>Indicateurs (KPI)</h2>
+      <h2>kPI des flux  SEPA</h2>
 
       <div className="inline-form">
         <label>Période <input type="month" value={periode} onChange={(e) => setPeriode(e.target.value)} /></label>

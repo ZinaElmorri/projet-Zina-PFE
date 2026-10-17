@@ -185,3 +185,14 @@ tr th { background: #f5f5f5; }
 .login-card .subtitle { text-align: center; color: #888; margin: 0 0 12px; }
 .login-card label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
 .login-card input { padding: 10px; border: 1px solid var(--border); border-radius: 6px; }
+
+/* Webcam (reconnaissance faciale) */
+.webcam { width: 100%; border-radius: 8px; background: #111; transform: scaleX(-1); }
+.face-enroll { max-width: 480px; }
+.login-card--wide { width: 420px; }
+.login-card select { padding: 10px; border: 1px solid var(--border); border-radius: 6px; }
+.face-capture { display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.login-card a { text-align: center; font-size: 14px; }
+.badge-attente { background: #ff8c00; }
+.badge-actif { background: #1e9e54; }
+.badge-inactif { background: #888; }

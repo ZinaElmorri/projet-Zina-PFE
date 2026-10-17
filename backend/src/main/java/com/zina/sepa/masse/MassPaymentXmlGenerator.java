@@ -1,17 +1,23 @@
 package com.zina.sepa.masse;
 
 import com.zina.sepa.domain.entity.Transaction;
+import com.zina.sepa.masse.dto.MasseDto.AnalyseXsd;
+import com.zina.sepa.masse.dto.MasseDto.ElementXsd;
+import com.zina.sepa.masse.dto.MasseDto.ErreurXsd;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.StringWriter;
+import java.io.StringReader;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.Normalizer;
@@ -19,6 +25,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.IdentityHashMap;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -34,12 +44,32 @@ public class MassPaymentXmlGenerator {
     private static final int MAX_E2E = 35;
     private static final DateTimeFormatter CRE_DT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
-    public record Genere(String xml, String msgId, int nbTransactions, BigDecimal ctrlSum) {}
+    public record ReperePaiement(String matricule, int paiement, int iban, int bic, int montant) {}
+    private record Omission(Element parent, String message) {}
+    private record RepereDom(String matricule, Element paiement, Element iban, Element bic, Element montant) {}
+
+    public record Genere(String xml, String msgId, int nbTransactions, BigDecimal ctrlSum,
+                         List<ErreurXsd> avertissements, List<ReperePaiement> reperes) {
+        public Genere(String xml, String msgId, int nbTransactions, BigDecimal ctrlSum) {
+            this(xml, msgId, nbTransactions, ctrlSum, List.of(), List.of());
+        }
+    }
 
     public Genere generer(String namespace, String version, List<Transaction> transactions,
                           String nomDebiteur, String ibanDebiteur, String bicDebiteur,
                           String dateExecution, String periode) {
-        boolean v09 = version != null && version.startsWith("001.001.09");
+        return generer(namespace, version, transactions, nomDebiteur, ibanDebiteur, bicDebiteur,
+            dateExecution, periode, null);
+        }
+
+        public Genere generer(String namespace, String version, List<Transaction> transactions,
+                  String nomDebiteur, String ibanDebiteur, String bicDebiteur,
+                  String dateExecution, String periode, AnalyseXsd analyse) {
+        Map<String, ElementXsd> elements = new HashMap<>();
+        if (analyse != null) indexer(analyse.racine(), elements);
+        List<Omission> omissions = new ArrayList<>();
+        List<RepereDom> reperesDom = new ArrayList<>();
+        boolean formatRecent = version != null && version.matches("001\\.001\\.(09|10|11)");
         String ns = (namespace == null || namespace.isBlank())
                 ? "urn:iso:std:iso:20022:tech:xsd:pain.001.001.03" : namespace;
 
@@ -71,7 +101,7 @@ public class MassPaymentXmlGenerator {
             text(doc, grpHdr, "NbOfTxs", String.valueOf(nbTx));
             text(doc, grpHdr, "CtrlSum", ctrlSum.toPlainString());
             Element initgPty = child(doc, grpHdr, "InitgPty");
-            text(doc, initgPty, "Nm", nettoyer(nomDebiteur, MAX_NM));
+            textOptionnel(doc, initgPty, "Nm", nettoyer(nomDebiteur, MAX_NM), elements, omissions);
 
             // --- PmtInf ---
             Element pmtInf = child(doc, racine, "PmtInf");
@@ -83,19 +113,19 @@ public class MassPaymentXmlGenerator {
             Element pmtTpInf = child(doc, pmtInf, "PmtTpInf");
             text(doc, child(doc, pmtTpInf, "SvcLvl"), "Cd", "SEPA");
             text(doc, child(doc, pmtTpInf, "CtgyPurp"), "Cd", "SALA");
-            if (v09) {
+            if (formatRecent) {
                 Element reqd = child(doc, pmtInf, "ReqdExctnDt");
                 text(doc, reqd, "Dt", dateExec);
             } else {
                 text(doc, pmtInf, "ReqdExctnDt", dateExec);
             }
             Element dbtr = child(doc, pmtInf, "Dbtr");
-            text(doc, dbtr, "Nm", nettoyer(nomDebiteur, MAX_NM));
+            textOptionnel(doc, dbtr, "Nm", nettoyer(nomDebiteur, MAX_NM), elements, omissions);
             Element dbtrAcct = child(doc, pmtInf, "DbtrAcct");
             text(doc, child(doc, dbtrAcct, "Id"), "IBAN", iban(ibanDebiteur));
             Element dbtrAgt = child(doc, pmtInf, "DbtrAgt");
             Element finInstn = child(doc, dbtrAgt, "FinInstnId");
-            text(doc, finInstn, v09 ? "BICFI" : "BIC", bic(bicDebiteur));
+            textOptionnel(doc, finInstn, formatRecent ? "BICFI" : "BIC", bic(bicDebiteur), elements, omissions);
             text(doc, pmtInf, "ChrgBr", "SLEV");
 
             // --- Transactions ---
@@ -108,25 +138,90 @@ public class MassPaymentXmlGenerator {
                 instd.setAttribute("Ccy", t.getDevise() == null ? "EUR" : t.getDevise());
                 instd.setTextContent(montant(t.getMontant()));
                 amt.appendChild(instd);
+                Element bicBeneficiaire = null;
                 if (t.getBic() != null && !t.getBic().isBlank()) {
                     Element cdtrAgt = child(doc, tx, "CdtrAgt");
-                    text(doc, child(doc, cdtrAgt, "FinInstnId"), v09 ? "BICFI" : "BIC", bic(t.getBic()));
+                    bicBeneficiaire = child(doc, child(doc, cdtrAgt, "FinInstnId"), formatRecent ? "BICFI" : "BIC");
+                    bicBeneficiaire.setTextContent(bic(t.getBic()));
                 }
                 Element cdtr = child(doc, tx, "Cdtr");
-                text(doc, cdtr, "Nm", nettoyer(t.getNomBeneficiaire(), MAX_NM));
+                textOptionnel(doc, cdtr, "Nm", nettoyer(t.getNomBeneficiaire(), MAX_NM), elements, omissions);
                 Element cdtrAcct = child(doc, tx, "CdtrAcct");
-                text(doc, child(doc, cdtrAcct, "Id"), "IBAN", iban(t.getIban()));
+                Element ibanBeneficiaire = child(doc, child(doc, cdtrAcct, "Id"), "IBAN");
+                ibanBeneficiaire.setTextContent(iban(t.getIban()));
                 Element rmtInf = child(doc, tx, "RmtInf");
                 text(doc, rmtInf, "Ustrd", nettoyer(libelle(t, periode), MAX_USTRD));
+                reperesDom.add(new RepereDom(t.getEmployeId(), tx, ibanBeneficiaire, bicBeneficiaire, instd));
             }
 
-            return new Genere(serialiser(doc), msgId, nbTx, ctrlSum);
+            String xml = serialiser(doc);
+            Map<Element, Integer> lignes = localiser(doc, xml);
+            List<ErreurXsd> avertissements = omissions.stream().map(omission ->
+                    new ErreurXsd(lignes.getOrDefault(omission.parent(), 0), 0,
+                            omission.message(), omission.parent().getLocalName())).toList();
+            List<ReperePaiement> reperes = reperesDom.stream().map(repere ->
+                    new ReperePaiement(repere.matricule(), lignes.getOrDefault(repere.paiement(), 0),
+                            lignes.getOrDefault(repere.iban(), 0), lignes.getOrDefault(repere.bic(), 0),
+                            lignes.getOrDefault(repere.montant(), 0))).toList();
+            return new Genere(xml, msgId, nbTx, ctrlSum, avertissements, reperes);
         } catch (Exception e) {
-            throw new IllegalStateException("Échec de génération du XML : " + e.getMessage(), e);
+            throw new IllegalStateException("Génération du XML impossible. Vérifiez la date d'exécution, les données des paiements sélectionnés et la compatibilité du schéma XSD, puis relancez la génération.", e);
         }
     }
 
     // ------------------------------------------------------------------
+
+    private void indexer(ElementXsd element, Map<String, ElementXsd> elements) {
+        if (element == null) return;
+        elements.put(element.chemin(), element);
+        if (element.enfants() != null) element.enfants().forEach(enfant -> indexer(enfant, elements));
+    }
+
+    private void textOptionnel(Document doc, Element parent, String nom, String valeur,
+                               Map<String, ElementXsd> elements, List<Omission> omissions) {
+        List<String> chemin = new ArrayList<>();
+        for (org.w3c.dom.Node noeud = parent; noeud instanceof Element; noeud = noeud.getParentNode()) {
+            chemin.add(0, noeud.getLocalName());
+        }
+        if (!chemin.isEmpty() && chemin.get(0).equals("Document")) chemin.remove(0);
+        String cheminComplet = String.join("/", chemin) + "/" + nom;
+        ElementXsd definition = elements.get(cheminComplet);
+        if (valeur.isBlank() && definition != null && !definition.obligatoire()) {
+            String champ = nom.equals("Nm")
+                    ? switch (parent.getLocalName()) {
+                        case "InitgPty" -> "Nom de l'initiateur du paiement";
+                        case "Dbtr" -> "Nom du débiteur";
+                        case "Cdtr" -> "Nom du bénéficiaire";
+                        default -> "Nom";
+                    }
+                    : "Code BIC/SWIFT de la banque du débiteur";
+            omissions.add(new Omission(parent, champ + " non renseigné : balise optionnelle <" + nom
+                    + "> omise. Ce champ n'est pas obligatoire dans le schéma sélectionné et son absence ne bloque pas la conformité XSD. "
+                    + "Renseignez-le si vous souhaitez l'inclure dans le XML. Chemin : " + cheminComplet + "."));
+            return;
+        }
+        text(doc, parent, nom, valeur);
+    }
+
+    private Map<Element, Integer> localiser(Document doc, String xml) throws Exception {
+        Map<Element, Integer> lignes = new IdentityHashMap<>();
+        var noeuds = doc.getElementsByTagNameNS("*", "*");
+        XMLInputFactory factory = XMLInputFactory.newFactory();
+        factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+        factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
+        var lecteur = factory.createXMLStreamReader(new StringReader(xml));
+        int index = 0;
+        try {
+            while (lecteur.hasNext()) {
+                if (lecteur.next() == XMLStreamConstants.START_ELEMENT) {
+                    lignes.put((Element) noeuds.item(index++), lecteur.getLocation().getLineNumber());
+                }
+            }
+        } finally {
+            lecteur.close();
+        }
+        return lignes;
+    }
 
     private Element child(Document doc, Element parent, String name) {
         Element e = doc.createElementNS(parent.getNamespaceURI(), name);

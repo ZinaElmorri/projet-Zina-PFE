@@ -8,6 +8,7 @@ export default function Transactions() {
   const [form, setForm] = useState(empty)
   const [message, setMessage] = useState('')
   const [iaResult, setIaResult] = useState(null)
+  const [approbationEnCours, setApprobationEnCours] = useState(null)
 
   const load = () => api.get('/transactions').then(({ data }) => setTransactions(data))
 
@@ -22,7 +23,26 @@ export default function Transactions() {
     load()
   }
 
-  const approuver = async (id) => { await api.put(`/transactions/${id}/approuver`); load() }
+  const approuver = async (id) => {
+    if (approbationEnCours !== null) return
+    setApprobationEnCours(id)
+    setMessage('')
+    try {
+      await api.put(`/transactions/${id}/approuver`)
+      setMessage(`Paiement n° ${id} approuvé.`)
+      try {
+        await load()
+      } catch {
+        setMessage(`Paiement n° ${id} approuvé, mais la liste n’a pas pu être actualisée. Actualisez la page pour consulter son statut.`)
+      }
+    } catch (erreur) {
+      setMessage(erreur.response?.data?.erreur || (erreur.response?.status === 403
+        ? 'Approbation refusée : seul un administrateur ou un validateur peut approuver les paiements.'
+        : 'Approbation impossible : vérifiez votre connexion et réessayez.'))
+    } finally {
+      setApprobationEnCours(null)
+    }
+  }
   const supprimer = async (id) => { await api.delete(`/transactions/${id}`); load() }
 
   const controler = async () => {
@@ -132,7 +152,7 @@ export default function Transactions() {
               <td>{t.nomBeneficiaire}</td>
               <td>{t.iban}</td>
               <td>{t.montant} {t.devise}</td>
-              <td>{t.statut}</td>
+              <td>{t.statut === 'BROUILLON' ? 'Non approuvé' : t.statut}</td>
               <td>{t.niveauRisque || '—'}</td>
               <td>{t.scoreRisque != null ? t.scoreRisque : '—'}</td>
               <td>
@@ -141,7 +161,7 @@ export default function Transactions() {
                 ) : (t.sourceAnomalie || '—')}
               </td>
               <td>
-                <button onClick={() => approuver(t.id)}>Approuver</button>
+                <button onClick={() => approuver(t.id)} disabled={approbationEnCours !== null || t.statut === 'APPROUVEE'}>Approuver</button>
                 <button onClick={() => supprimer(t.id)}>Supprimer</button>
               </td>
             </tr>

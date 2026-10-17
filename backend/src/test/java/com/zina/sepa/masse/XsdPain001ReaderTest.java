@@ -59,6 +59,15 @@ class XsdPain001ReaderTest {
     void xsd_vide_est_incompatible() {
         assertThatThrownBy(() -> reader.analyser(""))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("CstmrCdtTrfInitn");
+                .hasMessageContaining("CstmrCdtTrfInitn")
+                .hasMessageContaining("schéma pain.001 complet");
+    }
+
+    @Test
+    void xsd_mal_forme_indique_comment_corriger_le_fichier() {
+        assertThatThrownBy(() -> reader.analyser("<CstmrCdtTrfInitn>"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Schéma XSD illisible")
+                .hasMessageContaining("importez un schéma XML bien formé");
     }
 }

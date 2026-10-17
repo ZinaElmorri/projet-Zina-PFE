@@ -24,6 +24,47 @@ class MassPaymentXmlGeneratorTest {
     }
 
     @Test
+    void champs_optionnels_vides_sont_omis_avec_avertissements_sans_invalider_xml() throws Exception {
+        String xsd = XsdPain001ReaderTest.xsdOfficiel();
+        List<Transaction> transactions = List.of(tx(1, "EMP1", "Alice", "FR7630006000011234567890189", "AGRIFRPP", "2000.00"));
+
+        Genere genere = generator.generer(NS_V03, "001.001.03", transactions, "",
+                "FR7630006000011234567890189", "", "2026-10-03", "2026-08",
+                new XsdPain001Reader().analyser(xsd));
+
+        assertThat(collector.valider(genere.xml(), xsd)).isEmpty();
+        assertThat(genere.avertissements()).hasSize(3).allMatch(avertissement -> avertissement.ligne() > 0);
+        assertThat(genere.xml()).doesNotContain("<Nm/>").doesNotContain("<BIC/>");
+        var repere = genere.reperes().get(0);
+        assertThat(genere.xml().split("\\n")[repere.iban() - 1]).contains("<IBAN>FR7630006000011234567890189</IBAN>");
+    }
+
+    @Test
+    void iban_debiteur_requis_vide_reste_une_erreur_xsd() throws Exception {
+        String xsd = XsdPain001ReaderTest.xsdOfficiel();
+        List<Transaction> transactions = List.of(tx(1, "EMP1", "Alice", "FR7630006000011234567890189", "AGRIFRPP", "2000.00"));
+
+        Genere genere = generator.generer(NS_V03, "001.001.03", transactions, "Societe",
+                "", "AGRIFRPP", "2026-10-03", "2026-08", new XsdPain001Reader().analyser(xsd));
+
+        assertThat(collector.valider(genere.xml(), xsd)).anyMatch(erreur -> erreur.element().equals("IBAN"));
+    }
+
+    @Test
+    void valeur_optionnelle_fournie_mais_invalide_n_est_pas_masquee() throws Exception {
+        String xsd = XsdPain001ReaderTest.xsdOfficiel();
+        List<Transaction> transactions = List.of(tx(1, "EMP1", "Alice", "FR7630006000011234567890189", "AGRIFRPP", "2000.00"));
+
+        Genere genere = generator.generer(NS_V03, "001.001.03", transactions, "Societe",
+                "FR7630006000011234567890189", "BAD!!", "2026-10-03", "2026-08",
+                new XsdPain001Reader().analyser(xsd));
+
+        assertThat(genere.avertissements()).isEmpty();
+        assertThat(genere.xml()).contains("<BIC>BAD!!</BIC>");
+        assertThat(collector.valider(genere.xml(), xsd)).anyMatch(erreur -> erreur.element().equals("BIC"));
+    }
+
+    @Test
     void nbtxs_ctrlsum_et_deux_decimales() {
         List<Transaction> txs = List.of(
                 tx(1, "EMP1", "Alice", "FR7630006000011234567890189", "AGRIFRPP", "2000.00"),
@@ -62,6 +103,19 @@ class MassPaymentXmlGeneratorTest {
         // Le Nm bénéficiaire est tronqué à 70 caractères.
         String nmGenere = xml.replaceAll("(?s).*<Cdtr>\\s*<Nm>(.*?)</Nm>.*", "$1");
         assertThat(nmGenere.length()).isLessThanOrEqualTo(70);
+    }
+
+    @Test
+    void v10_et_v11_utilisent_les_elements_attendus_des_versions_recentes() {
+        List<Transaction> transactions = List.of(tx(1, "EMP1", "Alice", "FR7630006000011234567890189", "AGRIFRPP", "2000.00"));
+        for (String version : List.of("001.001.10", "001.001.11")) {
+            String namespace = "urn:iso:std:iso:20022:tech:xsd:pain." + version;
+            String xml = generator.generer(namespace, version, transactions, "Soc",
+                    "FR7630006000011234567890189", "AGRIFRPP", "2026-10-03", "2026-08").xml();
+
+            assertThat(xml).contains(namespace).contains("<BICFI>").doesNotContain("<BIC>");
+            assertThat(xml).contains("<ReqdExctnDt>").contains("<Dt>2026-10-03</Dt>");
+        }
     }
 
     @Test

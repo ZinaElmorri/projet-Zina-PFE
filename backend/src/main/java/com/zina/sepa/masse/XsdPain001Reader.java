@@ -56,7 +56,7 @@ public class XsdPain001Reader {
 
     public AnalyseXsd analyser(String xsd) {
         if (xsd == null || xsd.isBlank() || !xsd.contains("CstmrCdtTrfInitn")) {
-            throw new IllegalArgumentException("Ce XSD ne permet pas un virement pain.001 (CstmrCdtTrfInitn introuvable).");
+            throw new IllegalArgumentException("Le schéma XSD est vide ou ne contient pas la structure de virements SEPA <CstmrCdtTrfInitn>. Importez ou sélectionnez un schéma pain.001 complet.");
         }
         Document doc = parse(xsd);
         Element schema = doc.getDocumentElement();
@@ -69,7 +69,7 @@ public class XsdPain001Reader {
 
         Element cstmr = trouverCstmr(schema, topElements, complexTypes);
         if (cstmr == null) {
-            throw new IllegalArgumentException("Élément CstmrCdtTrfInitn introuvable dans le XSD.");
+            throw new IllegalArgumentException("La structure de virements SEPA <CstmrCdtTrfInitn> n'est pas définie dans le schéma. Vérifiez que le fichier importé est un schéma pain.001 complet, puis sélectionnez-le à nouveau.");
         }
 
         int[] compteur = {0};
@@ -348,7 +348,7 @@ public class XsdPain001Reader {
             factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
             return factory.newDocumentBuilder().parse(new org.xml.sax.InputSource(new StringReader(xsd)));
         } catch (Exception e) {
-            throw new IllegalArgumentException("XSD illisible : " + e.getMessage());
+            throw new IllegalArgumentException("Schéma XSD illisible : vérifiez les balises, les attributs et l'absence de DOCTYPE dans le fichier, puis importez un schéma XML bien formé.", e);
         }
     }
 }

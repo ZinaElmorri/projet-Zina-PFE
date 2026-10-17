@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .anomaly_detector import detecter
+from .face.router import router as face_router
 from .montant_suspect.router import router as montant_suspect_router
 from .schemas import AnomalyOut, DetectRequest
 
@@ -23,6 +24,7 @@ app.add_middleware(
 
 # Module additif : détection des montants suspects (Isolation Forest).
 app.include_router(montant_suspect_router)
+app.include_router(face_router)
 
 
 @app.get("/health")

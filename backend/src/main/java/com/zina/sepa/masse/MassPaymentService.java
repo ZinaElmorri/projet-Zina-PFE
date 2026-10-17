@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 public class MassPaymentService {
 
     private static final Set<TransactionStatus> STATUTS_AUTORISES =
-            Set.of(TransactionStatus.APPROUVEE, TransactionStatus.VALIDEE);
+            Set.of(TransactionStatus.APPROUVEE);
 
     private final MassePaiementRepository paiementRepository;
     private final XsdSchemaRepository xsdSchemaRepository;
@@ -129,6 +129,9 @@ public class MassPaymentService {
 
     public FichierSepaGenere enregistrer(ApercuRequest req, HttpServletRequest http) {
         Resultat r = construire(req);
+        if (!r.reponse().valideXsd()) {
+            throw new IllegalStateException("Le XML n'est pas conforme au XSD : enregistrement interdit. Corrigez les erreurs rouges de l'aperçu, puis générez à nouveau le XML avant de l'enregistrer.");
+        }
         XsdSchema schema = xsd(req.xsdSchemaId());
         String societe = req.clientId() == null ? "TOUTES" : req.clientId();
         String nomFichier = ("SEPA_" + societe + "_" + (req.periode() == null ? "" : req.periode())
@@ -172,14 +175,17 @@ public class MassPaymentService {
 
     public FichierDetail detail(Long id) {
         FichierSepaGenere f = fichierRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Fichier introuvable : " + id));
+                .orElseThrow(() -> new IllegalArgumentException("Le fichier SEPA n° " + id + " n'est plus disponible. Actualisez l'historique et sélectionnez un fichier existant."));
         return new FichierDetail(resume(f), f.getContenuXml(), fromJson(f.getErreursXsd()),
                 f.getNomDebiteur(), f.getIbanDebiteur(), f.getDateExecution());
     }
 
     public FichierSepaGenere pourTelecharger(Long id, HttpServletRequest http) {
         FichierSepaGenere f = fichierRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Fichier introuvable : " + id));
+                .orElseThrow(() -> new IllegalArgumentException("Le fichier SEPA n° " + id + " n'est plus disponible. Actualisez l'historique et sélectionnez un fichier existant."));
+        if (!f.isValideXsd()) {
+            throw new IllegalStateException("Le XML n'est pas conforme au XSD : téléchargement interdit. Consultez les erreurs avec « Revoir », corrigez les données puis générez un nouveau fichier conforme.");
+        }
         auditService.log(AuditAction.XML_GENERE,
                 "Téléchargement fichier #" + id + " (" + f.getNomFichier() + ")", "SUCCES", http);
         return f;
@@ -193,7 +199,7 @@ public class MassPaymentService {
         XsdSchema schema = xsd(req.xsdSchemaId());
         XsdPain001Reader.MetaXsd meta = xsdReader.meta(schema.getContenu());
         if (!meta.compatible()) {
-            throw new IllegalArgumentException("Le XSD choisi n'est pas compatible pain.001.");
+            throw new IllegalArgumentException("Le schéma XSD sélectionné ne décrit pas un fichier de virements SEPA pain.001. Choisissez un schéma pain.001 compatible dans la liste des schémas.");
         }
 
         List<Transaction> transactions = selectionner(req);
@@ -201,29 +207,74 @@ public class MassPaymentService {
             transactions = transactions.stream().filter(t -> erreurControle(t) == null).collect(Collectors.toList());
         }
 
-        List<String> erreursMetier = businessControlService.controle(transactions).erreurs();
+        var controleMetier = businessControlService.controle(transactions);
 
         MassPaymentXmlGenerator.Genere genere = generator.generer(meta.namespace(), meta.version(),
                 transactions, req.nomDebiteur(), req.ibanDebiteur(), req.bicDebiteur(),
-                req.dateExecution(), req.periode());
+            req.dateExecution(), req.periode(), xsdReader.analyser(schema.getContenu()));
 
         List<ErreurXsd> erreurs = new ArrayList<>();
-        if (!validationService.validerSyntaxe(genere.xml()).valide()) {
-            erreurs.add(new ErreurXsd(0, 0, "XML mal formé", ""));
-        }
+        boolean syntaxeValide = validationService.validerSyntaxe(genere.xml()).valide();
         erreurs.addAll(errorCollector.valider(genere.xml(), schema.getContenu()));
+        if (!syntaxeValide && erreurs.isEmpty()) {
+            erreurs.add(new ErreurXsd(0, 0, "XML mal formé : vérifiez les balises de fermeture et les caractères réservés, puis générez à nouveau le fichier.", ""));
+        }
         boolean valide = erreurs.isEmpty();
 
-        ApercuResponse reponse = new ApercuResponse(genere.xml(), valide, erreurs, erreursMetier,
+        ApercuResponse reponse = new ApercuResponse(genere.xml(), valide, erreurs, controleMetier.erreurs(),
+            controleMetier.avertissements(),
+            avertissementsXml(genere, controleMetier.avertissements()),
+            positionnerMetier(genere, controleMetier.erreurs(), false),
                 genere.nbTransactions(), genere.ctrlSum(), meta.version(), genere.msgId());
         return new Resultat(reponse, transactions, genere.msgId());
     }
 
-    private List<Transaction> selectionner(ApercuRequest req) {
-        if (req.transactionIds() != null && !req.transactionIds().isEmpty()) {
-            return paiementRepository.findAllById(req.transactionIds());
+    private List<ErreurXsd> avertissementsXml(MassPaymentXmlGenerator.Genere genere, List<String> avertissements) {
+        List<ErreurXsd> resultat = new ArrayList<>(genere.avertissements());
+        resultat.addAll(positionnerMetier(genere, avertissements, true));
+        return resultat;
+    }
+
+    private List<ErreurXsd> positionnerMetier(MassPaymentXmlGenerator.Genere genere, List<String> messages,
+                                            boolean avertissement) {
+        List<ErreurXsd> resultat = new ArrayList<>();
+        for (var repere : genere.reperes()) {
+            for (String message : messages) {
+                if (!message.startsWith("[emp " + repere.matricule() + "]")) continue;
+                int ligne = repere.paiement();
+                String element = "CdtTrfTxInf";
+                if (!avertissement) {
+                    if (message.contains("IBAN") || message.contains("compte bancaire")) {
+                        ligne = repere.iban();
+                        element = "IBAN";
+                    } else if (message.contains("BIC")) {
+                        ligne = repere.bic();
+                        element = "BIC";
+                    } else {
+                        ligne = repere.montant();
+                        element = "InstdAmt";
+                    }
+                }
+                resultat.add(new ErreurXsd(ligne, 0, message, element));
+            }
         }
-        return filtrer(req.clientId(), req.periode(), req.matricules(), req.statuts());
+        return resultat;
+    }
+
+    private List<Transaction> selectionner(ApercuRequest req) {
+        List<Transaction> transactions = req.transactionIds() != null && !req.transactionIds().isEmpty()
+            ? paiementRepository.findAllById(req.transactionIds())
+            : filtrer(req.clientId(), req.periode(), req.matricules(), req.statuts());
+        List<Transaction> nonApprouvees = transactions.stream()
+            .filter(transaction -> transaction.getStatut() != TransactionStatus.APPROUVEE).toList();
+        if (!nonApprouvees.isEmpty()) {
+            String references = nonApprouvees.stream()
+                .map(transaction -> "n° " + transaction.getId() + " (" + transaction.getEmployeId() + ")")
+                .collect(Collectors.joining(", "));
+            throw new IllegalStateException("Génération refusée : seuls les paiements approuvés peuvent figurer dans le XML. "
+                + "Paiements non approuvés : " + references + ". Faites approuver ces paiements, puis relancez la recherche et la génération.");
+        }
+        return transactions;
     }
 
     private List<Transaction> filtrer(String clientId, String periode, List<String> matricules, List<String> statuts) {
@@ -257,13 +308,15 @@ public class MassPaymentService {
     /** Erreur de contrôle métier bloquante pour une fiche, via les méthodes existantes. */
     private String erreurControle(Transaction t) {
         if (t.getIban() == null || t.getIban().isBlank() || !businessControlService.ibanValide(t.getIban())) {
-            return "IBAN invalide";
+                return t.getIban() == null || t.getIban().isBlank()
+                    ? "IBAN du bénéficiaire manquant : renseignez-le dans la fiche du paiement."
+                    : "IBAN invalide : vérifiez le numéro de compte et sa clé de contrôle sur le relevé bancaire du bénéficiaire.";
         }
         if (t.getBic() != null && !t.getBic().isBlank() && !businessControlService.bicValide(t.getBic())) {
-            return "BIC invalide";
+            return "BIC invalide : renseignez le code SWIFT de la banque du bénéficiaire avec 8 ou 11 caractères, sans espaces.";
         }
         if (t.getMontant() == null || t.getMontant().compareTo(BigDecimal.ZERO) <= 0) {
-            return "Montant négatif ou nul";
+            return "Montant manquant, négatif ou nul : renseignez un montant strictement supérieur à zéro.";
         }
         return null;
     }
@@ -278,7 +331,7 @@ public class MassPaymentService {
 
     private XsdSchema xsd(Long id) {
         return xsdSchemaRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("XSD introuvable : " + id));
+                .orElseThrow(() -> new IllegalArgumentException("Le schéma XSD n° " + id + " n'est plus disponible. Actualisez la liste et sélectionnez un schéma existant."));
     }
 
     private String detailAudit(String action, ApercuRequest req, Resultat r) {

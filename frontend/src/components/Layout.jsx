@@ -16,13 +16,14 @@ export default function Layout() {
         <h1 className="logo">SEPA</h1>
         <nav>
           <Link to="/">Tableau de bord</Link>
-          <Link to="/kpi">Indicateurs KPI</Link>
+          <Link to="/kpi">kPI des flux  SEPA</Link>
           <Link to="/transactions">Transactions</Link>
           <Link to="/anomalies">Anomalies</Link>
           <Link to="/virements-masse">Virements de masse</Link>
           <Link to="/xsd">Schémas XSD</Link>
           <Link to="/audit">Journal d'audit</Link>
           {user?.role === 'ADMINISTRATEUR' && <Link to="/users">Utilisateurs</Link>}
+          <Link to="/profil">Mon profil</Link>
         </nav>
       </aside>
       <div className="main">

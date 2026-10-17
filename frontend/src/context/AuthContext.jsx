@@ -17,12 +17,34 @@ export function AuthProvider({ children }) {
     setLoading(false)
   }, [])
 
-  const login = async (username, password) => {
-    const { data } = await api.post('/auth/login', { username, password })
+  const storeSession = (data) => {
     localStorage.setItem('token', data.token)
     localStorage.setItem('username', data.username)
     localStorage.setItem('role', data.role)
     setUser({ username: data.username, role: data.role })
+  }
+
+  // Retourne { otpRequis, challengeId, emailMasque } si un code OTP doit être saisi.
+  const login = async (username, password) => {
+    const { data } = await api.post('/auth/login', { username, password })
+    if (!data.otpRequis) storeSession(data)
+    return data
+  }
+
+  const faceLogin = async (username, image) => {
+    const { data } = await api.post('/auth/face-login', { username, image })
+    if (!data.otpRequis) storeSession(data)
+    return data
+  }
+
+  const verifyOtp = async (challengeId, code) => {
+    const { data } = await api.post('/auth/verify-otp', { challengeId, code })
+    storeSession(data)
+    return data
+  }
+
+  const resendOtp = async (challengeId) => {
+    const { data } = await api.post('/auth/resend-otp', { challengeId })
     return data
   }
 
@@ -32,7 +54,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, faceLogin, verifyOtp, resendOtp, logout, loading }}>
       {children}
     </AuthContext.Provider>
   )

@@ -1,5 +1,6 @@
 package com.zina.sepa.domain.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.zina.sepa.domain.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
@@ -22,6 +23,7 @@ public class User {
     @Column(nullable = false, unique = true)
     private String username;
 
+    @JsonIgnore
     @Column(nullable = false)
     private String password;
 
@@ -36,11 +38,17 @@ public class User {
     private Role role;
 
     /** Encodage de référence du visage (facultatif) pour l'auth biométrique. */
+    @JsonIgnore
     @Column(columnDefinition = "TEXT")
     private String faceEncoding;
 
     @Column(nullable = false)
     private boolean actif = true;
+
+    /** false tant que l'administrateur n'a pas approuvé un compte créé par inscription. */
+    @Builder.Default
+    @Column(columnDefinition = "boolean default true")
+    private boolean approuve = true;
 
     private LocalDateTime creeLe;
 

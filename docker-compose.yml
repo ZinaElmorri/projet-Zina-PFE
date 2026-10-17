@@ -16,6 +16,13 @@ services:
       timeout: 5s
       retries: 5
 
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: sepa-mailhog
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Interface web
+
   ai-module:
     build: ./ai-module
     container_name: sepa-ai
@@ -40,12 +47,17 @@ services:
       SPRING_DATASOURCE_PASSWORD: sepa_pwd
       AI_MODULE_URL: http://ai-module:8000
       AI_ENABLED: "true"
+      MAIL_HOST: mailhog
+      MAIL_PORT: 1025
+      OTP_ENABLED: "true"
     ports:
       - "8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
       ai-module:
+        condition: service_started
+      mailhog:
         condition: service_started
 
   frontend:

@@ -69,6 +69,11 @@ public class TransactionController {
     public ResponseEntity<Transaction> approuver(@PathVariable Long id, HttpServletRequest request) {
         Transaction t = repository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Transaction introuvable"));
+        ValidationResult controle = businessControlService.controle(List.of(t));
+        if (!controle.valide()) {
+            throw new IllegalStateException("Approbation refusée : corrigez les données du paiement avant de l'approuver. "
+                    + String.join(" ", controle.erreurs()));
+        }
         t.setStatut(TransactionStatus.APPROUVEE);
         repository.save(t);
         auditService.log(AuditAction.TRANSACTION_APPROUVEE,

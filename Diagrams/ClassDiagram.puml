@@ -1,401 +1,93 @@
 @startuml ClassDiagram
-' ======================================================================
-'  Diagramme de classes global - Plateforme SEPA (Zina PFE)
-'  Style StarUML
-' ======================================================================
-title Diagramme de classes global - Plateforme SEPA
+!pragma layout smetana
+title Diagramme de classes metier - Plateforme SEPA
 
-' ---- Export image pour rapport (page A4 portrait) ----
-' Resolution adaptee a l'impression A4 et largeur bornee a la page.
 skinparam dpi 150
-scale max 1240 width
-
-' ---- Apparence facon StarUML ----
+scale max 704*992
+top to bottom direction
 skinparam backgroundColor #FFFFFF
 skinparam shadowing false
-skinparam linetype ortho
-skinparam packageStyle rectangle
+skinparam linetype polyline
 skinparam classAttributeIconSize 0
 skinparam defaultFontName Arial
-skinparam defaultFontSize 11
-skinparam nodesep 40
-skinparam ranksep 55
-skinparam padding 2
+skinparam defaultFontSize 14
+skinparam nodesep 30
+skinparam ranksep 45
+skinparam padding 4
+hide methods
+hide circle
 
 skinparam class {
   BackgroundColor #FFFFFF
+  HeaderBackgroundColor #FFFFFF
   BorderColor #000000
   ArrowColor #000000
-  HeaderBackgroundColor #FFFFFF
-  AttributeFontColor #000000
   FontColor #000000
-}
-skinparam package {
-  BackgroundColor #F8F8F8
-  BorderColor #808080
-  FontStyle bold
+  AttributeFontColor #000000
 }
 
-' ======================================================================
-'  UTILISATEURS & SECURITE
-' ======================================================================
-package "Utilisateurs & Securite" {
-
-  class User {
-    - id : Long
-    - username : String
-    - password : String
-    - nomComplet : String
-    - email : String
-    - role : Role
-    - faceEncoding : String
-    - actif : boolean
-    - creeLe : LocalDateTime
-    - derniereConnexion : LocalDateTime
-  }
-
-  enum Role {
-    ADMINISTRATEUR
-    GESTIONNAIRE_RH
-    VALIDATEUR
-    AUDITEUR
-  }
-
-  class AuthController {
-    + login(request : LoginRequest) : AuthResponse
-  }
-
-  class UserController {
-    + creerUtilisateur(request : CreateUserRequest) : User
-  }
-
-  class AuthService {
-    + login(request : LoginRequest) : AuthResponse
-  }
-
-  class UserService {
-    + creer(request : CreateUserRequest) : User
-    + lister() : List<User>
-  }
-
-  class JwtService {
-    + genererToken(username : String) : String
-    + extraireUsername(token : String) : String
-    + estTokenValide(token : String, ud : UserDetails) : boolean
-  }
-
-  class CustomUserDetailsService {
-    + loadUserByUsername(username : String) : UserDetails
-  }
-
-  class JwtAuthenticationFilter {
-    # doFilterInternal(req, res, chain) : void
-  }
-
-  class SecurityConfig {
-    + filterChain(http : HttpSecurity) : SecurityFilterChain
-  }
+class User {
+  - id : Long
+  - username : String
+  - nomComplet : String
+  - role : Role
+  - actif : boolean
 }
 
-' ======================================================================
-'  TRANSACTIONS & VIREMENTS
-' ======================================================================
-package "Transactions & Virements" {
-
-  class Transaction {
-    - id : Long
-    - employeId : String
-    - clientId : String
-    - nomBeneficiaire : String
-    - iban : String
-    - bic : String
-    - montant : BigDecimal
-    - devise : String
-    - statut : TransactionStatus
-    - scoreRisque : Double
-    - niveauRisque : RiskLevel
-    - typeAnomalie : String
-    - sourceAnomalie : String
-    - modelVersion : String
-    - creeLe : LocalDateTime
-    - modifieLe : LocalDateTime
-  }
-
-  enum TransactionStatus {
-    BROUILLON
-    VALIDEE
-    APPROUVEE
-    REJETEE
-    SUPPRIMEE
-  }
-
-  enum RiskLevel {
-    FAIBLE
-    MOYEN
-    ELEVE
-    CRITIQUE
-  }
-
-  class TransactionController {
-    + creer(request : TransactionRequest) : Transaction
-    + approuver(id : Long) : Transaction
-  }
-
-  class BusinessControlService {
-    + valider(transaction : Transaction) : ValidationResult
-  }
-
-  class XmlGenerationService {
-    + genererXml(transactions : List<Transaction>) : String
-  }
+class AuditLog {
+  - id : Long
+  - username : String
+  - action : AuditAction
+  - resultat : String
+  - horodatage : LocalDateTime
 }
 
-' ======================================================================
-'  VIREMENTS DE MASSE
-' ======================================================================
-package "Virements de masse" {
-
-  class FichierSepaGenere {
-    - id : Long
-    - msgId : String
-    - nomFichier : String
-    - contenuXml : String
-    - xsdSchemaId : Long
-    - versionMessage : String
-    - clientId : String
-    - periode : String
-    - nbTransactions : int
-  }
-
-  class MassController {
-    + genererFichierMasse() : FichierSepaGenere
-  }
-
-  class MassPaymentService {
-    + genererFichier(clientId : String, periode : String) : FichierSepaGenere
-  }
-
-  class MassPaymentXmlGenerator {
-    + genererXml(paiements : List) : String
-  }
-
-  class XsdPain001Reader {
-    + lire(xsd : byte[]) : Schema
-  }
-
-  class XsdErrorCollector {
-    + collecter(erreurs : List) : List<String>
-  }
+class Transaction {
+  - id : Long
+  - employeId : String
+  - iban : String
+  - montant : BigDecimal
+  - statut : TransactionStatus
 }
 
-' ======================================================================
-'  VALIDATION XSD
-' ======================================================================
-package "Validation XSD" {
-
-  class XsdSchema {
-    - id : Long
-    - nom : String
-    - version : int
-    - cheminFichier : String
-    - contenu : String
-    - importePar : String
-    - importeLe : LocalDateTime
-  }
-
-  class XsdController {
-    + importer(fichier : MultipartFile) : XsdSchema
-  }
-
-  class XsdService {
-    + importer(fichier : byte[], nom : String) : XsdSchema
-  }
-
-  class ValidationService {
-    + validerFichier(xml : byte[]) : ValidationResult
-  }
+class Anomalie {
+  - id : Long
+  - type : String
+  - transactionId : Long
+  - statut : AnomalieStatut
+  - recommandation : String
 }
 
-' ======================================================================
-'  ANOMALIES & RECOMMANDATIONS
-' ======================================================================
-package "Anomalies & Recommandations" {
-
-  class Anomalie {
-    - id : Long
-    - signature : String
-    - type : String
-    - matricule : String
-    - iban : String
-    - montant : BigDecimal
-    - periode : String
-    - details : String
-    - transactionId : Long
-    - recommandation : String
-    - statut : AnomalieStatut
-    - creeLe : LocalDateTime
-    - modifieLe : LocalDateTime
-  }
-
-  enum AnomalieStatut {
-    OUVERTE
-    CORRIGEE
-    IGNOREE
-  }
-
-  class AnomalieController {
-    + lister() : List<Anomalie>
-    + corriger(id : Long) : Anomalie
-  }
-
-  class AnomalieService {
-    + detecter() : List<Anomalie>
-    + corriger(id : Long, commentaire : String) : Anomalie
-  }
-
-  interface RecommendationEngine {
-    + recommander(anomalie : Anomalie) : String
-  }
-
-  class CatalogRecommendationEngine {
-    + recommander(anomalie : Anomalie) : String
-  }
+class FichierSepaGenere {
+  - id : Long
+  - nomFichier : String
+  - periode : String
+  - nbTransactions : int
+  - valideXsd : boolean
 }
 
-' ======================================================================
-'  INTELLIGENCE ARTIFICIELLE
-' ======================================================================
-package "Intelligence Artificielle" {
-
-  class AiAnomalyService {
-    + evaluer(transactions : List<Transaction>) : List<Anomalie>
-  }
-
-  class AiClient {
-    + evaluerRisque(transaction : Transaction) : AnomalyScore
-  }
-
-  class MontantSuspectClient {
-    + detecter(paiements : List) : DetectResponseDto
-  }
-
-  class AiDetectionController {
-    + detecter() : List<Anomalie>
-  }
-
-  class AdminAiController {
-    + entrainerModele() : void
-  }
-
-  class MontantSuspectModel <<Python / ML>> {
-    + predire(features : DataFrame) : List<float>
-    + entrainer(donnees : DataFrame) : void
-  }
+class XsdSchema {
+  - id : Long
+  - nom : String
+  - version : int
+  - importePar : String
+  - importeLe : LocalDateTime
 }
 
-' ======================================================================
-'  TABLEAU DE BORD & AUDIT
-' ======================================================================
-package "Tableau de bord & Audit" {
+User -[hidden]right-> AuditLog
+User -[hidden]down-> Transaction
+AuditLog -[hidden]down-> Anomalie
+Transaction -[hidden]down-> FichierSepaGenere
+Anomalie -[hidden]down-> XsdSchema
 
-  class KpiDashboardController {
-    + kpi(filtre : DashboardFilter) : Object
-  }
+AuditLog .left.> User : username
+Anomalie .left.> Transaction : transactionId
+FichierSepaGenere .up.> Transaction : transactionIds
+FichierSepaGenere .right.> XsdSchema : xsdSchemaId
 
-  class KpiDashboardService {
-    + calculerKpi(filtre : DashboardFilter) : Object
-  }
-
-  class DashboardController {
-    + stats() : DashboardStats
-  }
-
-  class DashboardService {
-    + statistiques() : DashboardStats
-  }
-
-  class AuditLog {
-    - id : Long
-    - username : String
-    - action : AuditAction
-    - details : String
-    - adresseIp : String
-    - resultat : String
-    - horodatage : LocalDateTime
-  }
-
-  enum AuditAction {
-    LOGIN
-    LOGOUT
-    XSD_IMPORTE
-    XML_GENERE
-    TRANSACTION_CREEE
-    TRANSACTION_APPROUVEE
-    ANOMALIE_DETECTEE
-    VALIDATION_EFFECTUEE
-  }
-
-  class AuditService {
-    + journaliser(action : AuditAction, details : String) : void
-  }
-
-  class AuditController {
-    + lister() : List<AuditLog>
-  }
-}
-
-' ======================================================================
-'  RELATIONS
-' ======================================================================
-
-' ---- Enums (composition) ----
-User "1" *-- "1" Role
-Transaction "1" *-- "1" TransactionStatus
-Transaction "1" *-- "0..1" RiskLevel
-Anomalie "1" *-- "0..1" AnomalieStatut
-AuditLog "1" *-- "1" AuditAction
-
-' ---- Associations metier ----
-Transaction "0..*" --> "1" User : saisie par
-Anomalie "0..*" --> "0..1" Transaction : concerne
-AuditLog "0..*" --> "1" User : trace
-
-' ---- Realisation d'interface ----
-CatalogRecommendationEngine ..|> RecommendationEngine
-
-' ---- Controleurs -> Services ----
-AuthController ..> AuthService
-UserController ..> UserService
-TransactionController ..> BusinessControlService
-TransactionController ..> XmlGenerationService
-TransactionController ..> AiClient
-MassController ..> MassPaymentService
-XsdController ..> XsdService
-AnomalieController ..> AnomalieService
-AiDetectionController ..> AiAnomalyService
-AdminAiController ..> AiAnomalyService
-KpiDashboardController ..> KpiDashboardService
-DashboardController ..> DashboardService
-AuditController ..> AuditService
-
-' ---- Services entre eux ----
-MassPaymentService ..> XsdPain001Reader
-MassPaymentService ..> MassPaymentXmlGenerator
-MassPaymentService ..> XsdErrorCollector
-MassPaymentService ..> ValidationService
-MassPaymentService ..> BusinessControlService
-AnomalieService ..> BusinessControlService
-AnomalieService ..> AiAnomalyService
-AnomalieService ..> RecommendationEngine
-AiAnomalyService ..> MontantSuspectClient
-AiClient ..> AiAnomalyService
-MontantSuspectClient ..> MontantSuspectModel : HTTP REST
-
-' ---- Securite ----
-JwtAuthenticationFilter ..> JwtService
-JwtAuthenticationFilter ..> CustomUserDetailsService
-SecurityConfig ..> JwtAuthenticationFilter
-AuthService ..> JwtService
-CustomUserDetailsService ..> User
-
+legend bottom
+  Pointilles : references par identifiant ou nom, sans association JPA.
+  Attributs essentiels uniquement ; types enum non developpes.
+  Diagramme technique complet : ClassDiagramDetail.puml.
+endlegend
 @enduml

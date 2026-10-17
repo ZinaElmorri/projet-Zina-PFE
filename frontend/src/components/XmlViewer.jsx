@@ -28,12 +28,16 @@ function segments(line) {
   return out
 }
 
-export default function XmlViewer({ xml, erreurs = [], ligneActive }) {
+export default function XmlViewer({ xml, erreurs = [], avertissements = [], ligneActive }) {
   const lignesEnErreur = useMemo(
     () => new Set((erreurs || []).map((e) => e.ligne).filter((n) => n > 0)),
     [erreurs]
   )
   const lines = useMemo(() => (xml ? xml.replace(/\r\n/g, '\n').split('\n') : []), [xml])
+  const lignesEnAvertissement = useMemo(
+    () => new Set((avertissements || []).map((avertissement) => avertissement.ligne).filter((numero) => numero > 0)),
+    [avertissements]
+  )
   const conteneur = useRef(null)
 
   useEffect(() => {
@@ -49,7 +53,7 @@ export default function XmlViewer({ xml, erreurs = [], ligneActive }) {
     <div className="xml-viewer" ref={conteneur}>
       {lines.map((line, i) => {
         const n = i + 1
-        const cls = `xml-line${lignesEnErreur.has(n) ? ' xml-line--err' : ''}${ligneActive === n ? ' xml-line--active' : ''}`
+        const cls = `xml-line${lignesEnErreur.has(n) ? ' xml-line--err' : lignesEnAvertissement.has(n) ? ' xml-line--warn' : ''}${ligneActive === n ? ' xml-line--active' : ''}`
         return (
           <div className={cls} data-ligne={n} key={n}>
             <span className="xml-gutter">{n}</span>

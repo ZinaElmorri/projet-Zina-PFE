@@ -31,6 +31,17 @@ public class UserController {
         return ResponseEntity.ok(userService.create(request));
     }
 
+    @PostMapping("/{id}/approuver")
+    public ResponseEntity<User> approuver(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.approuver(id));
+    }
+
+    @PostMapping("/{id}/rejeter")
+    public ResponseEntity<Void> rejeter(@PathVariable Long id) {
+        userService.rejeter(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deactivate(@PathVariable Long id) {
         userService.deactivate(id);
