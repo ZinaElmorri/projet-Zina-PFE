@@ -1,0 +1,2472 @@
+=====PAGE 1=====
+RAPPORT DE STAGE DE FIN D’ÉTUDES
+Intitulé du stage
+Système de gestion des flux SEPA (ISO 20022) avec détection
+intelligente d’anomalies pour la paie HR Access
+Réalisé par
+Zina ElMorri
+Société d’accueil
+Sopra HR Software
+Encadrant entreprise
+M. Mohamed Zied FIOUEL
+Encadrant universitaire
+M. Malek BOUZAIENE
+Année universitaire
+2025 / 2026
+=====PAGE 2=====
+Dédicace
+Je dédie ce travail à mes parents, qui m’ont soutenue à chaque étape de ce parcours avec une
+patience infinie, des sacrifices et une confiance inébranlable en moi, même dans les moments
+où je doutais de moi-même. Leur encouragement a été la force silencieuse derrière chaque nuit
+tardive et chaque défi que j’ai surmonté, et ils ont contribué à façonner la personne que je suis
+devenue.
+À mes frères et sœurs, pour leurs encouragements constants, pour avoir célébré mes petites vic-
+toires comme si c’étaient les leurs, et pour avoir toujours été là dès que j’en avais besoin.
+À mes grands-parents, dont l’amour et les prières m’ont portée plus loin qu’ils ne le sauront
+jamais.
+À mes amis, qui se sont tenus à mes côtés dans les moments les plus difficiles, qui ont su
+m’écouter quand j’avais besoin de parler, et qui m’ont poussée vers l’avant.
+Et à tous ceux qui ont fait partie de mon parcours de près ou de loin, y compris les enseignants,
+mentors et amis : votre soutien, votre gentillesse et vos encouragements signifient plus que les
+mots ne peuvent l’exprimer.
+Zina Elmorri
+i
+=====PAGE 3=====
+Remerciements
+Je tiens à exprimer ma profonde gratitude à Sopra HR Software pour m’avoir accueillie du-
+rant ce projet de fin d’études et pour la richesse de l’environnement humain et technique qui a
+entouré son développement. J’ai eu la chance de travailler aux côtés de professionnels expéri-
+mentés du domaine bancaire et des systèmes d’information RH, dont la disponibilité, la rigueur
+et la bienveillance ont profondément enrichi cette expérience.
+Mes remerciements sincères vont à mon encadrant en entreprise, dont les conseils avisés sur la
+solution HR Access, sur les normes SEPA / ISO 20022 et sur les bonnes pratiques de dévelop-
+pement Java Enterprise ont été déterminants pour orienter la conception et l’implémentation de
+la plateforme.
+J’adresse également mes remerciements chaleureux à mon encadrant académique pour son suivi
+patient, ses relectures attentives et ses recommandations méthodologiques qui ont grandement
+contribué à la qualité de ce mémoire.
+Je remercie l’ensemble des membres du jury pour l’honneur qu’ils me font en acceptant d’éva-
+luer ce travail.
+Enfin, ma gratitude s’adresse à toutes les personnes qui, de près ou de loin, ont pris le temps
+de partager un conseil, une piste de résolution ou une remarque bienveillante. Chacune de ces
+contributions a joué un rôle dans l’aboutissement de ce projet.
+ii
+=====PAGE 4=====
+Résumé
+Le présent travail s’inscrit dans le cadre d’un projet de fin d’études réalisé au sein de la société
+Sopra HR Software en vue de l’obtention du diplôme national d’ingénieur à l’École Supérieure
+Privée des Sciences Appliquées et de Management (SESAME).
+L’objectif de ce projet consiste à concevoir et implémenter, pour la solution de paieHR Access,
+une plateforme de gestion des virements de salaires au format SEPA (ISO 20022, messages
+pain.001). Contrairement aux approches classiques limitées à une version figée du schéma,
+la plateforme permet d’importer et de gérer dynamiquement plusieurs versions du schéma XSD
+(pain.001.001.03etpain.001.001.09), de générer le fichier XML correspondant à
+partir des paiements sélectionnés, et de le valider systématiquement avant son enregistrement.
+La plateforme intègre également une détection hybride des anomalies métier, combinant un mo-
+teur de règles expertes (IBAN, BIC, montants, doublons) et un service d’intelligence artificielle
+dédié à la détection des montants statistiquement suspects, chaque anomalie étant accompagnée
+d’une recommandation actionnable. Un tableau de bord restitue les indicateurs clés d’activité,
+tandis qu’un mécanisme d’authentification et de gestion des rôles (administrateur, gestionnaire
+RH, validateur, auditeur) sécurise l’accès aux fonctionnalités, chaque action sensible étant tra-
+cée dans un journal d’audit.
+L’application se compose d’un back-end Spring Boot exposant une API REST sécurisée par
+jeton JWT, d’une interface React et d’un module d’intelligence artificielle Python, l’ensemble
+étant conteneurisé avec Docker pour faciliter son déploiement.
+Mots clés— HR Access, SEPA, ISO 20022, pain.001, virements de salaires, validation XSD,
+détection d’anomalies, intelligence artificielle, Spring Boot, React, PostgreSQL.
+=====PAGE 5=====
+Table des matières
+Introduction Générale 1
+1 Présentation du contexte du projet 3
+1.1 Introduction . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 3
+1.2 Présentation de la société d’accueil . . . . . . . . . . . . . . . . . . . . . . . . 3
+1.2.1 La solution HR Access . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+1.3 Présentation du projet . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+1.3.1 Problématique . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+1.3.2 Analyse de l’existant . . . . . . . . . . . . . . . . . . . . . . . . . . . 5
+1.3.3 Solution proposée . . . . . . . . . . . . . . . . . . . . . . . . . . . . 6
+1.3.4 Analyse des besoins . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+1.4 Choix méthodologique . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 9
+1.4.1 Agile Scrum . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 10
+1.4.2 Application de la méthodologie . . . . . . . . . . . . . . . . . . . . . 11
+1.5 Conclusion . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 11
+2 Sprint 0 : Étude préalable et choix des technologies 12
+2.1 Introduction . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 12
+2.2 Domaine métier : paie et virements SEPA . . . . . . . . . . . . . . . . . . . . 12
+2.2.1 L’espace SEPA et la norme ISO 20022 . . . . . . . . . . . . . . . . . . 12
+2.2.2 Structure d’un fichier pain.001 . . . . . . . . . . . . . . . . . . . . . . 13
+2.2.3 Identifiants bancaires : IBAN et BIC . . . . . . . . . . . . . . . . . . . 13
+2.3 Détection intelligente d’anomalies : approche hybride . . . . . . . . . . . . . . 14
+2.4 Choix technologiques . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 15
+2.4.1 Langage et framework back-end . . . . . . . . . . . . . . . . . . . . . 15
+2.4.2 Framework front-end . . . . . . . . . . . . . . . . . . . . . . . . . . . 16
+2.4.3 Module d’intelligence artificielle . . . . . . . . . . . . . . . . . . . . . 17
+2.4.4 Base de données . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 17
+2.4.5 Outils annexes et DevOps . . . . . . . . . . . . . . . . . . . . . . . . 18
+2.5 Backlog produit global . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 18
+2.6 Diagramme de cas d’utilisation global . . . . . . . . . . . . . . . . . . . . . . 22
+iv
+=====PAGE 6=====
+Table des matières
+2.7 Diagramme de classes global . . . . . . . . . . . . . . . . . . . . . . . . . . . 24
+2.8 Diagramme de séquence global . . . . . . . . . . . . . . . . . . . . . . . . . . 26
+2.9 Architecture logicielle cible . . . . . . . . . . . . . . . . . . . . . . . . . . . . 28
+2.10 Conclusion . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 28
+3 Sprint 1 : Authentification JWT, gestion des utilisateurs et journal d’audit 30
+3.1 Introduction . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 30
+3.2 Backlog du sprint . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 30
+3.3 Diagrammes de conception . . . . . . . . . . . . . . . . . . . . . . . . . . . . 31
+3.3.1 Diagramme de cas d’utilisation . . . . . . . . . . . . . . . . . . . . . 31
+3.3.2 Diagramme de classes . . . . . . . . . . . . . . . . . . . . . . . . . . 31
+3.3.3 Diagramme de séquence – Authentification . . . . . . . . . . . . . . . 31
+3.3.4 Diagramme d’activités . . . . . . . . . . . . . . . . . . . . . . . . . . 32
+3.4 Modèle de données . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 32
+3.5 Implémentation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 33
+3.5.1 Configuration Spring Security . . . . . . . . . . . . . . . . . . . . . . 33
+3.5.2 Service JWT . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 33
+3.5.3 Filtre d’authentification . . . . . . . . . . . . . . . . . . . . . . . . . . 34
+3.5.4 Journal d’audit . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 34
+3.5.5 API REST du sprint . . . . . . . . . . . . . . . . . . . . . . . . . . . 34
+3.5.6 Mesures de sécurité mises en œuvre . . . . . . . . . . . . . . . . . . . 34
+3.5.7 Interface React . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 35
+3.6 Conclusion . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 36
+4 Sprint 2 : Gestion dynamique des XSD et génération des virements de masse SEPA 37
+4.1 Introduction . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 37
+4.2 Backlog du sprint . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 37
+4.3 Diagrammes de conception . . . . . . . . . . . . . . . . . . . . . . . . . . . . 38
+4.3.1 Diagramme de cas d’utilisation . . . . . . . . . . . . . . . . . . . . . 38
+4.3.2 Diagramme de classes . . . . . . . . . . . . . . . . . . . . . . . . . . 38
+4.3.3 Diagramme de séquence . . . . . . . . . . . . . . . . . . . . . . . . . 39
+4.4 Scénario illustratif de bout en bout . . . . . . . . . . . . . . . . . . . . . . . . 39
+4.5 Gestion dynamique des schémas XSD . . . . . . . . . . . . . . . . . . . . . . 40
+4.5.1 Schéma XSD importé . . . . . . . . . . . . . . . . . . . . . . . . . . 40
+4.5.2 Analyse dynamique d’un XSD . . . . . . . . . . . . . . . . . . . . . . 40
+4.6 Génération dynamique du XML pain.001 . . . . . . . . . . . . . . . . . . . . 41
+4.6.1 Variantes supportées . . . . . . . . . . . . . . . . . . . . . . . . . . . 41
+4.6.2 Construction du fichier . . . . . . . . . . . . . . . . . . . . . . . . . . 41
+4.6.3 Nettoyage SEPA . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 41
+4.7 Validation XSD avec collecte exhaustive des erreurs . . . . . . . . . . . . . . . 41
+v
+=====PAGE 7=====
+Table des matières
+4.8 Historique immuable des fichiers générés . . . . . . . . . . . . . . . . . . . . 42
+4.9 API REST du sprint . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 42
+4.10 Interface React . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 42
+4.11 Qualité : jeu de tests . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 43
+4.12 Conclusion . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 43
+5 Sprint 3 : Détection hybride des anomalies (règles métier + IA Python) et recom-
+mandations 44
+5.1 Introduction . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 44
+5.2 Backlog du sprint . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 45
+5.3 Architecture de détection hybride . . . . . . . . . . . . . . . . . . . . . . . . . 45
+5.4 Moteur de règles métier Java . . . . . . . . . . . . . . . . . . . . . . . . . . . 46
+5.4.1 Types d’anomalies couverts . . . . . . . . . . . . . . . . . . . . . . . 46
+5.4.2 Validation IBAN MOD-97 . . . . . . . . . . . . . . . . . . . . . . . . 46
+5.4.3 Validation BIC ISO 9362 . . . . . . . . . . . . . . . . . . . . . . . . . 46
+5.4.4 Détection des doublons . . . . . . . . . . . . . . . . . . . . . . . . . . 47
+5.5 Service IA Python : détection des montants suspects . . . . . . . . . . . . . . . 47
+5.5.1 Features par paiement . . . . . . . . . . . . . . . . . . . . . . . . . . 47
+5.5.2 Modèle Isolation Forest . . . . . . . . . . . . . . . . . . . . . . . . . 47
+5.5.3 Scoring et seuil de décision . . . . . . . . . . . . . . . . . . . . . . . . 48
+5.5.4 Explication lisible . . . . . . . . . . . . . . . . . . . . . . . . . . . . 48
+5.5.5 Endpoints du service IA . . . . . . . . . . . . . . . . . . . . . . . . . 48
+5.6 Intégration back-endIA . . . . . . . . . . . . . . . . . . . . . . . . . . . . 48
+5.6.1 Appel du service IA . . . . . . . . . . . . . . . . . . . . . . . . . . . 48
+5.6.2 Garanties de non-régression . . . . . . . . . . . . . . . . . . . . . . . 48
+5.6.3 Enrichissement de la transaction . . . . . . . . . . . . . . . . . . . . . 49
+5.7 EntitéAnomalieet cycle de vie . . . . . . . . . . . . . . . . . . . . . . . . . 49
+5.8 Moteur de recommandations . . . . . . . . . . . . . . . . . . . . . . . . . . . 49
+5.9 Configuration et supervision . . . . . . . . . . . . . . . . . . . . . . . . . . . 50
+5.10 Interface React . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 50
+5.11 Évaluation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 51
+5.11.1 Protocole d’évaluation . . . . . . . . . . . . . . . . . . . . . . . . . . 51
+5.11.2 Métriques retenues . . . . . . . . . . . . . . . . . . . . . . . . . . . . 51
+5.11.3 Résultats . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 52
+5.11.4 Tests automatisés . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 52
+5.12 Conclusion . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 52
+6 Sprint 4 : Tableau de bord KPI, cycle de vie et conteneurisation 53
+6.1 Introduction . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 53
+6.2 Backlog du sprint . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 54
+vi
+=====PAGE 8=====
+Table des matières
+6.3 Tableau de bord KPI . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 54
+6.3.1 Définitions . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 54
+6.3.2 Indicateurs restitués . . . . . . . . . . . . . . . . . . . . . . . . . . . 54
+6.3.3 Calcul des indicateurs . . . . . . . . . . . . . . . . . . . . . . . . . . 55
+6.3.4 Taux d’erreur . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 55
+6.3.5 Endpoint REST . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 55
+6.3.6 Interface React . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 56
+6.4 Finalisation du cycle de vie des anomalies . . . . . . . . . . . . . . . . . . . . 56
+6.5 Documentation OpenAPI / Swagger . . . . . . . . . . . . . . . . . . . . . . . 56
+6.6 Conteneurisation Docker . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 57
+6.6.1 Dockerfiles multi-stages . . . . . . . . . . . . . . . . . . . . . . . . . 57
+6.6.2 Orchestrationdocker-compose. . . . . . . . . . . . . . . . . . . 57
+6.6.3 Variables d’environnement . . . . . . . . . . . . . . . . . . . . . . . . 57
+6.6.4 Exploitation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 57
+6.7 Points d’accès finaux . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 58
+6.8 Synthèse qualité . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 58
+6.9 Bilan quantitatif . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 58
+6.10 Limites du projet . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 59
+6.11 Conclusion . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 60
+Conclusion Générale 61
+Problème initial . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 61
+Solution proposée . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 61
+Réalisation technique . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 61
+Résultats obtenus . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 62
+Limites . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 63
+Perspectives . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 63
+Références 65
+vii
+=====PAGE 9=====
+Table des figures
+1.1 Architecture générale de la plateforme SEPA intelligente . . . . . . . . . . . . 6
+1.2 Méthodologie Scrum . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 10
+2.1 Spring Boot 3 et Java 17 pour le back-end . . . . . . . . . . . . . . . . . . . . 16
+2.2 React 18 et Vite pour le front-end . . . . . . . . . . . . . . . . . . . . . . . . . 17
+2.3 Diagramme de cas d’utilisation global . . . . . . . . . . . . . . . . . . . . . . 23
+2.4 Diagramme de classes global . . . . . . . . . . . . . . . . . . . . . . . . . . . 25
+2.5 Diagramme de séquence global . . . . . . . . . . . . . . . . . . . . . . . . . . 27
+2.6 Architecture logicielle en trois services conteneurisés . . . . . . . . . . . . . . 28
+3.1 Cas d’utilisation du sprint 1 . . . . . . . . . . . . . . . . . . . . . . . . . . . . 31
+3.2 Diagramme de classes du sprint 1 . . . . . . . . . . . . . . . . . . . . . . . . 31
+3.3 Séquence d’authentification par JWT . . . . . . . . . . . . . . . . . . . . . . . 32
+3.4 Activités du processus d’authentification . . . . . . . . . . . . . . . . . . . . . 32
+3.5 Écran de connexion . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 35
+3.6 Gestion des utilisateurs (vue administrateur) . . . . . . . . . . . . . . . . . . . 35
+3.7 Journal d’audit : traçabilité des actions . . . . . . . . . . . . . . . . . . . . . . 35
+4.1 Cas d’utilisation du module XSD + virements de masse . . . . . . . . . . . . . 38
+4.2 Diagramme de classes du module SEPA . . . . . . . . . . . . . . . . . . . . . 39
+4.3 Séquence de génération d’un fichier SEPA . . . . . . . . . . . . . . . . . . . . 39
+4.4 Analyse d’un XSD : arbre des éléments et contraintes . . . . . . . . . . . . . . 43
+4.5 Virements de masse : filtres, aperçu coloré et conformité XSD . . . . . . . . . 43
+5.1 Architecture hybride de détection : règles Java + modèle Python . . . . . . . . 45
+5.2 Interface Anomalies : règles + IA + recommandations . . . . . . . . . . . . . . 51
+5.3 Détail d’une anomalie IA avec explications et recommandation . . . . . . . . . 51
+6.1 Tableau de bord KPI de la plateforme . . . . . . . . . . . . . . . . . . . . . . 56
+6.2 Page d’accueil opérationnelle (statistiques et dernières anomalies) . . . . . . . 56
+viii
+=====PAGE 10=====
+Liste des tableaux
+1.1 Évaluation des outils existants pour la génération et le contrôle des flux SEPA . 5
+1.2 Rôles applicatifs et responsabilités . . . . . . . . . . . . . . . . . . . . . . . . 9
+1.3 Comparaison des méthodologies traditionnelle (Cascade) et Agile Scrum . . . . 9
+1.4 Backlog du projet et planification des sprints . . . . . . . . . . . . . . . . . . . 11
+2.1 Principaux blocs d’un fichier pain.001 pour les virements de salaires . . . . . . 13
+2.2 Comparaison des deux approches de détection retenues conjointement . . . . . 14
+2.3 Comparaison des frameworks back-end . . . . . . . . . . . . . . . . . . . . . 15
+2.4 Comparaison des frameworks front-end . . . . . . . . . . . . . . . . . . . . . 16
+2.5 Comparaison des stacks IA . . . . . . . . . . . . . . . . . . . . . . . . . . . . 17
+2.6 Comparaison des SGBD . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 18
+2.7 Backlog produit global . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 19
+3.1 Backlog du Sprint 1 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 30
+3.2 Entités persistées du sprint 1 . . . . . . . . . . . . . . . . . . . . . . . . . . . 33
+3.3 Endpoints REST du Sprint 1 . . . . . . . . . . . . . . . . . . . . . . . . . . . 34
+4.1 Backlog du Sprint 2 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 38
+4.2 Scénario illustratif de bout en bout de la gestion dynamique des XSD . . . . . . 40
+4.3 Endpoints REST du Sprint 2 . . . . . . . . . . . . . . . . . . . . . . . . . . . 42
+5.1 Backlog du Sprint 3 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 45
+5.2 Types d’anomalies supportés et sources . . . . . . . . . . . . . . . . . . . . . 46
+5.3 Features par paiement attendus par le modèle . . . . . . . . . . . . . . . . . . 47
+5.4 Niveaux de risque dérivés du score . . . . . . . . . . . . . . . . . . . . . . . . 48
+5.5 Cycle de vie des anomalies . . . . . . . . . . . . . . . . . . . . . . . . . . . . 49
+5.6 Extrait du catalogue de recommandations . . . . . . . . . . . . . . . . . . . . 50
+5.7 Comparaison Isolation Forest vs seuil fixe sur le jeu de données synthétique . . 52
+6.1 Backlog du Sprint 4 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 54
+6.2 Indicateurs restitués par le tableau de bord . . . . . . . . . . . . . . . . . . . . 55
+6.3 Endpoint du tableau de bord KPI . . . . . . . . . . . . . . . . . . . . . . . . . 55
+ix
+=====PAGE 11=====
+Liste des tableaux
+6.4 Services déclarés dansdocker-compose.yml. . . . . . . . . . . . . . . . 57
+6.5 URL exposées par la plateforme . . . . . . . . . . . . . . . . . . . . . . . . . 58
+6.6 Suites de tests livrées à la fin du sprint 4 . . . . . . . . . . . . . . . . . . . . . 58
+6.7 Bilan quantitatif de la réalisation . . . . . . . . . . . . . . . . . . . . . . . . . 59
+x
+=====PAGE 12=====
+Liste des abréviations
+APIInterface de Programmation d’Applications (Application Programming Inter-
+face)
+BCryptFonction de hachage des mots de passe (Blowfish-based Crypt)
+BICCode d’Identification Bancaire (Bank Identifier Code)
+CI/CDIntégration et Déploiement Continus (Continuous Integration / Continuous De-
+ployment)
+CORSPartage de Ressources entre Origines Multiples (Cross-Origin Resource Sharing)
+CRUDCréer, Lire, Mettre à jour, Supprimer (Create, Read, Update, Delete)
+DTOObjet de Transfert de Données (Data Transfer Object)
+EPCEuropean Payments Council
+HTTPSProtocole de Transfert Hypertexte Sécurisé (Hypertext Transfer Protocol Secure)
+IAIntelligence Artificielle (Artificial Intelligence)
+IBANNuméro de Compte Bancaire International (International Bank Account Num-
+ber)
+ISOOrganisation Internationale de Normalisation (International Organization for Stan-
+dardization)
+JPAJava Persistence API
+JDBCJava Database Connectivity
+JVMMachine Virtuelle Java (Java Virtual Machine)
+JSONNotation d’Objets JavaScript (JavaScript Object Notation)
+JWTJeton Web JSON (JSON Web Token)
+KPIIndicateur Clé de Performance (Key Performance Indicator)
+LOFFacteur d’Isolement Local (Local Outlier Factor)
+MLApprentissage Automatique (Machine Learning)
+OIDCOpenID Connect
+RESTTransfert d’État de Représentation (Representational State Transfer)
+xi
+=====PAGE 13=====
+Liste des tableaux
+RHRessources Humaines
+SEPAEspace Unique de Paiements en Euros (Single Euro Payments Area)
+SGBDSystème de Gestion de Base de Données
+SIRHSystème d’Information Ressources Humaines
+SPAApplication Monopage (Single Page Application)
+SQLLangage de Requêtes Structuré (Structured Query Language)
+TLSSécurité de la Couche de Transport (Transport Layer Security)
+UMLLangage de Modélisation Unifié (Unified Modeling Language)
+URLLocalisateur Uniforme de Ressource (Uniform Resource Locator)
+XMLLangage de Balisage Extensible (Extensible Markup Language)
+XSDDéfinition de Schéma XML (XML Schema Definition)
+XXEAttaque par Entité Externe XML (XML External Entity)
+xii
+=====PAGE 14=====
+Introduction Générale
+Dans un environnement où la digitalisation des processus de gestion des ressources humaines
+s’est généralisée, le versement des salaires est devenu un processus totalement dématérialisé,
+échangé entre le système d’information RH et les partenaires bancaires sous la forme de fichiers
+de paiement structurés. La norme européenne SEPA (Single Euro Payments Area), déclinée à
+travers le standard ISO 20022, s’est imposée comme la référence pour ces échanges : les ordres
+de virements de salaires prennent la forme de messages XMLpain.001(Customer Credit
+Transfer Initiation) dont la structure est contrainte par un schéma XSD publié par l’EPC (Euro-
+pean Payments Council). Plusieurs variantes coexistent en production (pain.001.001.03
+encore largement répandue,pain.001.001.09plus récente), chacune avec son propre jeu
+d’éléments, d’attributs et de contraintes de type.
+Les solutions de paie de référence, telles queHR Access, produisent chaque mois plusieurs mil-
+liers de lignes de paiement destinées à être transformées en fichier SEPA puis transmises aux
+systèmes bancaires pour exécution. Ce processus critique est particulièrement sensible aux er-
+reurs : un IBAN mal saisi, un BIC incorrect, un montant aberrant ou un doublon de bénéficiaire
+peuvent entraîner le rejet du fichier par la banque, un versement erroné, voire un litige avec
+le salarié. Les contrôles historiquement mis en place restent essentiellement techniques (véri-
+fication du format XML par rapport au schéma XSD) et n’intègrent pas la dimension métier
+des données de paie, qui reste examinée manuellement par les gestionnaires RH. L’étude des
+solutions existantes menée dans le cadre de ce projet (voir chapitre 1) n’a par ailleurs pas identi-
+fié d’outil combinant simultanément unegestion dynamiquedes schémas XSD, unegénération
+contrainte par ces schémas, unedétection intelligentedes anomalies métier et unetraçabilité
+complète des actions réalisées sur chaque ordre de paiement.
+Ce constat justifie la mise en place d’une plateforme qui automatise l’ensemble du cycle : im-
+port et analyse des schémas XSD officiels, génération du fichier SEPA ajustée à la version
+du schéma choisi, validation technique systématique, détection hybride des anomalies métier
+(règles expertes et modèle d’apprentissage automatique) et pilotage par indicateurs clés de per-
+formance. C’est dans ce cadre que s’inscrit ce projet de fin d’études, réalisé au sein de la société
+Sopra HR Softwareen vue de l’obtention du diplôme national d’ingénieur à l’École Supérieure
+Privée des Sciences Appliquées et de Management (SESAME).
+L’objectif de ce travail est de concevoir et de développer une plateforme qui doit : (i) gérer
+dynamiquement les schémas XSD (import, versions, analyse des contraintes), (ii) produire un
+1
+=====PAGE 15=====
+Introduction Générale
+fichier XMLpain.001conforme à la variante choisie, (iii) valider ce fichier au niveau struc-
+turel contre le XSD officiel en collectant toutes les erreurs, (iv) détecter les anomalies métier au
+moyen d’un moteur de règles expertes (validation des IBAN et des BIC, montants, doublons,
+net supérieur au brut) complété par un service d’intelligence artificielle dédié aux montants sta-
+tistiquement suspects, (v) proposer, pour chaque anomalie, unerecommandation lisibleissue
+d’un catalogue, (vi) tracer intégralement les actions au moyen d’un journal d’audit, (vii) piloter
+l’activité à travers un tableau de bord KPI (fiches générées, taux d’erreurs bloquantes, évolution
+sur douze mois, top clients, répartition par type/source/statut) et (viii) offrir une gestion fine des
+rôles utilisateurs (Administrateur, Gestionnaire RH, Validateur, Auditeur).
+Le présent rapport est organisé en six chapitres. Le chapitre 1 présente le contexte général du
+projet, la société d’accueil, la problématique métier autour du traitement des paiements de sa-
+laires, l’analyse de l’existant, la solution proposée et la méthodologie Scrum retenue pour la
+conduite du projet. Le chapitre 2 correspond au sprint 0 : il expose les concepts fondamentaux
+du domaine et justifie les choix technologiques. Les chapitres 3 à 6 sont structurés selon les
+sprints de développement : authentification JWT, gestion des utilisateurs/rôles et journal d’au-
+dit (sprint 1) ; gestion dynamique des schémas XSD et génération des virements de masse SEPA
+(sprint 2) ; détection hybride des anomalies (règles métier Java + modèle IA Python) et moteur
+de recommandations (sprint 3) ; tableau de bord KPI, cycle de vie des anomalies, conteneurisa-
+tion et déploiement (sprint 4). Enfin, une conclusion générale synthétise les résultats obtenus,
+les difficultés rencontrées et les perspectives d’évolution de la plateforme.
+2
+=====PAGE 16=====
+Chapitre 1
+Présentation du contexte du projet
+1.1 Introduction
+Ce chapitre d’ouverture pose le cadre du projet en exposant les éléments fondamentaux qui
+l’ont façonné. Il présente d’abord la société d’accueil et ses activités, puis introduit la solution
+de paieHR Access, cœur métier du sujet, ainsi que la problématique liée au traitement des flux
+de paiement des salaires. Il expose ensuite une analyse comparative des solutions existantes,
+formalise la solution proposée et détaille les besoins fonctionnels et non fonctionnels, avant de
+justifier le choix de la méthodologie de conduite de projet retenue.
+1.2 Présentation de la société d’accueil
+Sopra HR Software est l’éditeur de la suiteHR Access, une solution de gestion des ressources
+humaines et de paie déployée par de très nombreuses organisations en France et à l’interna-
+tional. Filiale du groupe Sopra Steria, leader européen de la transformation numérique présent
+dans une trentaine de pays et rassemblant plus de cinquante mille collaborateurs, Sopra HR
+Software bénéficie de cette expertise reconnue dans les secteurs bancaire, financier, industriel
+et administration publique.
+Cette solution assure la tenue du dossier administratif du salarié, la gestion des temps, le calcul
+de la paie et la production des déclarations sociales et fiscales. L’entreprise a mis à ma dispo-
+sition un environnement de développement complet et un accompagnement technique tout au
+long de la réalisation de ce projet.
+Logo Sopra HR Software (éditeur de HR Access)
+3
+=====PAGE 17=====
+Chapitre 1. Présentation du contexte du projet
+1.2.1 La solution HR Access
+HR Accessest une suite intégrée de gestion des ressources humaines qui couvre l’ensemble
+du cycle de vie du salarié dans l’entreprise. Elle intègre un moteur de paie paramétrable, un
+module de gestion administrative des dossiers salariés, un module de gestion des temps et des
+activités, ainsi qu’un module de production des flux à destination des organismes tiers (banques,
+URSSAF, mutuelles, etc.). Le versement effectif des salaires s’effectue à travers la génération
+d’un fichier de virements au format SEPA (ISO 20022), transmis à la banque du client pour
+exécution. C’est précisément sur cette dernière étape (la préparation), la validation et le contrôle
+qualité des fichiers SEPA que se concentre le projet.
+1.3 Présentation du projet
+Cette section décrit le projet, ses objectifs, son périmètre et les problèmes qu’il ambitionne de
+résoudre pour les utilisateurs de la solution HR Access.
+1.3.1 Problématique
+Chaque cycle de paie, les données consolidées sont transformées en un fichier XML SEPA
+pain.001qui décrit précisément l’ordre de virement adressé à la banque. Ce fichier doit
+respecter trois niveaux de conformité :
+—Conformité structurelle :le XML doit se plier au schéma XSD officiel publié par l’Euro-
+pean Payments Council. Plusieurs variantes sont admises par les banques (pain.001.001.03,
+pain.001.001.09, . . .), chacune introduisant ses propres éléments, attributs et contraintes
+de longueur. Toute déviation entraîne un rejet immédiat par le canal bancaire.
+—Conformité réglementaire :les codes IBAN et BIC doivent respecter les règles ISO 13616
+(IBAN, contrôle MOD-97) et ISO 9362 (BIC, format alphanumérique 8 ou 11).
+—Conformité métier :les montants doivent être strictement positifs et plausibles, les bé-
+néficiaires correctement renseignés, le net inférieur au brut, et il ne doit pas exister de
+doublons de paiement pour un même salarié sur la même période.
+Dans les processus actuels, la génération et le contrôle du fichier reposent en grande partie
+sur des scripts internes et sur une vérification humaine effectuée par les gestionnaires RH. Les
+contrôles automatiques mis en œuvre restent essentiellement techniques : ils s’assurent que
+le fichier est bien formé et respecte le XSD, mais ne remontent pas les anomalies métier qui
+n’apparaîtront qu’après réception du fichier par la banque, voire lorsque le salarié constate que
+son virement est erroné ou absent. Par ailleurs, les scripts existants ciblent une version figée du
+schéma, ce qui oblige à redévelopper une partie du code chaque fois qu’une banque demande
+une version plus récente. L’absence combinée de contrôles métier automatisés et desouplesse
+sur la variante XSDse traduit concrètement par des rejets bancaires, des ordres de re-génération,
+4
+=====PAGE 18=====
+Chapitre 1. Présentation du contexte du projet
+des délais de paiement allongés et une charge de support importante pour les équipes RH. Enfin,
+aucune traçabilité fine (audit trail) ni aucun tableau de bord de pilotage n’est disponible pour
+mesurer la qualité du processus mensuel.
+Le projet vise donc à répondre à la question suivante :comment industrialiser la génération
+des fichiers SEPA au sein d’une plateforme web unifiée, en garantissant à la fois le respect
+dynamique du schéma XSD choisi par le client, la détection intelligente des anomalies métier
+avant envoi, la traçabilité des actions et le pilotage opérationnel du processus de paiement ?
+1.3.2 Analyse de l’existant
+Avant de concevoir la plateforme, une analyse des solutions actuellement utilisées pour la gé-
+nération et le contrôle des fichiers SEPA a été menée. Le Tableau 1.1 résume les outils les plus
+couramment rencontrés, leurs capacités et leurs limites au regard des besoins exprimés.
+Critère Scripts internes HR Ac-
+cess
+Modules SEPA ban-
+caires (ex. Sage, Cegid)
+Validateurs XSD gé-
+nériques
+Automatisation de
+bout en bout
+Partielle Élevée mais couplée à
+l’ERP
+Aucune
+Génération pain.001
+multi-versions
+Non (une variante codée
+en dur)
+Oui, mais fermée Non
+Validation XSD ISO
+20022
+Manuelle Intégrée Oui
+Contrôles IBAN
+(MOD-97)
+Non systématiques Oui Non
+Contrôles BIC (ISO
+9362)
+Non Oui Non
+Détection de doublons
+métier
+Non Limitée Non
+Contrôle sur montants
+aberrants (IA)
+Non Non Non
+Journal d’audit & tra-
+çabilité
+Non Partiel Non
+Tableau de bord KPI Non Partiel Non
+Interface RH dédiée Non Payante et propriétaire Non
+Ouverture API REST
+& conteneurisation
+Faible Faible (SI verrouillé) N/A
+Coût Interne Élevé (licence + mainte-
+nance)
+Faible
+TABLE1.1 – Évaluation des outils existants pour la génération et le contrôle des flux SEPA
+L’analyse fait ressortir plusieurs manques : les scripts internes de HR Access assurent la pro-
+duction du XML mais laissent les contrôles métier à la charge des gestionnaires et ne gèrent
+qu’une version figée du schéma ; les modules bancaires du marché offrent des contrôles riches
+mais sont propriétaires, coûteux et couplés à un ERP tiers ; enfin, les validateurs XSD publics
+ne contrôlent que la structure et ignorent totalement la dimension métier. L’étude comparative
+5
+=====PAGE 19=====
+Chapitre 1. Présentation du contexte du projet
+réalisée dans le cadre de ce projet n’a pas identifié de solution répondant simultanément à l’en-
+semble des critères retenus : lagestion dynamiquedu schéma XSD, la génération contrainte par
+ce schéma, la validation structurelle, la détection intelligente des anomalies (règles expertes et
+apprentissage automatique), la traçabilité par audit trail et le pilotage par KPI dans une interface
+unifiée destinée aux gestionnaires RH utilisateurs de HR Access. Cette analyse reste circonscrite
+aux outils effectivement examinés et ne constitue pas une étude exhaustive du marché.
+1.3.3 Solution proposée
+Pour répondre à ces limitations, le projet propose une plateforme web modulaire composée de
+trois services conteneurisés qui coopèrent via des API REST. La Figure 1.1 illustre l’architec-
+ture générale de la solution.
+FIGURE1.1 – Architecture générale de la plateforme SEPA intelligente
+Notre solution repose sur unearchitecture web en couches, complétée par unservice d’intel-
+ligence artificielle indépendant, comme l’illustre la figure 1.1. :
+Lacouche de présentationest assurée par une applicationReact.js. Elle constitue le point
+d’entrée de l’utilisateur, qui y accède via le protocole sécuriséHTTPS. Elle prend en charge
+l’affichage et l’interaction, puis transmet les requêtes au serveur au moyen d’uneAPI REST.
+Lacouche applicativeest implémentée avecSpring Boot. Ce backend suit uneorganisation
+en couches:
+—Contrôleurs: ils exposent les points d’accès REST et reçoivent les requêtes du frontend.
+—Services: ils portent la logique métier.
+—Accès aux données: lesrepositoriesSpring Data JPA gèrent les interactions avec la base
+de données, au-dessus de l’implémentation Hibernate.
+Cette séparation des responsabilités facilite la lisibilité du code, les tests et la maintenance.
+Lacouche de donnéesrepose sur un système de gestion de base de données relationnellePost-
+greSQL. Le backend y accède viaSpring Data JPA / Hibernate, qui s’appuie en interne sur
+un piloteJDBCpour dialoguer avec le SGBD ; la figure 1.1 représente cette communication au
+niveau protocole (JDBC), tandis que le code applicatif manipule des entités JPA.
+6
+=====PAGE 20=====
+Chapitre 1. Présentation du contexte du projet
+En parallèle de ces couches, les traitements d’intelligence artificielle sont confiés à unservice
+séparédéveloppé avecFastAPI(Python). Le backend l’appelle via des requêtesREST, et il
+consulte directement la base de données enlectureafin d’exploiter lesdonnées historiques
+nécessaires à ses traitements. Ce découplage permet de faire évoluer, de déployer et de mettre à
+l’échelle le module IA indépendamment du reste de l’application. Il permet aussi de tirer parti
+de l’écosystème Python, particulièrement riche dans le domaine de l’apprentissage automatique.
+Les trois composants applicatifs (back-end, front-end, service IA) sont par ailleurs packagés et
+déployés sous forme deservices conteneurisés(voir chapitre 6).
+1.3.4 Analyse des besoins
+1.3.4.1 Besoins fonctionnels
+Les besoins fonctionnels décrivent ce que le système doit accomplir :
+—Authentification et gestion des utilisateurs :connexion par JWT, gestion des rôles (Ad-
+ministrateur, Gestionnaire RH, Validateur, Auditeur), encodage facial optionnel pour une
+authentification biométrique.
+—Journal d’audit :enregistrement de toutes les actions sensibles (login, import XSD,
+génération, validation, changement de statut d’anomalie) avec auteur, IP, horodatage et
+résultat.
+—Gestion des schémas XSD :import de nouveaux schémas, versions multiples, ana-
+lyse dynamique des éléments (version, namespace, ordre, obligatoires,maxLength,
+pattern, énumérations).
+—Génération SEPA :production d’un fichier XMLpain.001conforme à la variante
+XSD choisie, incluantGrpHdr,PmtInfetntransactionsCdtTrfTxInf,
+avecNbOfTxs/CtrlSumenBigDecimal.
+—Validation XSD :contrôle structurel du fichier généré avec collecte exhaustive de toutes
+les erreurs (ligne, colonne, message traduit).
+—Détection d’anomalies métier :contrôle des IBAN (MOD-97), des BIC (ISO 9362),
+des montants (zéro, négatif), des doublons, du cas net > brut, des champs obligatoires
+manquants.
+—Détection par IA :identification des montants statistiquement suspects par Isolation Fo-
+rest sur un vecteur de features par paiement.
+—Recommandations lisibles :moteur de catalogue qui, pour chaque type d’anomalie, pro-
+duit une recommandation actionnable incluant les vraies valeurs (matricule, IBAN mas-
+qué, montant).
+—Cycle de vie des anomalies :statuts OUVERTE / CORRIGÉE / IGNORÉE avec traça-
+bilité des changements.
+7
+=====PAGE 21=====
+Chapitre 1. Présentation du contexte du projet
+—Virements de masse :sélection par société/période/matricules, aperçu coloré, génération
+avec validation, enregistrement en historique, retéléchargement à l’identique.
+—Tableau de bord KPI :fiches générées, nombre d’erreurs bloquantes, taux d’erreurs,
+évolution sur douze mois, top 5 des clients à anomalies, répartitions par type/source/statut.
+1.3.4.2 Besoins non fonctionnels
+Les besoins non fonctionnels caractérisent la qualité attendue du système :
+—Fiabilité :chaque fichier généré doit être conforme au schéma XSD choisi et exempt
+d’anomalies bloquantes avant tout téléchargement ; un re-téléchargement renvoie exacte-
+ment le même contenu que l’enregistrement initial.
+—Sécurité :authentification JWT, hachage BCrypt des mots de passe, contrôle CORS,
+échanges HTTPS, sécurité XXE (doctype interdit), journal d’audit, principe du moindre
+privilège applicatif via rôles.
+—Performance :la génération et la validation d’un lot de plusieurs milliers de paiements
+doivent s’exécuter en quelques secondes ; les KPI sont calculés en lecture seule par agré-
+gations SQL.
+—Portabilité :l’application doit pouvoir fonctionner sur PostgreSQL en production et sur
+H2 en développement, grâce aux abstractions JPA/Hibernate ; l’ensemble est conteneurisé
+pour un démarrage reproductible.
+—Maintenabilité :architecture en couches, séparation nette entre contrôleurs, services et
+repositories, DTO explicites pour l’API REST, interrupteur permettant de désactiver l’IA
+sans impacter le traitement.
+—Ergonomie :interface React 18 unifiée, réactive et bilingue-ready, aperçu coloré du XML
+avec numéros de ligne, surlignage des erreurs XSD.
+—Observabilité :documentation OpenAPI/Swagger générée automatiquement, logs struc-
+turés, interrupteurs côté IA.
+1.3.4.3 Acteurs du système
+Conformément à la gestion des rôles implémentée dans le module de sécurité, quatre acteurs
+humains et un acteur système interagissent avec la plateforme (Tableau 1.2).
+8
+=====PAGE 22=====
+Chapitre 1. Présentation du contexte du projet
+Rôle Responsabilités
+ADMINISTRATEUR Supervise l’application : création/désactivation des utilisateurs, import
+et retrait des schémas XSD, supervision du module IA (health/train),
+accès complet au journal d’audit et aux KPI.
+GESTIONNAIRE_RH Prépare les lots de paiements, choisit le XSD, lance la génération et la
+validation, consulte les anomalies, exporte le fichier SEPA.
+V ALIDATEUR Vérifie les fiches en attente et approuve les paiements ; peut consulter en
+lecture les XSD, les virements de masse et les anomalies.
+AUDITEUR Lecture seule du journal d’audit et des indicateurs ; aucun droit d’écri-
+ture ni de génération.
+Module IA Service applicatif Python/FastAPI qui attribue un score de risque à
+chaque paiement et peut être ré-entraîné sur demande de l’administra-
+teur.
+TABLE1.2 – Rôles applicatifs et responsabilités
+Le système bancaire externe reste destinataire des fichiers SEPA XML pour exécution des vire-
+ments, en dehors du périmètre applicatif de la plateforme.
+1.4 Choix méthodologique
+Le choix d’une méthodologie adaptée est essentiel pour organiser la construction incrémentale
+d’une plateforme qui combine plusieurs domaines (paie, virements, interface web, moteur de
+règles, IA, DevOps). Le Tableau 1.3 compare les deux approches candidates.
+Critère Traditionnel (Cascade [1]) Agile Scrum [2]
+Approche Linéaire, séquentielle Itérative, incrémentale
+Flexibilité Rigide ; changements coûteux Très flexible
+Phases Uniques et séquentielles Sprints (1 à 4 semaines)
+Implication du
+client
+Début et fin Continue
+Exigences Fixes au départ Évolutives
+Livraison Produit final unique Incréments fréquents
+Gestion des risques Traitée tôt Continue
+Documentation Exhaustive dès le départ Juste-à-temps
+Visibilité Faible jusqu’à la fin Élevée à chaque sprint
+Adaptation aux be-
+soins évolutifs
+Faible Élevée
+TABLE1.3 – Comparaison des méthodologies traditionnelle (Cascade) et Agile Scrum
+L’analyse fait clairement ressortir Agile Scrum comme la méthodologie la plus adaptée. La
+construction d’une plateforme SEPA touche des domaines techniques hétérogènes (standards
+ISO 20022, XSD, règles métier, modèle d’IA Python, interface React, conteneurisation), dont
+la complète formalisation en amont serait risquée. Une approche itérative permet au contraire
+de livrer des incréments fonctionnels démontrables, d’obtenir des retours rapides de l’enca-
+9
+=====PAGE 23=====
+Chapitre 1. Présentation du contexte du projet
+drant métier et d’ajuster progressivement les règles de détection au regard des données réelles
+observées.
+1.4.1 Agile Scrum
+Agile Scrum [2, 3] est un cadre itératif et incrémental qui favorise la flexibilité, la collaboration
+et la satisfaction du client à travers des rôles clairement définis. La Figure 1.2 illustre le cycle
+de vie d’un sprint Scrum.
+FIGURE1.2 – Méthodologie Scrum
+Les principaux éléments de Scrum adoptés dans ce projet sont :
+—Product Owner :définit et priorise le backlog, représente la voix du client métier HR
+Access.
+—Scrum Master :facilite les cérémonies Scrum et lève les obstacles.
+—Équipe de développement :livre les incréments à chaque sprint.
+—Sprint Planning :sélection des User Stories du backlog et engagement de l’équipe sur
+l’objectif du sprint.
+—Daily Scrum :synchronisation quotidienne, partage des avancements et obstacles.
+—Sprint Review et Rétrospective :démonstration du produit livré aux parties prenantes
+et amélioration continue du processus.
+10
+=====PAGE 24=====
+Chapitre 1. Présentation du contexte du projet
+1.4.2 Application de la méthodologie
+Le projet a été découpé en cinq sprints (un sprint 0 d’étude puis quatre sprints de réalisation).
+Le backlog global est présenté dans le Tableau 1.4.
+Sprint Sprint 1 Sprint 2 Sprint 3 Sprint 4
+Fonctionn-
+alités
+Authentification
+JWT, gestion des
+utilisateurs & rôles,
+journal d’audit
+Gestion dynamique
+des schémas XSD et
+virements de masse
+SEPA pain.001
+Détection d’anoma-
+lies hybride (règles
+métier Java + IA Py-
+thon) et recomman-
+dations
+Tableau de bord
+KPI, cycle de vie
+des anomalies,
+conteneurisation
+Docker
+User Sto-
+ries
+En tant qu’utilisa-
+teur, je veux me
+connecter avec un
+rôle et retrouver mes
+actions dans le jour-
+nal d’audit.
+En tant que gestion-
+naire RH, je veux
+importer un XSD,
+voir ses contraintes,
+générer et valider
+un fichier SEPA
+conforme.
+En tant que gestion-
+naire RH, je veux
+que les anomalies
+métier et les mon-
+tants statistiquement
+anormaux me soient
+signalés avec des
+recommandations
+claires.
+En tant qu’adminis-
+trateur, je veux pilo-
+ter l’activité à travers
+des KPI, suivre le
+cycle de vie des ano-
+malies et déployer
+l’ensemble avec Do-
+cker.
+TABLE1.4 – Backlog du projet et planification des sprints
+1.5 Conclusion
+Ce chapitre a présenté la société Sopra HR Software, sa solution de paie HR Access et le
+contexte métier dans lequel s’inscrit le projet. Il a identifié la problématique du traitement des
+flux SEPA de paiement des salaires, les limites des solutions existantes et la solution proposée
+sous forme d’une plateforme web intégrée en trois services conteneurisés combinant génération
+dynamique, validation XSD multi-versions, détection hybride règles + IA, recommandations
+lisibles et pilotage par KPI. Le choix d’une conduite Agile Scrum a été justifié et le backlog
+des sprints détaillé. Les chapitres suivants approfondissent, sprint par sprint, la conception et la
+réalisation de la solution.
+11
+=====PAGE 25=====
+Chapitre 2
+Sprint 0 : Étude préalable et choix des
+technologies
+2.1 Introduction
+Ce deuxième chapitre présente le sprint 0 : une étude préalable qui pose les concepts fondamen-
+taux du domaine (paie, SEPA, ISO 20022, XSD, IBAN, BIC) et sélectionne les technologies
+utilisées lors de l’implémentation. L’objectif est d’identifier les briques les plus adaptées aux
+exigences fonctionnelles et non fonctionnelles d’une plateforme en trois services (back-end,
+front-end et module d’intelligence artificielle), orchestrée par conteneurs.
+2.2 Domaine métier : paie et virements SEPA
+Le versement des salaires constitue, dans toute entreprise, un processus critique dont la fiabilité
+conditionne la relation de confiance avec le salarié. À l’issue du cycle de paie, chaque ligne
+de paiement calculée par le moteur de paie est consolidée en une transaction qui comporte,
+notamment, l’identifiant de l’employé, l’identifiant du client (entreprise), le nom du bénéfi-
+ciaire, l’IBAN, le BIC, le montant, la devise, le libellé et le statut (BROUILLON,VALIDEE,
+APPROUVEE,REJETEE,SUPPRIMEE). Seules les transactions au statutAPPROUVEEsont
+consommées par la génération SEPA et alimentent le fichierpain.001transmis à la banque.
+2.2.1 L’espace SEPA et la norme ISO 20022
+L’espace SEPA (Single Euro Payments Area) est un espace de paiement unifié couvrant les pays
+de l’Union européenne ainsi que plusieurs pays associés. Il définit un cadre technique commun
+pour les virements et prélèvements en euros, avec pour objectif de traiter tous les paiements
+transfrontaliers avec la même simplicité qu’un paiement domestique.
+Sur le plan technique, SEPA s’appuie sur le standard ISO 20022 [4], une norme internationale
+pour la description structurée des messages financiers. ISO 20022 définit un dictionnaire de
+12
+=====PAGE 26=====
+Chapitre 2. Sprint 0 : Étude préalable et choix des technologies
+composants métier et un format XML, contraint par des schémas XSD [5], pour l’échange de
+messages entre les acteurs financiers. Le message utilisé pour un ordre de virement de salaires
+estpain.001:Customer Credit Transfer Initiation. Plusieurs versions de ce message co-
+existent en production, dont les deux qui doivent être supportées par le projet :pain.001.001.03
+(encore largement acceptée par les banques domestiques) etpain.001.001.09(version
+plus récente alignée sur les dernières spécifications EPC [6]).
+2.2.2 Structure d’un fichier pain.001
+Un messagepain.001est structuré autour de trois blocs principaux :
+Élément Description
+GrpHdr
+Group Header
+En-tête du fichier de virements de salaires. Il regroupe l’identifiant du mes-
+sage (MsgId), la date et l’heure de création (CreDtTm), le nombre de tran-
+sactions (NbOfTxs), le montant total des virements (CtrlSum) et le donneur
+d’ordre (InitgPty).
+PmtInf
+Payment Information
+Informations communes au lot de paiements : service SEPA
+(PmtTpInf/SvcLvl/Cd), catégorie SALA correspondant aux salaires,
+date d’exécution (ReqdExctnDt), entreprise débitrice (Dbtr), IBAN de son
+compte (DbtrAcct/Id/IBAN) et banque du débiteur (DbtrAgt).
+CdtTrfTxInf
+Credit Transfer Tran-
+saction Information
+Détails de chaque virement individuel à un salarié : identifiant de tran-
+saction (EndToEndId), montant et devise (InstdAmt), salarié bénéficiaire
+(Cdtr), IBAN de son compte (CdtrAcct/Id/IBAN), banque du bénéficiaire
+(CdtrAgt/FinInstnId/BIC ou BICFI selon la version) et libellé du virement
+(RmtInf/Ustrd).
+TABLE2.1 – Principaux blocs d’un fichier pain.001 pour les virements de salaires
+À titre d’exemple, la versionpain.001.001.09utilise la balise<BICFI>pour identi-
+fier la banque. La date d’exécution est renseignée dans l’élément<Dt>, à l’intérieur du bloc
+<ReqdExctnDt>, par exemple<Dt>2026-08-01</Dt>. La plateforme devra donc gé-
+nérer son XMLdynamiquementen fonction du schéma XSD retenu par l’utilisateur. Chaque
+bloc est contraint par un schéma XSD publié par l’EPC. Toute déviation (élément manquant,
+ordre incorrect, type de donnée non conforme) provoque le rejet du fichier par la banque, d’où
+la nécessité d’une validation systématique en amont.
+2.2.3 Identifiants bancaires : IBAN et BIC
+Deux identifiants sont au cœur de tout virement SEPA :
+—IBAN(International Bank Account Number, ISO 13616 [7]) : de 15 à 34 caractères alpha-
+numériques commençant par un code pays sur deux lettres et deux chiffres de contrôle.
+La validité d’un IBAN se vérifie via l’algorithmeMOD 97présenté ci-dessous.
+13
+=====PAGE 27=====
+Chapitre 2. Sprint 0 : Étude préalable et choix des technologies
+—BIC(Business Identifier Code, ISO 9362 [8]) : 8 ou 11 caractères alphanumériques iden-
+tifiant l’établissement bancaire, structurés en code banque (4 lettres), code pays (2 lettres),
+code emplacement (2 caractères) et éventuellement code d’agence (3 caractères).
+2.2.3.1 Algorithme MOD 97 de validation de l’IBAN
+La validation de l’IBAN repose sur le calcul suivant :
+1. Déplacer les quatre premiers caractères (code pays + clé) à la fin de la chaîne.
+2. Convertir chaque lettre en un entier (A=10, B=11, . . ., Z=35) et concaténer les chiffres
+obtenus.
+3. Calculer le reste modulo 97 de ce grand entier.
+4. L’IBAN est valide si et seulement si le reste vaut1:
+IBAN valide⇐⇒Nmod 97 = 1
+Cet algorithme est utilisé à la fois par le moteur de détection d’anomalies et par le nettoyage
+SEPA.
+2.2.3.2 Format du BIC
+Le format du BIC est validé contre la structure normalisée ISO 9362 (8 ou 11 caractères, code
+banque, pays et localisation, suffixe d’agence optionnel).
+2.3 Détection intelligente d’anomalies : approche hybride
+Le projet combine deux approches complémentaires de détection, chacune ayant son terrain de
+prédilection (Tableau 2.2).
+Critère IA symbolique (règles métier en
+Java)
+Apprentissage automatique
+(scikit-learn)
+Explicabilité Totale (chaque anomalie porte le
+nom de la règle violée)
+Modérée (score + raisons tex-
+tuelles)
+Besoin de données
+étiquetées
+Aucun Faible (apprentissage non super-
+visé)
+Conformité régle-
+mentaire
+Adaptée : règles alignées
+ISO 13616 et ISO 9362
+Nécessite une justification textuelle
+Détection de nou-
+veaux motifs
+Non Oui (Isolation Forest, LOF, z-score)
+Précision sur les
+règles connues
+100 % Variable
+Mise en production Immédiate dans le back-end Service Python dédié, versionnable
+TABLE2.2 – Comparaison des deux approches de détection retenues conjointement
+14
+=====PAGE 28=====
+Chapitre 2. Sprint 0 : Étude préalable et choix des technologies
+Compte tenu du caractère très structuré des règles à appliquer (IBAN, BIC, montants, doublons,
+net > brut) et de l’exigence d’explicabilité vis-à-vis du gestionnaire RH, lemoteur de règles
+symboliques Javaconstitue le socle de la détection. Pour couvrir la famille des anomalies plus
+faiblement caractérisées (par exemple un montant qui s’écarte fortement de la médiane histo-
+rique du salarié ou du client), unmodule IA Pythondédié est mis en place. Son modèle de
+production est unIsolation Forestentraîné sur un vecteur de six features comportementales
+par paiement (écart à la moyenne du salarié sur six mois, z-score par client, variation vs mois
+précédent, changement récent d’IBAN, nombre de paiements sur un même IBAN, montant).
+Un second pipeline expérimental, combinant Isolation Forest, Local Outlier Factor et un score
+statistiquez-scorepar une moyenne pondérée, sert de validation croisée pour comparer les ap-
+proches, sans être utilisé pour le scoring en production (voir chapitre 5). Les deux moteurs
+(règles et IA) partagent le même format de sortie, ce qui permet un affichage unifié dans l’inter-
+face.
+2.4 Choix technologiques
+Cette section motive les choix technologiques structurants de la plateforme.
+2.4.1 Langage et framework back-end
+Le Tableau 2.3 compare les principaux candidats pour le back-end.
+Technologie Avantages Limites
+Spring Boot 3.3 [9]
+(Java 17)
+Support des records, du pattern mat-
+ching et du text block ; Spring Secu-
+rity 6 avec configuration par lambda ;
+starter JWT via jjwt 0.12 ; starter Ope-
+nAPI (springdoc 2.6) ; écosystème ma-
+ture.
+Empreinte mémoire supérieure à
+d’autres runtimes.
+Node.js / Express Développement rapide, syntaxe JavaS-
+cript unifiée avec le front.
+Support JPA/SQL moins idiomatique,
+écosystème SEPA moins fourni.
+Django (Python) Productivité élevée, ORM puissant. Peu adapté à un déploiement d’entre-
+prise Java côté client.
+TABLE2.3 – Comparaison des frameworks back-end
+Spring Boot 3.3.4avecJava 17a été retenu en raison de son écosystème très riche (Spring
+Security 6, Spring Data JPA, Spring Validation), de son support natif de PostgreSQL, de la
+disponibilité d’un starter OpenAPI/Swagger moderne et d’une bibliothèque JWT éprouvée pour
+l’authentification.
+15
+=====PAGE 29=====
+Chapitre 2. Sprint 0 : Étude préalable et choix des technologies
+FIGURE2.1 – Spring Boot 3 et Java 17 pour le back-end
+2.4.2 Framework front-end
+Le Tableau 2.4 compare les principaux frameworks JavaScript modernes.
+Technologie Avantages Limites
+React 18 + Vite
+[10, 11]
+Composants fonctionnels, hooks, éco-
+système très riche,HMRultra-rapide
+avec Vite, démarrage de projet léger
+(package.json minimal).
+Nécessite d’assembler des librairies
+tierces pour couvrir des besoins avan-
+cés (routing, formulaires, DI).
+Angular 17 [12] Framework complet (routing, formu-
+laires, HTTP, DI), TypeScript strict.
+Courbe d’apprentissage plus raide,
+bundle initial plus lourd.
+Vue.js Documentation claire, syntaxe acces-
+sible.
+Moins présent dans les grands SI d’en-
+treprise.
+TABLE2.4 – Comparaison des frameworks front-end
+React 18servi parVite 5a été retenu pour la vélocité de développement (HMR instantané),
+la simplicité de la configuration et la richesse de l’écosystème. Le routing est confié à react-
+router, et les appels REST sont centralisés via un client HTTP qui joint automatiquement le
+jeton d’authentification à chaque requête.
+16
+=====PAGE 30=====
+Chapitre 2. Sprint 0 : Étude préalable et choix des technologies
+FIGURE2.2 – React 18 et Vite pour le front-end
+2.4.3 Module d’intelligence artificielle
+Le Tableau 2.5 compare les options possibles pour le service IA.
+Technologie Avantages Limites
+Python 3.11 + Fas-
+tAPI [13, 14]
+scikit-learn (Isolation Forest, LOF),
+pandas, numpy, API asynchrone, docu-
+mentation OpenAPI auto-générée.
+Deuxième runtime à superviser.
+Spring + Weka
+(Java)
+Même runtime que le back-end. Catalogue d’algorithmes plus restreint,
+performances moindres.
+TensorFlow Ser-
+ving
+Déploiement de modèles profonds. Surdimensionné pour des arbres isolés.
+TABLE2.5 – Comparaison des stacks IA
+Python 3.11avecFastAPI,scikit-learn,pandasetnumpya été retenu. Le service expose des
+endpoints pour le scoring d’un lot de paiements, l’état du modèle et son ré-entraînement. Le
+modèle entraîné est sérialisé et versionné. L’ensemble embarque également un pipelineLocal
+Outlier Factoret un calcul dez-scoresur le montant, combinés dans un score moyenné.
+2.4.4 Base de données
+Le Tableau 2.6 compare les SGBD envisagés.
+17
+=====PAGE 31=====
+Chapitre 2. Sprint 0 : Étude préalable et choix des technologies
+SGBD Avantages Limites
+PostgreSQL 16
+[15]
+Open-source, support JSONB, agréga-
+tions SQL puissantes pour les KPI, ex-
+cellent support JPA/Hibernate, conte-
+neur officiel.
+Nécessite un service dédié.
+Oracle Database Robustesse éprouvée, cible historique
+de HR Access.
+Licence propriétaire, image conteneur
+lourde.
+H2 Base embarquée, idéale pour le déve-
+loppement local.
+Non adaptée à la production.
+TABLE2.6 – Comparaison des SGBD
+Un modèle à deux profils Spring a été mis en place :PostgreSQL 16pour la production (image
+Docker officielle) etH2en mémoire pour certains tests unitaires, sans altérer le code métier
+grâce à l’abstraction JPA/Hibernate.
+2.4.5 Outils annexes et DevOps
+—Mavenpour la gestion des dépendances et du build back-end (Spring Boot, Spring Secu-
+rity, JPA, PostgreSQL/H2, JWT, OpenAPI, Lombok).
+—Vite + npmpour le build front-end et le serveur de développement.
+—pip + venvpour l’installation des dépendances Python du module IA.
+—Dockeretdocker-composepour l’orchestration locale et la mise en production des
+quatre services (base de données, back-end, module IA, front-end).
+—Lombokpour la réduction du code répétitif côté back-end.
+—OpenAPI / Swagger UIpour la documentation interactive de l’API.
+—Gitpour la gestion de version.
+—pytestpour les tests du module IA etJUnit 5 + Spring Boot Testpour les tests back-end.
+2.5 Backlog produit global
+Le Tableau 2.7 regroupe les besoins fonctionnels décrits dans ce rapport, par fonctionnalité et
+par sprint. Les acteurs correspondent aux rôles présentés dans les chapitres suivants : adminis-
+trateur, gestionnaire RH, validateur et auditeur. En l’absence du code source de l’application
+dans le dépôt du rapport, ce backlog constitue une synthèse documentaire ; les droits effectifs
+et l’état d’implémentation restent à vérifier, tandis que les priorités et les estimations proposées
+restent à valider.
+18
+=====PAGE 32=====
+Chapitre 2. Sprint 0 : Étude préalable et choix des technologies
+TABLE2.7 – Backlog produit global
+ID Fonctionnalité User story Priorité Est.
+(pts)
+Sprint
+US-01 Authentification et
+sécurité
+En tant que gestionnaire RH, je veux m’authentifier
+par identifiant et mot de passe afin d’accéder à mon
+espace de travail sécurisé.
+Must 5 1
+US-02 Authentification et
+sécurité
+En tant que validateur, je veux accéder aux
+fonctions autorisées par mon rôle afin de respecter
+la séparation des responsabilités.
+Must 5 1
+US-03 Utilisateurs et rôles En tant qu’administrateur, je veux créer des
+comptes utilisateurs afin de donner accès à la
+plateforme aux personnes habilitées.
+Must 3 1
+US-04 Utilisateurs et rôles En tant qu’administrateur, je veux affecter un rôle à
+chaque utilisateur afin de définir ses responsabilités
+dans le processus de paie.
+Must 3 1
+US-05 Utilisateurs et rôles En tant qu’administrateur, je veux désactiver un
+compte afin de retirer l’accès à un utilisateur qui
+n’est plus habilité.
+Must 2 1
+US-06 Journal d’audit En tant qu’auditeur, je veux consulter les actions
+sensibles avec leur auteur, leur date, leur adresse IP
+et leur résultat afin de vérifier la traçabilité des
+opérations.
+Must 5 1
+US-07 Journal d’audit En tant qu’auditeur, je veux retrouver les
+changements de statut des anomalies dans le
+journal afin de suivre les décisions prises pendant
+leur traitement.
+Should 3 4
+US-08 Schémas XSD En tant qu’administrateur, je veux importer un
+schéma XSD pain.001 afin de prendre en charge le
+format de virement attendu.
+Must 5 2
+US-09 Schémas XSD En tant qu’administrateur, je veux conserver
+plusieurs versions des schémas XSD afin de
+répondre aux exigences des banques destinataires.
+Must 3 2
+US-10 Schémas XSD En tant que gestionnaire RH, je veux consulter les
+éléments et les contraintes d’un XSD afin de
+comprendre les données requises pour générer un
+fichier conforme.
+Must 8 2
+US-11 Transactions de
+paie
+En tant que gestionnaire RH, je veux consulter les
+transactions de paie et leur statut afin de préparer
+les paiements à traiter.
+Must 3 2
+US-12 Transactions de
+paie
+En tant que gestionnaire RH, je veux filtrer les
+paiements par société, période et matricules afin de
+constituer le lot de virements souhaité.
+Must 5 2
+Suite du backlog à la page suivante
+19
+=====PAGE 33=====
+Chapitre 2. Sprint 0 : Étude préalable et choix des technologies
+ID Fonctionnalité User story Priorité Est.
+(pts)
+Sprint
+US-13 Transactions de
+paie
+En tant que validateur, je veux approuver les
+transactions de paie afin que seuls les paiements
+autorisés soient utilisés pour la génération SEPA.
+Must 5 2
+US-14 Contrôles métier En tant que gestionnaire RH, je veux détecter les
+IBAN invalides par le contrôle MOD-97 afin de
+limiter les rejets bancaires.
+Must 3 3
+US-15 Contrôles métier En tant que gestionnaire RH, je veux contrôler le
+format des BIC selon ISO 9362 afin de vérifier les
+identifiants des banques bénéficiaires.
+Must 2 3
+US-16 Contrôles métier En tant que gestionnaire RH, je veux détecter les
+montants nuls ou négatifs afin d’écarter les
+paiements non valides.
+Must 2 3
+US-17 Contrôles métier En tant que gestionnaire RH, je veux détecter les
+paiements en doublon sur une période afin d’éviter
+de payer plusieurs fois le même salarié.
+Must 5 3
+US-18 Contrôles métier En tant que gestionnaire RH, je veux détecter un
+montant net supérieur au brut afin de repérer les
+incohérences de calcul de paie.
+Must 3 3
+US-19 Détection par IA En tant que gestionnaire RH, je veux détecter les
+montants suspects avec Isolation Forest afin de
+repérer les paiements atypiques non couverts par les
+règles métier.
+Must 13 3
+US-20 Détection par IA En tant que gestionnaire RH, je veux consulter le
+score, le niveau de risque et les raisons d’un
+signalement afin d’évaluer la gravité d’un paiement
+suspect.
+Must 5 3
+US-21 Détection par IA En tant qu’administrateur, je veux consulter l’état
+du modèle et déclencher son réentraînement afin de
+maintenir le service de détection opérationnel.
+Should 5 3
+US-22 Recommandations
+et anomalies
+En tant que gestionnaire RH, je veux consulter des
+recommandations contextualisées pour chaque
+anomalie afin de choisir une action corrective
+adaptée.
+Must 5 3
+US-23 Recommandations
+et anomalies
+En tant que gestionnaire RH, je veux consulter les
+anomalies détectées par les règles métier et par l’IA
+dans une interface commune afin de centraliser leur
+analyse.
+Must 5 3
+US-24 Recommandations
+et anomalies
+En tant que gestionnaire RH, je veux marquer une
+anomalie comme corrigée ou ignorée afin de suivre
+son cycle de vie.
+Should 5 4
+Suite du backlog à la page suivante
+20
+=====PAGE 34=====
+Chapitre 2. Sprint 0 : Étude préalable et choix des technologies
+ID Fonctionnalité User story Priorité Est.
+(pts)
+Sprint
+US-25 Virements de
+masse SEPA
+En tant que gestionnaire RH, je veux visualiser un
+aperçu du XML généré afin de vérifier les
+informations du lot avant son enregistrement.
+Must 5 2
+US-26 Virements de
+masse SEPA
+En tant que gestionnaire RH, je veux valider le
+XML contre le XSD sélectionné et consulter les
+erreurs afin de corriger les écarts de conformité.
+Must 8 2
+US-27 Virements de
+masse SEPA
+En tant que gestionnaire RH, je veux générer et
+enregistrer un fichier pain.001 conforme à partir des
+transactions approuvées afin de préparer le
+versement des salaires.
+Must 13 2
+US-28 Virements de
+masse SEPA
+En tant que gestionnaire RH, je veux télécharger le
+fichier XML généré afin de disposer du document à
+transmettre à la banque.
+Must 3 2
+US-29 Virements de
+masse SEPA
+En tant que gestionnaire RH, je veux consulter
+l’historique des fichiers et les retélécharger à
+l’identique afin de retrouver les lots déjà produits.
+Should 5 2
+US-30 Tableau de bord
+KPI
+En tant qu’administrateur, je veux consulter le
+nombre de fiches générées, les erreurs bloquantes,
+le taux d’erreurs et le montant total viré afin de
+suivre l’activité mensuelle.
+Must 8 4
+US-31 Tableau de bord
+KPI
+En tant qu’administrateur, je veux visualiser
+l’évolution des fiches et des erreurs sur douze mois
+afin d’identifier les tendances de l’activité.
+Should 5 4
+US-32 Tableau de bord
+KPI
+En tant qu’administrateur, je veux consulter les
+clients les plus concernés et les répartitions des
+anomalies afin de cibler les actions d’amélioration.
+Should 5 4
+US-33 Authentification
+biométrique
+En tant que gestionnaire RH, je veux utiliser une
+authentification faciale afin de disposer d’un mode
+de connexion complémentaire (Prévu: évolution
+mentionnée dans le rapport, non vérifiée dans le
+code).
+Could 8 1
+La priorisation proposée suit MoSCoW :Mustdésigne les besoins indispensables,Shouldles
+besoins importants etCouldles possibilités complémentaires. Les estimations en points ex-
+priment la complexité relative selon la suite 1, 2, 3, 5, 8, 13, et non une durée ; la story US-33
+est rattachée au socle du sprint 1 comme évolution prévue, sans être considérée comme livrée
+dans ce sprint.
+21
+=====PAGE 35=====
+Chapitre 2. Sprint 0 : Étude préalable et choix des technologies
+2.6 Diagramme de cas d’utilisation global
+La Figure 2.3 présente les principales interactions des acteurs avec la plateforme SEPA, de
+l’authentification à la préparation et au suivi des virements de salaires. Elle reprend les rôles et
+les accès décrits dans les chapitres des sprints, ainsi que le module IA comme acteur système
+externe au back-end. Ce modèle documentaire reste à valider dans les contrôleurs et les menus
+React, le code de l’application n’étant pas disponible dans le dépôt du rapport.
+22
+=====PAGE 36=====
+Chapitre 2. Sprint 0 : Étude préalable et choix des technologies
+FIGURE2.3 – Diagramme de cas d’utilisation global
+Acteurs et rôles.L’administrateur gère les comptes, les rôles et les schémas XSD ; il dispose
+également des accès à la génération SEPA, au tableau de bord et au journal d’audit décrits dans
+le rapport. Le gestionnaire RH prépare les lots, examine les anomalies et produit les fichiers de
+virements, tandis que le validateur intervient dans l’approbation des transactions et la consulta-
+tion des paiements et de l’historique. L’auditeur consulte les indicateurs et les traces d’activité ;
+le module IA fournit les scores et les raisons des signalements de montants suspects.
+23
+=====PAGE 37=====
+Chapitre 2. Sprint 0 : Étude préalable et choix des technologies
+La génération inclut la validation XSD ; la détection IA complète les contrôles lorsque le service
+est activé. Le téléchargement suppose un fichier déjà conservé dans l’historique, sans impliquer
+une nouvelle génération ni une transmission automatique au système bancaire. Les autorisations
+exactes relatives à l’approbation et au traitement des anomalies restent à confirmer dans le code
+source.
+2.7 Diagramme de classes global
+La Figure 2.4 synthétise les principaux objets métier décrits dans les chapitres consacrés aux
+différents sprints. Elle rassemble les utilisateurs, les transactions, les anomalies, les traces d’au-
+dit, les schémas XSD et les fichiers SEPA. Ce modèle est construit à partir du rapport : les noms
+de champs, les types et les multiplicités sont descriptifs et ne constituent pas une vérification
+des entités JPA.
+24
+=====PAGE 38=====
+Chapitre 2. Sprint 0 : Étude préalable et choix des technologies
+FIGURE2.4 – Diagramme de classes global
+Les transactions représentent les paiements des salariés et peuvent être associées à plusieurs
+anomalies, chacune accompagnée de raisons et d’une recommandation. Un fichier SEPA conserve
+un instantané XML des paiements ainsi que le schéma utilisé pour sa validation, tandis que
+le journal d’audit retrace les opérations réalisées. Les liens représentés sont conceptuels ; leur
+persistance sous forme de relations JPA ou d’identifiants reste à confirmer dans le code de l’ap-
+plication.
+25
+=====PAGE 39=====
+Chapitre 2. Sprint 0 : Étude préalable et choix des technologies
+2.8 Diagramme de séquence global
+La Figure 2.5 présente un scénario de préparation d’un lot de virements de salaires, depuis
+l’authentification jusqu’au téléchargement du fichier XML. Elle met en évidence les échanges
+entre le gestionnaire RH, l’interface React, le back-end Spring Boot, PostgreSQL et le service
+IA FastAPI. Cette séquence est une synthèse du parcours décrit dans le rapport, et non une trace
+d’exécution vérifiée dans le code.
+26
+=====PAGE 40=====
+Chapitre 2. Sprint 0 : Étude préalable et choix des technologies
+FIGURE2.5 – Diagramme de séquence global
+Les transactions sont supposées approuvées en amont par un validateur. Les contrôles métier
+et la détection IA fournissent des signalements à examiner, puis l’aperçu permet de vérifier le
+XML avant sa génération définitive. La validation XSD est renouvelée lors de l’enregistrement ;
+le téléchargement restitue le contenu conservé dans l’historique, sans supposer de transmission
+automatique à la banque.
+27
+=====PAGE 41=====
+Chapitre 2. Sprint 0 : Étude préalable et choix des technologies
+2.9 Architecture logicielle cible
+L’architecture cible retenue est une architecture web en couches, organisée autour d’un back-
+end Spring Boot, d’un front-end React et d’un service dédié à l’intelligence artificielle en Py-
+thon, déployés sous forme de services conteneurisés. Elle est mise en œuvre selon les principes
+suivants (Figure 2.6) :
+—Client React: SPA organisée par pages fonctionnelles (connexion, tableau de bord, tran-
+sactions, anomalies, audit, utilisateurs, virements de masse, gestion des XSD), avec un
+client HTTP centralisé et un contexte d’authentification partagé.
+—Serveur Spring Boot: contrôleurs REST exposant l’API, services métier, couche d’accès
+aux données, DTO explicites pour l’API, gestion centralisée des exceptions, et autorisa-
+tion fine par rôle.
+—Service IA Python: API FastAPI dédiée à la détection des montants suspects, modèle
+entraîné persisté et versionné.
+—Persistance: entités JPA pour les utilisateurs, transactions, anomalies, journal d’audit,
+schémas XSD et fichiers générés, avec Hibernate 6.
+—Sécurité: filtre d’authentification JWT, encodeur BCrypt, CORS restreint au front-end,
+routes d’authentification et de documentation publiques, politique de sessionstateless.
+FIGURE2.6 – Architecture logicielle en trois services conteneurisés
+2.10 Conclusion
+Ce sprint 0 a permis de préciser le domaine métier (paie, SEPA, ISO 20022, variantespain.001.001.03
+etpain.001.001.09, IBAN/MOD-97, BIC/ISO 9362), de justifier le choix d’une détection
+d’anomalieshybride(règles symboliques Java + IA Python) et d’arrêter la pile technique :
+28
+=====PAGE 42=====
+Chapitre 2. Sprint 0 : Étude préalable et choix des technologies
+Spring Boot 3.3 (Java 17), React 18/Vite, PostgreSQL 16, FastAPI avec scikit-learn, Maven,
+pip et Docker. Les chapitres suivants entrent dans le détail de la réalisation, sprint par sprint.
+29
+=====PAGE 43=====
+Chapitre 3
+Sprint 1 : Authentification JWT, gestion
+des utilisateurs et journal d’audit
+3.1 Introduction
+Ce chapitre présente le premier sprint de développement, consacré au socle sécuritaire de la pla-
+teforme : l’authentification des utilisateurs par jeton JWT, la gestion des comptes et des rôles,
+ainsi que le journal d’audit qui trace l’ensemble des actions sensibles réalisées sur l’applica-
+tion. Ce sprint met en place les entités persistées, les API REST associées et les pages React
+correspondantes (Login,Users,Audit).
+3.2 Backlog du sprint
+Les User Stories retenues pour ce sprint sont présentées dans le Tableau 3.1.
+User Story Est. (h) Priorité Description
+US-1 – Authentification
+par JWT
+18 Haute En tant qu’utilisateur, je veux m’authentifier avec
+un identifiant/mot de passe et recevoir un jeton
+JWT pour accéder aux API protégées.
+US-2 – Gestion des utili-
+sateurs & rôles
+15 Haute En tant qu’administrateur, je veux créer et désac-
+tiver des utilisateurs et leur affecter un rôle (AD-
+MINISTRATEUR, GESTIONNAIRE_RH, V A-
+LIDATEUR, AUDITEUR).
+US-3 – Journal d’audit
+(audit trail)
+12 Haute En tant qu’auditeur, je veux consulter la liste
+chronologique des actions avec l’auteur, l’horo-
+datage, l’IP et le résultat.
+US-4 – Encodage facial
+(option)
+6 Faible En tant qu’utilisateur, je veux pouvoir enregistrer
+un encodage de référence de mon visage, destiné
+à une future authentification biométrique.
+TABLE3.1 – Backlog du Sprint 1
+30
+=====PAGE 44=====
+Chapitre 3. Sprint 1 : Authentification JWT, gestion des utilisateurs et journal d’audit
+3.3 Diagrammes de conception
+3.3.1 Diagramme de cas d’utilisation
+La Figure 3.1 présente le diagramme de cas d’utilisation associé à l’authentification et à la
+gestion des utilisateurs.
+[Figure à produire :fig3_1_usecase_auth]
+FIGURE3.1 – Cas d’utilisation du sprint 1
+Tous les acteurs (Administrateur,Gestionnaire RH,Validateur,Auditeur) partagent le cas d’uti-
+lisationse connecterqui déclenche la génération d’un jeton JWT. Seul l’Administrateurpeut
+créer, consulter et désactiver des utilisateurs. L’Auditeur(comme l’administrateur) a accès au
+journal d’audit en lecture. Chaque action sensible (login, logout, génération, validation, appro-
+bation, suppression, import XSD)inclutun enregistrement dans le journal d’audit, modélisé par
+la relation«include».
+3.3.2 Diagramme de classes
+Le diagramme de classes (Figure 3.2) reprend les principales entités et services du sprint.
+[Figure à produire :fig3_2_class_auth]
+FIGURE3.2 – Diagramme de classes du sprint 1
+Le diagramme distingue les deux entités persistées (utilisateur et journal d’audit), les rôles ap-
+plicatifs et les actions tracées, ainsi que les services métier (authentification, gestion des utilisa-
+teurs, audit, gestion du jeton) et les contrôleurs REST qui les exposent.
+3.3.3 Diagramme de séquence – Authentification
+La Figure 3.3 illustre la séquence d’appels lors de la connexion.
+31
+=====PAGE 45=====
+Chapitre 3. Sprint 1 : Authentification JWT, gestion des utilisateurs et journal d’audit
+[Figure à produire :fig3_3_seq_auth]
+FIGURE3.3 – Séquence d’authentification par JWT
+L’utilisateur saisit son identifiant et son mot de passe sur la page de connexion. Le mot de
+passe fourni est comparé à l’empreinte BCrypt stockée. En cas de succès, un jeton JWT signé
+est généré, la date de dernière connexion est mise à jour et une entrée de succès est ajoutée
+au journal d’audit ; en cas d’échec, une entrée d’échec est journalisée et une erreur 401 est
+renvoyée. Le jeton reçu est conservé côté client et joint automatiquement à toutes les requêtes
+suivantes.
+3.3.4 Diagramme d’activités
+La Figure 3.4 synthétise le flux d’activités de l’authentification.
+[Figure à produire :fig3_4_activity_auth]
+FIGURE3.4 – Activités du processus d’authentification
+3.4 Modèle de données
+Le Tableau 3.2 liste les entités JPA du sprint et leurs principaux champs.
+32
+=====PAGE 46=====
+Chapitre 3. Sprint 1 : Authentification JWT, gestion des utilisateurs et journal d’audit
+Entité Champs Contraintes
+User Identité, identifiants de connexion, rôle, statut
+du compte et date de dernière connexion
+username et email
+uniques ; mot de passe
+hashé BCrypt
+AuditLog Auteur, action réalisée, détails, adresse IP, ré-
+sultat et horodatage
+action obligatoire, horo-
+datage automatique
+Role(enum) ADMINISTRATEUR, GESTIONNAIRE
+RH, V ALIDATEUR, AUDITEUR
+–
+AuditAction
+(enum)
+Une dizaine d’actions tracées (connexion, im-
+port XSD, génération/validation/suppression
+de transaction, détection d’anomalie, . . .)
+–
+TABLE3.2 – Entités persistées du sprint 1
+Au premier démarrage, un compte de démonstration est créé pour chaque rôle, avec un mot
+de passe par défaut uniquement destiné aux environnements de démonstration et à changer en
+production.
+3.5 Implémentation
+3.5.1 Configuration Spring Security
+La classeSecurityConfigcompose la chaîne de filtres selon les règles suivantes (adaptées
+à Spring Security 6) :
+— CSRF désactivé car l’API est consommée uniquement enBearerJWT.
+— CORS restreint àhttp://localhost:5173(origine du front-end Vite).
+— Les routes d’authentification et la documentation API sont publiques ; toutes les autres
+routes exigent un jeton valide.
+— La politique de session estsans état: aucun cookie, le jeton JWT est transmis à chaque
+requête.
+— Un filtre dédié intercepte chaque requête pour valider le jeton et établir le contexte de
+sécurité avant que la requête n’atteigne le contrôleur métier.
+— L’autorisation fine est appliquée par rôle directement sur les contrôleurs sensibles (par
+exemple la gestion des utilisateurs réservée à l’administrateur).
+Les mots de passe sont encodés avec BCrypt, qui applique un sel aléatoire et un facteur de coût
+configurable, résistant aux attaques par force brute.
+3.5.2 Service JWT
+Le jeton est signé (HMAC-SHA) avec une clé secrète externalisée et possède une durée de vie
+configurable (24 heures par défaut). Le service dédié sait générer un jeton pour un utilisateur
+33
+=====PAGE 47=====
+Chapitre 3. Sprint 1 : Authentification JWT, gestion des utilisateurs et journal d’audit
+authentifié, en extraire l’identifiant, et vérifier sa validité (signature et expiration) à chaque
+requête.
+3.5.3 Filtre d’authentification
+À chaque requête, le filtre lit l’en-tête d’autorisation : si un jeton Bearer est présent, il est
+extrait, l’utilisateur correspondant est rechargé et, si le jeton est valide, le contexte de sécurité
+de la requête est établi. Les requêtes dépourvues de jeton restent anonymes et sont rejetées par
+les règles d’autorisation.
+3.5.4 Journal d’audit
+Chaque action sensible (connexion, import, génération, validation, suppression, . . .) est jour-
+nalisée avec l’auteur (ou l’identifiant saisi en cas d’échec de connexion), l’adresse IP de la
+requête, le résultat (succès ou échec) et l’horodatage. La consultation du journal est réservée à
+l’administrateur et à l’auditeur, avec pagination côté serveur.
+3.5.5 API REST du sprint
+Le Tableau 3.3 récapitule les endpoints exposés par ce sprint.
+Verbe URL Rôle requis Description
+POST /api/auth/login public Authentification, retourne un
+jeton JWT
+POST /api/auth/face-login public Point d’entrée biométrique
+(501 par défaut)
+GET /api/users ADMIN Liste des utilisateurs
+POST /api/users ADMIN Création d’un utilisateur avec
+rôle
+DELETE /api/users/{id} ADMIN Désactivation d’un utilisateur
+GET /api/audit ADMIN / AUDIT Consultation paginée du
+journal d’audit
+TABLE3.3 – Endpoints REST du Sprint 1
+3.5.6 Mesures de sécurité mises en œuvre
+La propriété à sens unique de BCrypt et la présence d’un sel aléatoire garantissent qu’une lecture
+de la table des utilisateurs ne permet pas de reconstituer les mots de passe. La signature HMAC-
+SHA du jeton garantit son intégrité ; sa durée de vie limite la fenêtre d’exploitation en cas de
+vol de jeton. Les règles de sécurité suivantes complètent le dispositif :
+—Journal exhaustif :toute tentative de connexion (réussie ou non) est enregistrée avec IP
+et horodatage.
+—Autorisation par rôle :les routes sensibles sont explicitement restreintes par rôle.
+34
+=====PAGE 48=====
+Chapitre 3. Sprint 1 : Authentification JWT, gestion des utilisateurs et journal d’audit
+—Désactivation plutôt que suppression :la suppression d’un compte le désactive (soft
+delete) en préservant la traçabilité historique.
+—Rotation de la clé JWT :la clé est externalisée et peut être changée sans redéploiement
+du code.
+3.5.7 Interface React
+Le front-end expose trois pages principales pour ce sprint : connexion, gestion des utilisateurs
+(visible uniquement pour l’administrateur) et consultation du journal d’audit. Un contexte glo-
+bal gère le jeton et le rôle de l’utilisateur courant, et sert à protéger les routes internes selon
+l’authentification et le rôle attendu ; la barre de navigation masque dynamiquement les liens
+non autorisés.
+[Figure à produire :fig3_5_login]
+FIGURE3.5 – Écran de connexion
+[Figure à produire :fig3_6_users]
+FIGURE3.6 – Gestion des utilisateurs (vue administrateur)
+[Figure à produire :fig3_7_audit]
+FIGURE3.7 – Journal d’audit : traçabilité des actions
+35
+=====PAGE 49=====
+Chapitre 3. Sprint 1 : Authentification JWT, gestion des utilisateurs et journal d’audit
+3.6 Conclusion
+Ce sprint 1 a livré le socle sécuritaire de la plateforme : authentification JWT avec BCrypt,
+quatre rôles applicatifs portés par Spring Security 6, gestion CRUD des utilisateurs réservée à
+l’administrateur, et journal d’audit traçant toutes les actions sensibles avec auteur, IP, horodatage
+et résultat (succès/échec). Les pages React associées sont protégées par un contexte d’authen-
+tification centralisé. Le sprint suivant exploite ce socle pour implémenter la gestion dynamique
+des schémas XSD et la génération des fichiers SEPA.
+36
+=====PAGE 50=====
+Chapitre 4
+Sprint 2 : Gestion dynamique des XSD et
+génération des virements de masse SEPA
+4.1 Introduction
+Ce chapitre présente le deuxième sprint, consacré au cœur métier du projet : lagestion dy-
+namique des schémas XSDet lagénération des virements de masse SEPA. Contrairement aux
+approches classiques qui ciblent une version figée du schéma, la plateforme développée permet
+à l’administrateur d’importer n’importe quel XSDpain.001, de visualiser les contraintes
+qu’il impose (version, namespace, obligatoires,maxLength,pattern, énumérations) et de
+produire ensuite un fichier conforme à ce schéma à partir des paiements sélectionnés en base.
+Le fichier est systématiquement validé contre son XSD source avant enregistrement dans l’his-
+torique.
+4.2 Backlog du sprint
+Les User Stories du sprint sont présentées dans le Tableau 4.1.
+37
+=====PAGE 51=====
+Chapitre 4. Sprint 2 : Gestion dynamique des XSD et génération des virements de masse SEPA
+User Story Est. (h) Priorité Description
+US-1 – Import et versions
+des XSD
+10 Haute En tant qu’administrateur, je veux importer un
+XSD pain.001 et le versionner.
+US-2 – Analyse d’un
+XSD
+12 Haute En tant que gestionnaire RH, je veux consul-
+ter l’analyse d’un XSD (éléments, obligatoires,
+contraintes de longueur, patterns, énumérations).
+US-3 – Filtrage des paie-
+ments
+10 Haute En tant que gestionnaire RH, je veux filtrer les
+paiements par société, période et matricules.
+US-4 – Aperçu + valida-
+tion
+15 Haute En tant que gestionnaire RH, je veux visualiser
+l’aperçu coloré du XML généré et voir une men-
+tion « Conforme au XSD » ou la liste des erreurs.
+US-5 – Génération et en-
+registrement
+10 Haute En tant que gestionnaire RH, je veux enregistrer
+le fichier généré dans l’historique et le téléchar-
+ger.
+US-6 – Historique et reté-
+léchargement
+6 Moyenne En tant que gestionnaire RH, je veux retrouver
+les fichiers générés et les retélécharger à l’iden-
+tique.
+TABLE4.1 – Backlog du Sprint 2
+4.3 Diagrammes de conception
+4.3.1 Diagramme de cas d’utilisation
+La Figure 4.1 présente le diagramme de cas d’utilisation.
+[Figure à produire :fig4_1_usecase_sepa]
+FIGURE4.1 – Cas d’utilisation du module XSD + virements de masse
+L’Administrateurimporte les XSD. LeGestionnaire RHchoisit un XSD compatible, visualise
+son analyse, filtre les paiements, lance l’aperçu, enregistre et télécharge. LeValidateuraccède
+en lecture à l’historique.
+4.3.2 Diagramme de classes
+Le diagramme de classes (Figure 4.2) présente les classes principales du sprint.
+38
+=====PAGE 52=====
+Chapitre 4. Sprint 2 : Gestion dynamique des XSD et génération des virements de masse SEPA
+[Figure à produire :fig4_2_class_sepa]
+FIGURE4.2 – Diagramme de classes du module SEPA
+Les entités persistées sont le schéma XSD importé (versionné) et le fichier SEPA généré (im-
+muable). Les composants applicatifs couvrent la lecture et l’analyse d’un XSD, la construction
+du XML pain.001, la validation XSD exhaustive, les contrôles métier RH (IBAN, BIC, montant,
+doublons) et l’orchestration du parcours complet, du filtrage des paiements jusqu’à l’historisa-
+tion du fichier généré.
+4.3.3 Diagramme de séquence
+La Figure 4.3 illustre la génération complète d’un aperçu.
+[Figure à produire :fig4_3_seq_sepa]
+FIGURE4.3 – Séquence de génération d’un fichier SEPA
+Le client React transmet l’identifiant du XSD choisi, le donneur d’ordre et les filtres (société,
+période, matricules). Le service métier charge le XSD, vérifie sa compatibilité pain.001, sélec-
+tionne les transactions approuvées ou validées, applique les contrôles métier (IBAN, BIC, mon-
+tant positif, doublons), puis génère le XML correspondant. Celui-ci est aussitôt validé contre
+le même XSD, qui remonte la liste intégrale des erreurs éventuelles (ligne, colonne, message
+traduit). Chaque action est tracée dans le journal d’audit.
+4.4 Scénario illustratif de bout en bout
+Pour fixer les idées avant de détailler chaque composant, le Tableau 4.2 reprend le parcours
+complet d’un gestionnaire RH souhaitant générer un fichier SEPA, en s’appuyant sur les méca-
+nismes décrits dans les sections suivantes de ce chapitre.
+39
+=====PAGE 53=====
+Chapitre 4. Sprint 2 : Gestion dynamique des XSD et génération des virements de masse SEPA
+Étape Action Description
+1 Sélection d’une ver-
+sion XSD
+Le gestionnaire RH choisit, parmi les schémas importés et
+marqués compatibles pain.001, la variante (001.001.03 ou
+001.001.09) attendue par la banque destinataire.
+2 Chargement du XSD Le contenu du schéma sélectionné est chargé depuis la base
+par le service dédié.
+3 Analyse de sa struc-
+ture
+Le schéma est analysé pour en extraire les éléments obliga-
+toires ou répétables, leurs types et leurs contraintes (longueur,
+motif, énumération), restitués sous forme d’arbre dépliable
+côté interface.
+4 Génération du XML Les paiements filtrés (société, période, matricules) sont assem-
+blés en un document XML pain.001 conforme à la variante
+choisie.
+5 Validation du XML
+par rapport au XSD
+Le document généré est immédiatement validé contre le
+schéma source, sans s’arrêter à la première erreur rencontrée.
+6 Détection des éven-
+tuelles erreurs
+Les violations (longueur, motif, élément obligatoire man-
+quant, type incorrect) sont collectées avec leur position (ligne,
+colonne) et traduites en messages compréhensibles.
+7 Affichage des erreurs
+dans l’interface
+L’aperçu coloré du XML met en évidence les lignes en erreur,
+cliquables pour afficher le message correspondant ; une men-
+tion « Conforme au XSD » s’affiche en l’absence d’erreur.
+8 Téléchargement du
+XML validé
+Une fois la conformité confirmée, le fichier est enregistré dans
+l’historique puis mis à disposition au téléchargement, avec ga-
+rantie de retéléchargement à l’identique.
+TABLE4.2 – Scénario illustratif de bout en bout de la gestion dynamique des XSD
+4.5 Gestion dynamique des schémas XSD
+4.5.1 Schéma XSD importé
+Chaque XSD importé est conservé avec son nom logique, sa version (incrémentée à chaque
+ré-import), son contenu et des métadonnées d’import (auteur, date).
+4.5.2 Analyse dynamique d’un XSD
+Le composant dédié analyse un XSD pain.001 importé et produit un arbre d’éléments parcouru
+par le front-end, en deux temps : extraction des métadonnées (namespace, version détectée,
+compatibilité avec le format pain.001) puis analyse complète de la structure (éléments obliga-
+toires ou répétables, types, et contraintes de longueur, de motif ou d’énumération portées par
+chaque champ). Le parsing XSD applique les précautions de sécurité standard contre les at-
+taques par entités externes (XXE). L’arbre obtenu est affiché côté front-end dans un composant
+dépliable qui reprend, pour chaque nœud, son nom, son caractère obligatoire et ses contraintes.
+40
+=====PAGE 54=====
+Chapitre 4. Sprint 2 : Gestion dynamique des XSD et génération des virements de masse SEPA
+4.6 Génération dynamique du XML pain.001
+Le générateur construit le fichier XML en adaptant automatiquement sa structure à la version
+du schéma choisi.
+4.6.1 Variantes supportées
+Les deux variantespain.001.001.03etpain.001.001.09partagent la même struc-
+ture générale (en-tête du message, informations de paiement, transactions individuelles) mais
+diffèrent sur quelques détails de forme (représentation du code BIC et de la date d’exécution,
+namespace cible). Le générateur détecte la variante attendue à partir du XSD sélectionné et
+adapte ces éléments en conséquence.
+4.6.2 Construction du fichier
+Le fichier généré comporte un identifiant de message unique, un horodatage de création, le
+nombre de transactions et leur somme de contrôle, les informations du donneur d’ordre (nom,
+IBAN, BIC), puis, pour chaque paiement, un identifiant de transaction, le montant avec sa de-
+vise, les coordonnées bancaires du bénéficiaire et un libellé de virement mentionnant la période
+et le matricule du salarié.
+4.6.3 Nettoyage SEPA
+Les chaînes de caractères injectées dans le XML (noms, libellés) sont nettoyées avant insertion :
+les caractères accentués sont translittérés, les caractères hors du jeu autorisé par la norme SEPA
+sont supprimés, et chaque champ est tronqué à la longueur maximale autorisée par le XSD. Ce
+traitement évite les rejets bancaires dus à des caractères accentués ou spéciaux présents dans les
+fiches de paie.
+4.7 Validation XSD avec collecte exhaustive des erreurs
+Contrairement à une validation classique qui s’arrête à la première erreur, le validateur accu-
+muletoutesles erreurs rencontrées en conservant leur position (ligne, colonne) et en traduisant
+les messages du parser en expressions compréhensibles (par exemple « Longueur hors norme »
+plutôt que le message technique brut). Une validation syntaxique simple, sans XSD, reste dis-
+ponible pour les cas où le schéma n’est pas exigé. La sécurité XXE est appliquée de la même
+manière que pour l’analyse du XSD.
+41
+=====PAGE 55=====
+Chapitre 4. Sprint 2 : Gestion dynamique des XSD et génération des virements de masse SEPA
+4.8 Historique immuable des fichiers générés
+Chaque génération réussie est conservée avec le nom du fichier, son contenu XML tel quel, le
+XSD source utilisé, les filtres ayant servi à la sélection des paiements, le nombre de transac-
+tions, la somme de contrôle, le donneur d’ordre et le résultat de la validation XSD au moment
+de la génération. Un re-téléchargement ultérieur renvoie ainsi exactement le fichier produit à
+l’origine.
+4.9 API REST du sprint
+Le Tableau 4.3 récapitule les endpoints exposés par ce sprint.
+Verbe URL Rôle requis Description
+GET /api/xsd ADMIN Liste des XSD impor-
+tés
+POST /api/xsd ADMIN Import d’un nouveau
+XSD
+GET /api/masse/xsd RH / V ALID / AD-
+MIN
+XSD compatibles
+pain.001 utilisables
+GET /api/masse/xsd/{id}/analyse RH / V ALID / AD-
+MIN
+Arbre + contraintes du
+XSD
+GET /api/masse/filtres RH / V ALID / AD-
+MIN
+Sociétés, périodes,
+matricules
+GET /api/masse/paiements RH / V ALID / AD-
+MIN
+Paiements filtrés +
+nombre + total
+POST /api/masse/apercu RH / ADMIN Génère & valide sans
+enregistrer
+POST /api/masse/fichiers RH / ADMIN Génère & valide & en-
+registre
+GET /api/masse/fichiers RH / V ALID / AD-
+MIN
+Historique (récent
+d’abord)
+GET /api/masse/fichiers/{id} RH / V ALID / AD-
+MIN
+Détail (XML + erreurs
++ params)
+GET /api/masse/fichiers/{id}/telecharger RH / ADMIN Téléchargement
+conforme au contenu
+enregistré
+TABLE4.3 – Endpoints REST du Sprint 2
+4.10 Interface React
+La page dédiée aux virements de masse orchestre tout le parcours (Figure 4.5) : sélection du
+XSD (les schémas non compatibles pain.001 sont grisés), consultation de l’analyse, saisie du
+donneur d’ordre, filtrage des paiements (société, période, matricules), sélection des lignes avec
+42
+=====PAGE 56=====
+Chapitre 4. Sprint 2 : Gestion dynamique des XSD et génération des virements de masse SEPA
+compteur et total, aperçu coloré du XML généré avec surlignage des erreurs, enregistrement et
+téléchargement. Une page dédiée à l’administration gère l’import et la liste des schémas.
+[Figure à produire :fig4_4_xsd_analyse]
+FIGURE4.4 – Analyse d’un XSD : arbre des éléments et contraintes
+[Figure à produire :fig4_5_virements_masse]
+FIGURE4.5 – Virements de masse : filtres, aperçu coloré et conformité XSD
+4.11 Qualité : jeu de tests
+Le sprint est couvert par des tests automatisés (JUnit 5 + Spring Boot Test) qui vérifient la
+lecture correcte d’un XSD pain.001 officiel, la validité du XML généré contre son schéma
+officiel, la collecte d’au moins deux erreurs sur un document délibérément fautif, ainsi que le
+filtrage, le statut par défaut des transactions sélectionnées, l’identité bit-à-bit d’un fichier re-
+téléchargé et l’exclusion des transactions en erreur métier.
+4.12 Conclusion
+Ce sprint 2 a livré le cœur métier de la plateforme : la gestiondynamiquedes schémas XSD
+(import, analyse, versions), la génération du XML pain.001 en deux variantes (001.001.03et
+001.001.09) construite via l’API DOM, la validation XSD collectant toutes les erreurs avec
+traduction en clair, le nettoyage SEPA systématique, la sécurité XXE et la persistance immuable
+des fichiers générés. L’interface React fournit un parcours bout en bout accompagné d’un aperçu
+coloré. Le sprint suivant complète cette chaîne par la détection d’anomalies : contrôles métier
+Java et modèle d’apprentissage automatique Python.
+43
+=====PAGE 57=====
+Chapitre 5
+Sprint 3 : Détection hybride des anomalies
+(règles métier + IA Python) et
+recommandations
+5.1 Introduction
+Ce troisième sprint apporte à la plateforme sa dimension la plus différenciante : ladétection hy-
+bridedes anomalies métier. Deux moteurs coopèrent, chacun avec son terrain de prédilection :
+d’un côté, unmoteur de règles symboliques en Javaqui couvre les anomalies formellement
+caractérisées (IBAN MOD-97, BIC ISO 9362, montants, doublons, net > brut, XSD) avec expli-
+cabilité totale ; de l’autre, unservice d’intelligence artificielle Python/FastAPIqui détecte les
+montants suspectsau moyen d’un modèleIsolation Forestentraîné sur un vecteur de features
+comportementaux par paiement. Les deux moteurs partagent un format d’anomalie commun et
+un catalogue de recommandations lisibles, de sorte que l’interface React affiche uniformément
+les résultats et guide le gestionnaire RH vers une action corrective concrète.
+44
+=====PAGE 58=====
+Chapitre 5. Sprint 3 : Détection hybride des anomalies (règles métier + IA Python) et
+recommandations
+5.2 Backlog du sprint
+User Story Est. (h) Priorité Description
+US-1 – Contrôles métier
+Java
+10 Haute En tant que gestionnaire RH, je veux détecter
+les IBAN invalides (MOD-97), BIC mal formés,
+montants nuls/négatifs et doublons.
+US-2 – Service IA Fas-
+tAPI
+18 Haute En tant qu’administrateur, je veux un service IA
+qui attribue un score de risque à chaque paiement
+via Isolation Forest.
+US-3 – Features compor-
+tementaux
+10 Haute En tant que data scientist, je veux calculer, pour
+chaque paiement, l’écart à la moyenne du salarié,
+le z-score client, la variation du mois précédent,
+l’IBAN changé récemment et le nombre d’IBAN
+partagés.
+US-4 – Intégration back-
+end→IA
+8 Haute En tant que développeur, je veux que le back-end
+appelle l’IA avec un interrupteur app.ai.enabled
+et un timeout, sans jamais interrompre le traite-
+ment en cas d’erreur.
+US-5 – Catalogue de re-
+commandations
+10 Haute En tant que gestionnaire RH, je veux que chaque
+anomalie soit accompagnée d’une recommanda-
+tion lisible intégrant les vraies valeurs (matricule,
+IBAN masqué, montant).
+US-6 – Cycle de vie des
+anomalies
+8 Moyenne En tant que gestionnaire RH, je veux pouvoir
+marquer une anomalie comme CORRIGÉE ou
+IGNORÉE.
+US-7 – Supervision du
+modèle
+5 Moyenne En tant qu’administrateur, je veux consulter l’état
+du modèle et déclencher son réentraînement.
+TABLE5.1 – Backlog du Sprint 3
+5.3 Architecture de détection hybride
+La Figure 5.1 présente l’architecture de détection.
+[Figure à produire :fig5_1_detection_architecture]
+FIGURE5.1 – Architecture hybride de détection : règles Java + modèle Python
+Un lot de transactions est soumis d’abord au moteur de règles métier Java. Les anomalies ainsi
+détectées sont persistées avec la source « règle ». Simultanément, lorsque la détection IA est
+activée, le lot est transmis au service d’intelligence artificielle Python qui calcule, pour chaque
+45
+=====PAGE 59=====
+Chapitre 5. Sprint 3 : Détection hybride des anomalies (règles métier + IA Python) et
+recommandations
+paiement, un score de risque à partir de son historique et de celui du client. Les résultats sont
+rattachés aux transactions avec la source « IA » et le type « montant suspect ». Enfin, un mo-
+teur de recommandations produit, pour chaque anomalie (toutes sources confondues), un texte
+actionnable.
+5.4 Moteur de règles métier Java
+5.4.1 Types d’anomalies couverts
+Les règles métier reconnues sont résumées dans le Tableau 5.2.
+Type Source Signification
+IBAN_INV ALIDE REGLE IBAN manquant, mal formé ou dont la clé MOD-97 est
+incorrecte
+BIC_INV ALIDE REGLE BIC absent ou non conforme à ISO 9362 (8 ou 11 ca-
+ractères)
+MONTANT_INV ALIDE REGLE Montant nul ou strictement négatif
+DOUBLON_PAIEMENT REGLE Même salarié payé plusieurs fois sur la même période
+IBAN_PARTAGE REGLE Un même IBAN apparaît chez plusieurs salariés dis-
+tincts
+NET_SUPERIEUR_BRUT REGLE Le net calculé est supérieur au brut (anomalie de calcul)
+MONTANT_SUSPECT IA Modèle statistique : montant atypique à la lumière des
+features comportementaux
+ERREUR_XSD XSD Violation de la contrainte XSD (longueur, pattern, obli-
+gatoire, type)
+CTRL_SUM_INCOHERENTXSD NbOfTxs ou CtrlSum incohérent avec le nombre de
+transactions
+TABLE5.2 – Types d’anomalies supportés et sources
+5.4.2 Validation IBAN MOD-97
+La validation reproduit l’algorithme standard ISO 13616 : après normalisation (suppression des
+espaces, mise en majuscules) et vérification du format général de l’IBAN, les quatre premiers
+caractères sont déplacés en fin de chaîne, les lettres sont converties en chiffres, puis le nombre
+obtenu est réduit modulo 97 :
+IBAN valide⇐⇒Nmod 97 = 1
+5.4.3 Validation BIC ISO 9362
+Le BIC est accepté s’il respecte le format normalisé ISO 9362 (8 ou 11 caractères, code banque,
+pays et localisation, suffixe d’agence optionnel).
+46
+=====PAGE 60=====
+Chapitre 5. Sprint 3 : Détection hybride des anomalies (règles métier + IA Python) et
+recommandations
+5.4.4 Détection des doublons
+Deux salariés payés avec le même IBAN et le même montant sur un même lot déclenchent
+un avertissement de doublon. Un contrôle plus riche est effectué au niveau de l’orchestration
+en confrontant les transactions à l’historique sur la période de paie, afin de détecter un même
+salarié payé plusieurs fois.
+5.5 Service IA Python : détection des montants suspects
+Le service de détection est un module Python indépendant, exposé par une API FastAPI dédiée.
+5.5.1 Features par paiement
+Chaque paiement est transformé en un vecteur de six features comportementales :
+Feature Définition
+montant Montant du paiement en euros
+ecart_moyenne_salarie montant
+historique6mois
+(défaut 1 si pas d’historique)
+zscore_client z-score du montant par rapport aux autres salariés du même clien-
+tId
+variation_mois_precedent montant−m t−1
+mt−1
+×100
+iban_change_recent 1 si l’IBAN diffère du paiement précédent du salarié, 0 sinon
+nb_paiements_meme_iban Nombre de paiements du lot partageant le même IBAN
+TABLE5.3 – Features par paiement attendus par le modèle
+L’ordre et les noms de ces features sont figés une fois pour toutes, garantissant la compatibilité
+entre le modèle persisté et toute version future du service.
+5.5.2 Modèle Isolation Forest
+Le modèle est une forêt d’isolement (Isolation Forest), une technique d’apprentissage non
+supervisé bien adaptée à la détection de valeurs atypiques. Ses principaux hyper-paramètres
+(nombre d’arbres, fraction d’anomalies attendue, seuil de score, profondeur d’historique) sont
+réglables par configuration.
+Avant l’entraînement, les features sont normalisées. Le modèle entraîné est persisté avec sa
+version (horodatée) pour assurer la traçabilité des prédictions. S’il n’existe pas encore lors de la
+première invocation, il est entraîné sur des données synthétiques générées à cet effet.
+47
+=====PAGE 61=====
+Chapitre 5. Sprint 3 : Détection hybride des anomalies (règles métier + IA Python) et
+recommandations
+5.5.3 Scoring et seuil de décision
+Le score brut produit par le modèle est ramené à une échelle[0,1], plus lisible pour l’utilisateur
+métier. Un paiement est marquéanomaliesi le modèle l’isole comme atypique ou si son score
+dépasse le seuil configuré. Le niveau de risque associé est dérivé par tranches (Tableau 5.4).
+Niveau Plage de score
+FAIBLE [0; 0,35[
+MOYEN [0,35; 0,6[
+ELEVE [0,6; 0,85[
+CRITIQUE [0,85; 1]
+TABLE5.4 – Niveaux de risque dérivés du score
+5.5.4 Explication lisible
+Lorsqu’un paiement est signalé, un libellé lisible en français est composé à partir des features à
+l’origine du signalement (par exemple « Montant 1,8× la moyenne des 6 derniers mois », « IBAN
+modifié ce mois-ci », « Hausse de 72% par rapport au mois précédent »). Cette explication prend
+le relais de l’opacité intrinsèque à un modèle non supervisé et rend la détection acceptable
+métier.
+5.5.5 Endpoints du service IA
+Le service expose des endpoints pour l’état du modèle, le scoring d’un lot de paiements et le
+réentraînement (sur des données fournies ou synthétiques). Un second pipeline expérimental,
+combinant plusieurs techniques de détection (Isolation Forest, Local Outlier Factor, z-score),
+sert de validation croisée pour comparer les approches.
+5.6 Intégration back-endIA
+5.6.1 Appel du service IA
+Le back-end appelle le service IA via un client HTTP configurable (URL et délai d’attente).
+5.6.2 Garanties de non-régression
+Le service d’intégration applique trois garanties :
+—Interrupteur global :la détection IA peut être désactivée globalement ; dans ce cas aucun
+appel réseau n’est émis et le traitement métier se poursuit à l’identique.
+—Résistance aux pannes :toute erreur (timeout, réseau, réponse vide) est capturée et jour-
+nalisée sans jamais interrompre le traitement appelant.
+48
+=====PAGE 62=====
+Chapitre 5. Sprint 3 : Détection hybride des anomalies (règles métier + IA Python) et
+recommandations
+—Idempotence :si une transaction précédemment signalée par l’IA ne l’est plus lors d’un
+nouveau passage, l’ancienne anomalie IA est purgée pour éviter les doublons.
+5.6.3 Enrichissement de la transaction
+En cas d’anomalie IA, la transaction est enrichie du score de risque, du niveau de risque, du
+type et de la source de l’anomalie, de la version du modèle utilisé, des raisons produites par le
+module Python et de la recommandation associée.
+5.7 EntitéAnomalieet cycle de vie
+Chaque anomalie d ˘00e9tect˘00e9e (quelle que soit sa source) est persist ˘00e9e avec son type,
+son statut, la p ˘00e9riode de paie, le client et le salari ˘00e9 concern ˘00e9s, l’IBAN masqu ˘00e9,
+le montant, les raisons qui l’expliquent et la recommandation associ ˘00e9e. Le cycle de vie est
+tri-états (Tableau 5.5).
+Statut Signification
+OUVERTE Anomalie nouvellement détectée, non traitée
+CORRIGEE Anomalie résolue (correction apportée à la fiche de paie)
+IGNOREE Anomalie examinée et jugée non pertinente, elle est exclue des KPI d’er-
+reurs bloquantes
+TABLE5.5 – Cycle de vie des anomalies
+L’endpoint de changement de statut accepte le nouveau statut et un commentaire optionnel.
+Chaque changement est tracé dans le journal d’audit.
+5.8 Moteur de recommandations
+Pour renforcer la valeur ajoutée métier, chaque anomalie est associée à une recommandation
+contextualisée qui utilise les vraies valeurs du dossier concerné (matricule, IBAN masqué, mon-
+tant, période, nombre d’occurrences). Le Tableau 5.6 donne un extrait du catalogue.
+49
+=====PAGE 63=====
+Chapitre 5. Sprint 3 : Détection hybride des anomalies (règles métier + IA Python) et
+recommandations
+Type Recommandation (exemple)
+IBAN_INV ALIDE « IBAN FR76****0189 du salarié EMP001 invalide (clé modulo 97).
+Demander un RIB à jour au salarié, corriger l’IBAN dans la fiche salarié,
+puis relancer la génération. »
+BIC_INV ALIDE « BIC XYZABC12 invalide : il doit contenir 8 ou 11 caractères. Corriger
+le BIC dans la fiche salarié. »
+DOUBLON_PAIEMENT« Le salarié EMP005 est payé 2 fois sur la période 2026-08. Supprimer
+la fiche de paie en double (id 437) avant de relancer la génération. »
+MONTANT_INV ALIDE« Montant de -1500,00 C pour EMP007 : un virement de salaire doit
+être strictement positif. Corriger le montant ou exclure la fiche du lot. »
+NET_SUPERIEUR_BRUT« Le net (3200,00 C) est supérieur au brut (3100,00 C) pour EMP009 :
+vérifier le calcul des cotisations, puis corriger la fiche. »
+MONTANT_SUSPECT« Montant de 15200,00 C (Montant 1,8× la moyenne des 6 derniers
+mois ; IBAN modifié ce mois-ci). Vérifier primes/rappels ; si justifié,
+ignorer, sinon corriger. »
+ERREUR_XSD « Élément Ustrd invalide (Longueur hors norme : 140 caractères autori-
+sés au maximum). Nettoyer le champ puis régénérer. »
+TABLE5.6 – Extrait du catalogue de recommandations
+Le moteur comporte un garde-fou : toute erreur lors de la construction d’un libellé déclenche
+un repli sur une recommandation générique sans jamais interrompre la détection.
+5.9 Configuration et supervision
+Le comportement de l’intégration IA (activation, URL du service, délai d’attente, seuil de score,
+profondeur d’historique) est entièrement piloté par configuration externe, sans nécessiter de
+modification du code. Des endpoints réservés à l’administrateur permettent de superviser l’état
+du service IA et de déclencher un réentraînement.
+5.10 Interface React
+La page des anomalies affiche la liste des anomalies détectées. Chaque ligne porte un badge de
+niveau coloré, le type (règle/IA/XSD), le matricule, l’IBAN masqué, le montant, les raisons et
+la recommandation. Un panneau latéral permet de changer le statut (ouverte/corrigée/ignorée)
+avec un commentaire.
+50
+=====PAGE 64=====
+Chapitre 5. Sprint 3 : Détection hybride des anomalies (règles métier + IA Python) et
+recommandations
+[Figure à produire :fig5_2_anomalies_liste]
+FIGURE5.2 – Interface Anomalies : règles + IA + recommandations
+[Figure à produire :fig5_3_anomalie_detail]
+FIGURE5.3 – Détail d’une anomalie IA avec explications et recommandation
+5.11 Évaluation
+5.11.1 Protocole d’évaluation
+Le modèle Isolation Forest de production est comparé à une règle naïve de seuil fixe, utilisée
+comme ligne de base simple ne tenant pas compte du comportement historique du salarié ou
+du client. L’évaluation s’appuie sur un jeu de donnéessynthétiquegénéré pour les besoins
+du développement ; aucune donnée réelle de paie n’a été utilisée pour cette évaluation (voir
+section 6.10 pour les limites que cela implique).
+5.11.2 Métriques retenues
+Trois métriques usuelles de classification binaire (paiement anormal / normal) sont retenues :
+—Précision (precision): parmi les paiements signalés comme anormaux par le modèle, la
+proportion qui le sont réellement. Une précision faible traduit un nombre élevé de faux
+positifs, coûteux en temps de vérification pour le gestionnaire RH.
+—Rappel (recall): parmi les paiements réellement anormaux, la proportion effectivement
+détectée par le modèle. Un rappel faible traduit des anomalies non détectées (faux néga-
+tifs), risquées du point de vue métier.
+—F1-score: moyenne harmonique de la précision et du rappel, qui résume les deux mé-
+triques précédentes en une seule valeur lorsqu’un compromis entre faux positifs et faux
+négatifs doit être évalué.
+51
+=====PAGE 65=====
+Chapitre 5. Sprint 3 : Détection hybride des anomalies (règles métier + IA Python) et
+recommandations
+5.11.3 Résultats
+Le Tableau 5.7 présente le format de restitution retenu pour comparer les deux approches sur le
+jeu de données synthétique. Les valeurs numériques doivent être complétées à partir de l’exé-
+cution réelle du protocole d’évaluation.
+Approche Précision Rappel F1-score
+Seuil fixe (ligne de base) [À compléter
+avec le résultat
+réel]
+[À compléter
+avec le résultat
+réel]
+[À compléter
+avec le résultat
+réel]
+Isolation Forest (production) [À compléter
+avec le résultat
+réel]
+[À compléter
+avec le résultat
+réel]
+[À compléter
+avec le résultat
+réel]
+TABLE5.7 – Comparaison Isolation Forest vs seuil fixe sur le jeu de données synthétique
+Le nombre de paiements et d’anomalies synthétiques utilisés pour cette évaluation[À complé-
+ter avec la valeur réelle].
+5.11.4 Tests automatisés
+Côté Java, des tests automatisés vérifient que la désactivation de l’IA court-circuite bien le
+client, qu’un timeout n’empêche pas le traitement, et que la transaction est correctement enrichie
+en cas d’anomalie. Les contrôles métier et le moteur de recommandations sont couverts par des
+tests dédiés. Le nombre total de tests automatisés (back-end et module IA) est[À compléter
+avec la valeur réelle].
+5.12 Conclusion
+Ce sprint 3 a doté la plateforme d’une couche de détection d’anomalieshybrideunique : le
+moteur de règles symboliques Java traite avec explicabilité totale les cas formellement caracté-
+risés (IBAN, BIC, montants, doublons, net > brut, XSD), tandis que le service IA Python dédié
+détecte les montants statistiquement suspects au moyen d’un Isolation Forest versionné qui ex-
+ploite des features comportementales. Les deux sources partagent le même format d’anomalie,
+un cycle de vie trois-états et un catalogue de recommandations contextualisées. L’intégration
+back-end garantit, par un interrupteur global et la capture des erreurs, que le traitement mé-
+tier se poursuit même en cas d’indisponibilité du service IA. Le sprint suivant exploitera ces
+anomalies pour construire le tableau de bord KPI et finaliser la conteneurisation.
+52
+=====PAGE 66=====
+Chapitre 6
+Sprint 4 : Tableau de bord KPI, cycle de
+vie et conteneurisation
+6.1 Introduction
+Ce dernier sprint termine la plateforme en fournissant trois briques essentielles pour une mise
+en production effective : untableau de bord KPIqui restitue, en lecture seule, les indica-
+teurs clés de l’activité SEPA (fiches générées, erreurs bloquantes, taux d’erreurs, évolution sur
+douze mois, top clients, répartitions par type/source/statut) ; la finalisation ducycle de vie des
+anomaliesassortie du journal d’audit étendu aux changements de statut ; et enfin uneconte-
+neurisationcomplète viadocker-composequi démarre les quatre services (PostgreSQL,
+back-end, module IA, front-end) d’une seule commande, prête pour un déploiement en recette
+ou en production.
+53
+=====PAGE 67=====
+Chapitre 6. Sprint 4 : Tableau de bord KPI, cycle de vie et conteneurisation
+6.2 Backlog du sprint
+User Story Est. (h) Priorité Description
+US-1 – KPI mensuels 12 Haute En tant qu’administrateur, je veux les fiches gé-
+nérées, les erreurs bloquantes, le taux d’erreurs et
+le montant total viré du mois.
+US-2 – Évolution sur 12
+mois
+10 Haute En tant qu’administrateur, je veux visualiser
+l’évolution du nombre de fiches et d’erreurs sur
+les douze derniers mois.
+US-3 – Top clients & ré-
+partitions
+10 Haute En tant qu’administrateur, je veux le top 5
+des clients à anomalies et les répartitions par
+type/source/statut.
+US-4 – Journal d’audit du
+cycle de vie
+6 Moyenne En tant qu’auditeur, je veux retrouver les change-
+ments de statut d’anomalies dans le journal.
+US-5 – Conteneurisation
+Docker
+10 Haute En tant qu’ops, je veux démarrer toute la plate-
+forme avec docker compose up.
+US-6 – Documentation
+API OpenAPI
+4 Moyenne En tant que développeur, je veux une page Swag-
+ger UI pour tester l’API.
+TABLE6.1 – Backlog du Sprint 4
+6.3 Tableau de bord KPI
+6.3.1 Définitions
+Deux définitions sont centrales dans la conception du tableau de bord :
+—Fiche générée: transaction au statutAPPROUVEEsur la période. Ce sont les fiches réel-
+lement consommées par la génération SEPA, à l’exclusion des brouillons et des rejets.
+—Erreur bloquante: anomalie dont le type empêche l’émission du fichier (IBAN/BIC
+invalide, montant invalide, doublon, net > brut, erreur XSD,CtrlSumincohérent)etdont
+le statut n’est pasIGNOREE. Les avertissements non bloquants (MONTANT_SUSPECT
+de l’IA,IBAN_PARTAGE) ne sont pas comptés dans ce total.
+6.3.2 Indicateurs restitués
+Le tableau de bord agrège les indicateurs résumés au Tableau 6.2.
+54
+=====PAGE 68=====
+Chapitre 6. Sprint 4 : Tableau de bord KPI, cycle de vie et conteneurisation
+Champ Description
+periode Période affichée (mois précédent par défaut)
+fichesGenerees Nombre de transactions approuvées sur la période
+clientsConcernes Nombre distinct de clients ayant au moins une fiche générée
+nbErreurs Nombre d’erreurs bloquantes (hors anomalies ignorées)
+tauxErreur Proportion de fiches en erreur, en pourcentage
+montantTotalVire Somme des montants des fiches approuvées
+anomaliesParType Répartition des anomalies par type
+anomaliesParSource Répartition des anomalies par source (règle / IA / XSD)
+anomaliesParStatut Répartition par statut (ouvertes, corrigées, ignorées)
+evolutionMensuelle Série des 12 derniers mois (fiches, erreurs, taux)
+topClientsAnomalies Top 5 des clients les plus concernés par des anomalies
+TABLE6.2 – Indicateurs restitués par le tableau de bord
+6.3.3 Calcul des indicateurs
+Le service de tableau de bord est en lecture seule et repose exclusivement sur des agrégations
+SQL. La catégorisation des sources (règle, IA, XSD) est déduite du type de l’anomalie.
+L’évolution mensuelle est reconstruite pour les 12 derniers mois (mois courant inclus) avec une
+interpolation à zéro pour les mois sans données, de sorte que la série renvoyée est toujours de
+longueur 12. Chaque indicateur est encapsulé dans un blocsafequi, en cas d’erreur, enregistre
+unWARNet renvoie une valeur de repli : aucun KPI individuel ne peut mettre en défaut le tableau
+de bord dans son ensemble.
+6.3.4 Taux d’erreur
+Le taux d’erreur est le rapport, en pourcentage, entre le nombre d’erreurs bloquantes et le
+nombre de fiches générées sur la période (nul si aucune fiche n’a été générée), arrondi à deux
+décimales.
+6.3.5 Endpoint REST
+Verbe URL Rôle requis Paramètres optionnels
+GET /api/dashboard/kpi ADMIN / AUDIT periode, clientId, departe-
+mentId, expertId
+TABLE6.3 – Endpoint du tableau de bord KPI
+Le filtre parclientIdpermet de restreindre tous les indicateurs à un seul client ; les filtres
+departementIdetexpertIdsont réservés à une évolution future (acceptés par le contrô-
+leur mais ignorés pour l’instant).
+55
+=====PAGE 69=====
+Chapitre 6. Sprint 4 : Tableau de bord KPI, cycle de vie et conteneurisation
+6.3.6 Interface React
+Le tableau de bord compose les indicateurs sous forme de cartes et de graphiques. Les cartes
+du haut (fiches, clients, erreurs, taux, montant total) sont des compteurs animés. Les graphiques
+illustrent l’évolution mensuelle et les répartitions par type, source et statut. Un sélecteur de
+période et un filtre client déclenchent le rechargement des données.
+[Figure à produire :fig6_1_kpi_dashboard]
+FIGURE6.1 – Tableau de bord KPI de la plateforme
+[Figure à produire :fig6_2_dashboard_accueil]
+FIGURE6.2 – Page d’accueil opérationnelle (statistiques et dernières anomalies)
+6.4 Finalisation du cycle de vie des anomalies
+Les changements de statut (ouverte→corrigée / ignorée) sont désormais tracés dans le journal
+d’audit, avec l’identifiant de l’anomalie, l’ancien et le nouveau statut, et le commentaire option-
+nel. Une anomalie ignorée sort automatiquement du décompte des erreurs bloquantes utilisé par
+les KPI, ce qui permet à l’administrateur d’améliorer la lisibilité du tableau de bord sans perdre
+l’information historique.
+6.5 Documentation OpenAPI / Swagger
+La documentation de l’API est générée automatiquement à partir des contrôleurs grâce à springdoc-
+openapi, et exposée via une page interactive Swagger accessible sans authentification, facilitant
+l’intégration par les équipes partenaires.
+56
+=====PAGE 70=====
+Chapitre 6. Sprint 4 : Tableau de bord KPI, cycle de vie et conteneurisation
+6.6 Conteneurisation Docker
+6.6.1 Dockerfiles multi-stages
+Chacun des trois services applicatifs embarque son propre Dockerfile. Le back-end utilise une
+construction en deux étapes qui met en cache les dépendances avant de copier le code source,
+réduisant les reconstructions ultérieures. Le module IA s’appuie sur une image Python légère.
+Le front-end sert la SPA en mode développement (ou pourrait être servi en production derrière
+un serveur web après compilation).
+6.6.2 Orchestrationdocker-compose
+Le fichierdocker-compose.ymlà la racine du projet déclare quatre services (Tableau 6.4)
+connectés sur le réseau par défaut, avec un volume persistantpgdatapour PostgreSQL et des
+healthcheckassurant un ordre de démarrage cohérent.
+Service Image Port Rôle
+postgres postgres :16-alpine 5432 SGBD (sepa_db, user sepa)
+ai-module build local 8000 FastAPI + Isolation Forest
+backend build local 8080 Spring Boot 3 + JWT + REST
+frontend build local 5173 React 18 + Vite
+TABLE6.4 – Services déclarés dansdocker-compose.yml
+Les relations entre services sont déclarées par la clausedepends_onassortie des conditions
+service_healthyouservice_started:
+—backendattendpostgres(healthy, testpg_isready)etai-module;
+—ai-moduleattendpostgres(healthy) ;
+—frontendattendbackend.
+6.6.3 Variables d’environnement
+Les secrets et paramètres (connexion à la base de données, clé JWT, configuration du service
+IA) sont externalisés par variables d’environnement injectées pardocker-compose. Ce mé-
+canisme respecte le principe « douze-facteurs » et facilite la bascule entre environnements (dé-
+veloppement, recette, production).
+6.6.4 Exploitation
+La plateforme se démarre, se reconstruit et s’arrête avec les commandes standard dedocker
+compose. Des comptes de démonstration permettent de tester chaque rôle ; ces identifiants
+n’ont vocation à exister qu’en environnement de démonstration.
+57
+=====PAGE 71=====
+Chapitre 6. Sprint 4 : Tableau de bord KPI, cycle de vie et conteneurisation
+6.7 Points d’accès finaux
+Une fois la plateforme démarrée, trois URL sont exposées à l’utilisateur (Tableau 6.5).
+Service URL
+Interface web React http ://localhost :5173
+API REST Spring Boot http ://localhost :8080/api/. . .
+Documentation Swagger http ://localhost :8080/swagger-ui.html
+Module IA FastAPI
+(health)
+http ://localhost :8000/health
+Module IA FastAPI
+(docs)
+http ://localhost :8000/docs
+TABLE6.5 – URL exposées par la plateforme
+6.8 Synthèse qualité
+Le Tableau 6.6 récapitule l’empreinte de tests livrée à la clôture du sprint.
+Module Suites de tests Technologie
+Authentification + Audit Tests du service d’authentification et
+du journal d’audit
+JUnit 5 + Spring Boot
+Test
+Virements de masse Tests de lecture du XSD, de génération
+(validée contre le XSD officiel) et de
+validation
+JUnit 5
+Détection d’anomalies Tests des contrôles métier, des recom-
+mandations et de l’intégration IA
+JUnit 5 + mocks
+KPI dashboard Tests du service et du contrôleur de ta-
+bleau de bord
+JUnit 5
+Module IA Python Tests de la détection et du calcul des
+features
+pytest
+TABLE6.6 – Suites de tests livrées à la fin du sprint 4
+6.9 Bilan quantitatif
+Le Tableau 6.7 récapitule les principaux indicateurs quantitatifs de la réalisation. Les valeurs
+non mesurées à ce stade du rapport sont explicitement indiquées comme restant à compléter
+plutôt qu’estimées.
+58
+=====PAGE 72=====
+Chapitre 6. Sprint 4 : Tableau de bord KPI, cycle de vie et conteneurisation
+Indicateur Valeur
+Versions du schéma pain.001 prises en charge 2 (001.001.03, 001.001.09)
+Rôles applicatifs 4 (Administrateur, Gestionnaire RH,
+Validateur, Auditeur)
+Types d’anomalies supportés (règles + IA +
+XSD)
+9 (voir Tableau 5.2)
+Features comportementales utilisées par le
+modèle IA
+6 (voir Tableau 5.3)
+Services conteneurisés orchestrés 4 (base de données, back-end, module
+IA, front-end)
+Suites de tests automatisés (familles fonction-
+nelles couvertes)
+5 (voir Tableau 6.6)
+Nombre total de tests automatisés (back-end
++ module IA)
+[À compléter avec la valeur réelle]
+Nombre de scénarios de test manuels/recette
+exécutés
+[À compléter avec la valeur réelle]
+Nombre de transactions traitées lors des es-
+sais
+[À compléter avec la valeur réelle]
+Nombre d’anomalies détectées lors des essais [À compléter avec la valeur réelle]
+Temps moyen de génération d’un fichier
+SEPA (lot type)
+[À compléter avec la valeur réelle]
+Temps moyen de validation XSD d’un fichier
+généré
+[À compléter avec la valeur réelle]
+TABLE6.7 – Bilan quantitatif de la réalisation
+6.10 Limites du projet
+Au terme de cette réalisation, plusieurs limites peuvent être identifiées de façon académique,
+sans minimiser la valeur de la solution livrée :
+—Dépendance à des données synthétiques pour l’évaluation de l’IA :le modèle Isola-
+tion Forest a été entraîné et évalué sur des données générées synthétiquement (voir cha-
+pitre 5), en l’absence de données historiques réelles et anonymisées de paie au moment
+de la réalisation. Les performances mesurées sur ce jeu synthétique ne garantissent pas
+un comportement identique sur des données de production.
+—Quantité et diversité des données disponibles :le volume et la variété des scénarios
+de paiement couverts par les données synthétiques restent limités en comparaison de la
+diversité réelle des situations rencontrées en production (multiplicité des clients, saison-
+nalité, événements de paie exceptionnels).
+—Limites inhérentes aux modèles non supervisés :l’Isolation Forest ne dispose d’aucune
+vérité terrain (étiquetage humain des anomalies réelles) ; il ne peut donc pas être évalué
+avec la même rigueur qu’un modèle supervisé, et son taux de faux positifs/négatifs en
+conditions réelles reste à mesurer.
+59
+=====PAGE 73=====
+Chapitre 6. Sprint 4 : Tableau de bord KPI, cycle de vie et conteneurisation
+—Nécessité de données historiques réelles et anonymisées :un déploiement en produc-
+tion bénéficierait d’un réentraînement sur un historique réel de paiements, anonymisé
+conformément aux exigences de protection des données, afin de mieux calibrer les seuils
+de détection.
+—Généralisation du modèle :les features comportementales retenues (écart à la moyenne
+du salarié, z-score client, variation mensuelle, changement d’IBAN, paiements partageant
+un IBAN) ont été définies à partir de l’analyse métier du projet ; leur capacité à généraliser
+à d’autres contextes clients n’a pas été mesurée hors du périmètre étudié.
+—Couverture des versions ISO 20022 :seules les variantespain.001.001.03et
+pain.001.001.09du messageCustomer Credit Transfer Initiationsont prises en
+charge ; les autres messages ISO 20022 (prélèvementspain.008, relevéscamt.053,
+. . .) ne sont pas couverts par la plateforme actuelle.
+6.11 Conclusion
+Ce sprint 4 a transformé le prototype des sprints précédents en une plateforme opérationnelle :
+le tableau de bord KPI restitue, en lecture seule et par agrégations SQL, les indicateurs clés
+d’activité (fiches générées, erreurs bloquantes, taux d’erreurs, évolution sur douze mois, top
+clients, répartitions par type/source/statut) avec un filtre par client. Le cycle de vie des anoma-
+lies est désormais complet et chaque transition est tracée dans le journal d’audit. L’orchestration
+docker-composedémarre les quatre services (PostgreSQL, back-end, IA, front-end) en res-
+pectant les dépendances et leshealthcheck, prête pour un déploiement en recette. Enfin,
+la documentation OpenAPI auto-générée simplifie l’intégration par les équipes partenaires. La
+plateforme est ainsi complète : de l’import d’un schéma XSD à la génération validée, de la
+détection hybride des anomalies à la restitution par KPI.
+60
+=====PAGE 74=====
+Conclusion Générale
+Problème initial
+Le versement mensuel des salaires au sein des organisations utilisatrices de la solution de
+paieHR Accessrepose sur la génération de fichiers de virement SEPA conformes à la norme
+ISO 20022. Ce processus restait, avant ce projet, exposé à plusieurs risques : des contrôles li-
+mités à la conformité structurelle du XML, l’absence de détection automatisée des anomalies
+métier (IBAN invalide, montants aberrants, doublons), une gestion figée d’une seule version du
+schéma XSD, et l’absence de traçabilité fine et de pilotage par indicateurs. Ces limites se tra-
+duisaient par des rejets bancaires, des délais de paiement et une charge de vérification manuelle
+importante pour les gestionnaires RH.
+Solution proposée
+Pour répondre à ce constat, ce projet de fin d’études, réalisé au sein de la société Sopra HR
+Software, a consisté à concevoir et implémenter une plateforme web qui automatise l’ensemble
+du cycle de traitement des flux SEPA : import et analyse dynamique des schémas XSD, géné-
+ration du fichierpain.001ajustée à la version du schéma choisi, validation structurelle sys-
+tématique, détection hybride des anomalies métier (règles expertes et intelligence artificielle),
+recommandations actionnables, journal d’audit complet et tableau de bord de pilotage par indi-
+cateurs clés.
+Réalisation technique
+Le sprint 0 a permis de préciser le domaine métier (paie, virements de salaires, norme ISO 20022,
+variantespain.001.001.03etpain.001.001.09, algorithme MOD-97 de validation
+des IBAN, format BIC ISO 9362) et d’arrêter les choix technologiques : un back-end Spring
+Boot 3.3 (Java 17) sécurisé par JWT, organisé en couches et accédant à PostgreSQL via Spring
+Data JPA/Hibernate, un front-end React 18 servi par Vite, une base de données PostgreSQL 16,
+et un service d’intelligence artificielle Python/FastAPI appuyé sur scikit-learn, le tout orches-
+tré pardocker-compose. L’approche de détection a été retenue sous formehybride: règles
+61
+=====PAGE 75=====
+Conclusion Générale
+symboliques Java pour l’explicabilité, modèle d’apprentissage automatique Python pour les
+anomalies statistiques faiblement caractérisées.
+Le sprint 1 a délivré le socle sécuritaire : authentification par jeton JWT avec hachage BCrypt
+des mots de passe, quatre rôles applicatifs (Administrateur, Gestionnaire RH, Validateur, Audi-
+teur) portés par Spring Security 6, gestion CRUD des utilisateurs réservée à l’administrateur, et
+journal d’audit traçant toutes les actions sensibles avec auteur, IP, horodatage et résultat (suc-
+cès/échec). Un contexte d’authentification centralisé protège les routes internes côté front-end.
+Le sprint 2 a livré le cœur métier de la plateforme : la gestiondynamiquedes schémas XSD
+(import, versions, analyse des contraintes), la génération du XML pain.001 en deux variantes
+adaptées automatiquement au schéma choisi, la validation XSD collectant toutes les erreurs
+avec traduction en clair, le nettoyage systématique des champs SEPA, la sécurité contre les
+attaques XXE, et la persistance immuable des fichiers générés garantissant un retéléchargement
+identique. L’interface React fournit un parcours bout en bout avec aperçu coloré et surlignage
+des erreurs.
+Le sprint 3 a doté la plateforme d’une couche de détection d’anomalieshybride: un moteur de
+règles symboliques applique les contrôles métier (validation des IBAN et des BIC, montants,
+doublons, net supérieur au brut), tandis qu’un service d’intelligence artificielle dédié calcule des
+features comportementales par paiement et exécute, en production, un modèle Isolation Forest
+versionné dont le score est converti en niveau de risque. Chaque anomalie est ensuite associée
+à une recommandation lisible qui intègre les vraies valeurs du dossier concerné (matricule,
+IBAN masqué, montant, période). L’intégration back-end garantit, par un interrupteur global et
+la capture des erreurs, que le traitement métier se poursuit même en cas d’indisponibilité du
+service IA. Les anomalies suivent un cycle de vie trois-états (ouverte, corrigée, ignorée).
+Le sprint 4 a transformé le prototype en plateforme opérationnelle. Le tableau de bord KPI
+restitue, en lecture seule et par agrégations SQL, les indicateurs clés d’activité : fiches géné-
+rées, erreurs bloquantes, taux d’erreurs, montant total viré, évolution sur douze mois, top 5 des
+clients à anomalies, répartitions par type/source/statut. Chaque indicateur est calculé de manière
+défensive afin de ne jamais rompre le tableau de bord en cas d’erreur ponctuelle. La conteneu-
+risationdocker-composeorchestre les quatre services (base de données, back-end, module
+IA, front-end) avec un ordre de démarrage cohérent, prêts pour un déploiement en recette. Enfin,
+la documentation OpenAPI auto-générée simplifie l’intégration par les équipes partenaires.
+Résultats obtenus
+La solution développée répond aux principaux objectifs fonctionnels et techniques définis au
+début du projet : gestion dynamique des XSD, génération automatique des fichiers SEPA multi-
+versions, validation XSD systématique avec collecte exhaustive des erreurs, détection hybride
+des anomalies métier, recommandations actionnables, journal d’audit complet, tableau de bord
+KPI, interface web unifiée en quatre rôles et conteneurisation Docker. Elle transforme un pro-
+62
+=====PAGE 76=====
+Conclusion Générale
+cessus partiellement manuel et sujet aux rejets bancaires en un processus davantage industria-
+lisé, tracé et piloté. L’évaluation quantitative détaillée du module de détection par intelligence
+artificielle (précision, rappel, F1-score) est présentée au chapitre 5 et reste, à ce stade, à com-
+pléter par des mesures exécutées sur le jeu de données disponible.
+Limites
+Les principales limites de la réalisation sont détaillées au chapitre 6 (section 6.10). Elles tiennent
+notamment à la dépendance du module d’intelligence artificielle à des données synthétiques
+pour son entraînement et son évaluation, à l’absence de vérité terrain propre aux modèles non
+supervisés, et à une couverture limitée aux variantespain.001.001.03etpain.001.001.09
+du standard ISO 20022.
+Perspectives
+Plusieurs pistes d’évolution peuvent être envisagées pour prolonger ce travail :
+—Enrichissement des features IA :intégration de données exogènes (jours fériés, événe-
+ments payroll comme régularisations ou primes exceptionnelles, calendrier salarial) afin
+de contextualiser davantage les scores et de réduire les faux positifs.
+—Ré-entraînement supervisé :mise en place d’une boucle de feedback : les anomalies
+marquées comme corrigées ou ignorées alimentent un jeu d’étiquettes qui permettrait
+d’évaluer, puis d’entraîner un modèle supervisé en complément de l’Isolation Forest.
+—Ouverture à d’autres messages ISO 20022 :extension àpain.008.001.xxpour les
+prélèvements SEPA et àcamt.053pour la réception des relevés bancaires afin d’auto-
+matiser le rapprochement des paiements effectivement exécutés.
+—Signature et archivage à valeur probante :signature électronique du fichier XML et
+archivage horodaté pour répondre aux exigences légales de conservation.
+—Externalisation de l’authentification :bascule du mécanisme JWT local vers un four-
+nisseur d’identité OAuth 2 / OIDC et introduction du MFA (reconnaissance faciale, OTP)
+sur les actions sensibles.
+—Industrialisation CI/CD :pipeline GitHub Actions ou GitLab CI, déploiement Kuber-
+netes avec monitoring (Prometheus, Grafana) et traces distribuées (OpenTelemetry).
+—Multi-locataire (SaaS) :isolation stricte des données par client (schéma PostgreSQL
+dédié ou colonnetenant_id) afin d’héberger plusieurs sociétés HR Access sur une
+même instance.
+Au-delà de la liste des fonctionnalités livrées, la contribution principale de ce projet est de
+démontrer la faisabilité d’une architecture combinant, sur un processus critique du système
+63
+=====PAGE 77=====
+Conclusion Générale
+d’information RH, un moteur de règles métier explicable et un modèle d’apprentissage automa-
+tique effectivement intégré au traitement applicatif, le tout appuyé sur une gestion dynamique
+des schémas XSD peu répandue dans les solutions existantes examinées. La plateforme réalisée
+constitue une base extensible pour la génération et le contrôle des flux SEPA de paie au sein de
+la solution HR Access.
+64
+=====PAGE 78=====
+Références
+[1] Winston W. Royce. Managing the development of large software systems, 1970.
+[2] Agile Alliance. Agile software development : Principles, patterns, and practices. Agile
+Alliance, 2026.
+[3] Scrum Alliance. Scrum guide : The definitive guide to scrum. Scrum Alliance, 2026.
+[4] ISO. Iso 20022 – universal financial industry message scheme.https://www.
+iso20022.org/, 2026. Accessed : 2026-09-10.
+[5] World Wide Web Consortium (W3C). Xml schema definition language (xsd).https:
+//www.w3.org/standards/xml/schema, 2026. Accessed : 2026-09-10.
+[6] European Payments Council. Epc sepa credit transfer rulebook.https://www.
+europeanpaymentscouncil.eu/, 2026. Accessed : 2026-09-10.
+[7] ISO. Iso 13616 – international bank account number (iban). International Organization
+for Standardization, 2020.
+[8] ISO. Iso 9362 – business identifier codes (bic). International Organization for Standardi-
+zation, 2022.
+[9] VMware, Inc. Spring boot : Convention over configuration for java-based applications.
+https://spring.io/projects/spring-boot, 2026. Accessed : 2026-09-10.
+[10] Meta Platforms, Inc. React : A javascript library for building user interfaces.https:
+//react.dev/, 2026. Accessed : 2026-09-10.
+[11] Evan You. Vite : Next generation frontend tooling.https://vitejs.dev/, 2026.
+Accessed : 2026-09-10.
+[12] Google LLC. Angular : The web development framework for building modern apps.
+https://angular.io/, 2026. Accessed : 2026-09-10.
+[13] Sebastián Ramírez. Fastapi : Modern, fast (high-performance) web framework for building
+apis with python.https://fastapi.tiangolo.com/, 2026. Accessed : 2026-09-
+10.
+[14] F. Pedregosa et al. scikit-learn : Machine learning in python.https://
+scikit-learn.org/, 2026. Accessed : 2026-09-10.
+65
+=====PAGE 79=====
+Références
+[15] PostgreSQL Global Development Group. Postgresql : The world’s most advanced open
+source relational database.https://www.postgresql.org/. Accessed : 2026-09-
+02.
+66
+=====PAGE 80=====
+Résumé
+Ce travail s’inscrit dans le cadre du projet de fin d’études réalisé au sein de Sopra HR Software
+en vue de l’obtention du diplôme national d’ingénieur à l’École Supérieure Privée des Sciences
+Appliquées et de Management.
+L’objectif de ce projet consiste à concevoir et implémenter, pour la solution de paie HR Access,
+une plateforme de génération, de validation et de contrôle des virements de salaires au format
+SEPA. Contrairement aux approches limitées à une version figée du schéma, la plateforme gère
+dynamiquement plusieurs versions du schéma XSDpain.001et valide systématiquement
+chaque fichier généré avant son enregistrement.
+La plateforme intègre une détection hybride des anomalies métier (règles expertes et intelli-
+gence artificielle), un tableau de bord d’indicateurs clés d’activité, ainsi qu’une authentification
+sécurisée et une gestion des rôles (administrateur, gestionnaire RH, validateur, auditeur), chaque
+action sensible étant tracée dans un journal d’audit.
+Mots clés— HR Access, SEPA, ISO 20022, pain.001, virements de salaires, validation XSD,
+détection d’anomalies, intelligence artificielle, Spring Boot, React, PostgreSQL.
+Abstract
+This work was carried out as part of a final-year project at Sopra HR Software, with the aim of
+obtaining the National Engineering Degree from the Private Higher School of Applied Sciences
+and Management (SESAME).
+The objective of this project is to design and implement, for theHR Accesspayroll solution,
+a platform for managing salary transfers in the SEPA format (ISO 20022,pain.001mes-
+sages). The platform enables the dynamic import and management of multiple versions of the
+XSD schema, the generation of the corresponding XML file from selected payments, and its
+systematic validation before being stored. It also incorporates a hybrid business anomaly detec-
+tion mechanism, combining an expert rule engine with an artificial intelligence service. Each
+detected anomaly is accompanied by an actionable recommendation. In addition, the platform
+provides a monitoring dashboard based on key performance indicators (KPIs), as well as fine-
+grained user role management.
+Keywords— HR Access, SEPA, ISO 20022, pain.001, salary transfers, XSD validation, ano-
+maly detection, artificial intelligence, Spring Boot, React, PostgreSQL.
