@@ -58,7 +58,7 @@ class AiAnomalyServiceTest {
     void ia_ok_marque_la_transaction_comme_montant_suspect() {
         properties.setEnabled(true);
         Transaction t = transaction();
-        when(repository.findByEmployeId(anyString())).thenReturn(List.of(t));
+        when(repository.findByEmployeIdIn(any())).thenReturn(List.of(t));
         when(repository.save(any(Transaction.class))).thenAnswer(i -> i.getArgument(0));
         when(client.detect(any())).thenReturn(new MontantSuspectResponse(
                 "iforest-2026-09-01",
@@ -78,7 +78,7 @@ class AiAnomalyServiceTest {
     void ia_en_erreur_le_traitement_continue_sans_exception() {
         properties.setEnabled(true);
         Transaction t = transaction();
-        when(repository.findByEmployeId(anyString())).thenReturn(List.of(t));
+        when(repository.findByEmployeIdIn(any())).thenReturn(List.of(t));
         when(client.detect(any())).thenThrow(new RuntimeException("timeout"));
 
         AnalyseResult result = service().analyser(List.of(t));

@@ -44,3 +44,5 @@ class TrainResponse(BaseModel):
 class HealthMS(BaseModel):
     status: str
     modelVersion: Optional[str] = None
+    source: Optional[str] = None
+    nbEntrainement: Optional[int] = None

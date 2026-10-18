@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -39,6 +41,7 @@ public class AiAnomalyService {
 
     private static final String TYPE_MONTANT_SUSPECT = "MONTANT_SUSPECT";
     private static final String SOURCE_IA = "IA";
+    static final int MIN_PAIEMENTS_ENTRAINEMENT = 100;
     private static final String RECOMMANDATION =
             "Vérifier primes/rappels dans la fiche de paie, confirmer ou corriger le montant.";
 
@@ -95,15 +98,36 @@ public class AiAnomalyService {
         }
     }
 
-    /** Déclenche un réentraînement du modèle (réservé à l'administrateur). */
+    /** Réentraîne le modèle sur les données synthétiques de référence. */
     public TrainResponse reentrainer() {
         return client.train(null);
     }
 
+    /**
+     * Réentraîne le modèle sur les paiements réels, sans ceux dont l'anomalie a été confirmée
+     * par un utilisateur : le modèle apprend ce qui est normal à partir de données vérifiées.
+     */
+    public TrainResponse reentrainerSurDonneesReelles(Set<Long> idsExclus) {
+        List<Transaction> lot = transactionRepository.findAll().stream()
+                .filter(t -> t.getId() != null && t.getMontant() != null && !idsExclus.contains(t.getId()))
+                .collect(Collectors.toList());
+        if (lot.size() < MIN_PAIEMENTS_ENTRAINEMENT) {
+            throw new IllegalStateException("Réentraînement impossible : " + lot.size()
+                    + " paiement(s) exploitable(s), il en faut au moins " + MIN_PAIEMENTS_ENTRAINEMENT + ".");
+        }
+        return client.train(construireRequete(lot));
+    }
+
     private MontantSuspectRequest construireRequete(List<Transaction> lot) {
+        Set<String> salaries = lot.stream().map(Transaction::getEmployeId)
+                .filter(Objects::nonNull).collect(Collectors.toSet());
+        Map<String, List<Transaction>> parSalarie = salaries.isEmpty() ? Map.of()
+                : transactionRepository.findByEmployeIdIn(salaries).stream()
+                        .collect(Collectors.groupingBy(Transaction::getEmployeId));
+
         List<PaiementDto> paiements = new ArrayList<>();
         for (Transaction t : lot) {
-            List<Transaction> anterieures = transactionRepository.findByEmployeId(t.getEmployeId())
+            List<Transaction> anterieures = parSalarie.getOrDefault(t.getEmployeId(), List.of())
                     .stream()
                     .filter(a -> a.getId() != null && !a.getId().equals(t.getId()))
                     .sorted(Comparator.comparing(

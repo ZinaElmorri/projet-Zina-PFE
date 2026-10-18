@@ -6,39 +6,47 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestClientException;
 
 import java.util.Map;
 
 /**
- * Supervision et pilotage du module IA, réservés à l'administrateur système.
+ * Supervision du module IA : consultation pour les utilisateurs métier, réentraînement réservé
+ * à l'administrateur système.
  */
 @RestController
 @RequestMapping("/api/admin/ai")
-@PreAuthorize("hasRole('ADMINISTRATEUR')")
+@PreAuthorize("hasAnyRole('ADMINISTRATEUR','GESTIONNAIRE_RH','VALIDATEUR')")
 public class AdminAiController {
 
-    private final AiAnomalyService aiAnomalyService;
+    private final AiSupervisionService supervision;
 
-    public AdminAiController(AiAnomalyService aiAnomalyService) {
-        this.aiAnomalyService = aiAnomalyService;
+    public AdminAiController(AiSupervisionService supervision) {
+        this.supervision = supervision;
     }
 
-    /** Indique si le module IA est disponible. */
     @GetMapping("/health")
     public Map<String, Object> health() {
-        return Map.of("disponible", aiAnomalyService.disponible());
+        return supervision.etat();
     }
 
-    /** Déclenche un réentraînement du modèle. */
+    @GetMapping("/metrics")
+    public Map<String, Object> metrics() {
+        return supervision.metriques();
+    }
+
+    /** Réentraîne le modèle sur les données synthétiques ou réelles (source=synthetique|reel). */
     @PostMapping("/train")
-    public ResponseEntity<?> train() {
+    @PreAuthorize("hasRole('ADMINISTRATEUR')")
+    public ResponseEntity<?> train(@RequestParam(defaultValue = AiSupervisionService.SOURCE_SYNTHETIQUE) String source) {
         try {
-            TrainResponse response = aiAnomalyService.reentrainer();
+            TrainResponse response = supervision.reentrainer(source);
             return ResponseEntity.ok(response);
-        } catch (Exception e) {
+        } catch (RestClientException e) {
             return ResponseEntity.status(503)
-                    .body(Map.of("erreur", "Module IA indisponible : " + e.getMessage()));
+                    .body(Map.of("erreur", "Module IA indisponible : réentraînement impossible pour le moment."));
         }
     }
 }

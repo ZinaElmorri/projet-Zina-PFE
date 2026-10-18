@@ -24,7 +24,8 @@ from sklearn.neighbors import LocalOutlierFactor
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import OneClassSVM
 
-from .config import CONTAMINATION, FEATURES, HISTORY_MONTHS, N_ESTIMATORS, RANDOM_STATE, SCORE_THRESHOLD
+from .config import (CONTAMINATION, FEATURES, HISTORY_MONTHS, N_ESTIMATORS, RANDOM_STATE,
+                     REGLE_IBAN_CHANGE, SCORE_THRESHOLD)
 from .features import compute_features
 from .synthetic import TYPES_ANOMALIES, generate_with_types
 
@@ -144,14 +145,23 @@ def _evaluer_un(nom: str, cle: str, predire, jeux, en_service: bool, t_train: Op
 
 def evaluer(modele, source: str, nb_entrainement: int, temps_entrainement: Optional[float]) -> Dict:
     """Évalue le modèle en service (``MontantSuspectModel``) et les modèles de comparaison."""
+    version = modele.version
     jeux = _jeux_de_test()
 
     def predire_prod(df, _paiements):
         scores, flags = modele.score(df)
         return np.asarray(scores), np.asarray(flags).astype(int)
 
-    resultats = [_evaluer_un("Isolation Forest (modèle en service)", "isolation_forest",
-                             predire_prod, jeux, True, temps_entrainement)]
+    def predire_if_seul(df, _paiements):
+        scores, flags = modele.score_isolation_forest(df)
+        return np.asarray(scores), np.asarray(flags).astype(int)
+
+    nom_prod = ("Isolation Forest + règle IBAN modifié (en service)" if REGLE_IBAN_CHANGE
+                else "Isolation Forest (en service)")
+    resultats = [_evaluer_un(nom_prod, "en_service", predire_prod, jeux, True, temps_entrainement)]
+    if REGLE_IBAN_CHANGE:
+        resultats.append(_evaluer_un("Isolation Forest seul", "isolation_forest",
+                                     predire_if_seul, jeux, False, temps_entrainement))
     resultats.append(_evaluer_un("Règle simple (montant > 2x moyenne)", "regle",
                                  _regle_simple, jeux, False, 0.0))
     for cle, (nom, predire, t_train) in _modeles_de_comparaison().items():
@@ -159,10 +169,11 @@ def evaluer(modele, source: str, nb_entrainement: int, temps_entrainement: Optio
 
     return {
         "date": datetime.datetime.now().isoformat(timespec="seconds"),
-        "modelVersion": modele.version,
+        "modelVersion": version,
         "entrainement": {"source": source, "nbPaiements": nb_entrainement},
         "configuration": {
-            "algorithme": "Isolation Forest",
+            "algorithme": "Isolation Forest" + (" + règle IBAN modifié" if REGLE_IBAN_CHANGE else ""),
+            "regleIbanModifie": REGLE_IBAN_CHANGE,
             "seuilScore": SCORE_THRESHOLD,
             "contamination": CONTAMINATION,
             "nbArbres": N_ESTIMATORS,
@@ -176,7 +187,8 @@ def evaluer(modele, source: str, nb_entrainement: int, temps_entrainement: Optio
             "seeds": list(SEEDS_TEST),
             "paiementsParTirage": N_CLIENTS_TEST * SALARIES_PAR_CLIENT_TEST,
             "tauxAnomalies": TAUX_ANOMALIES_TEST,
-            "regleDecision": f"anomalie si prédiction Isolation Forest = -1 ou score >= {SCORE_THRESHOLD}",
+            "regleDecision": f"anomalie si prédiction Isolation Forest = -1 ou score >= {SCORE_THRESHOLD}"
+                             + (" ou IBAN modifié" if REGLE_IBAN_CHANGE else ""),
             "comparaison": "Règle simple, LOF et One-Class SVM entraînés sur le jeu synthétique standard (seed 42)",
         },
         "modeles": resultats,

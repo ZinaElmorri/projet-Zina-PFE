@@ -1,6 +1,6 @@
-# Module IA — Détection d'anomalies
+# Module IA — Détection des montants suspects et reconnaissance faciale
 
-Service Python/FastAPI qui attribue un **score de risque** à chaque virement SEPA à l'aide de Scikit-Learn (Isolation Forest, Local Outlier Factor) et de règles statistiques.
+Service Python/FastAPI appelé uniquement par le backend Spring Boot.
 
 ## Prérequis
 - Python 3.11+
@@ -10,7 +10,6 @@ Service Python/FastAPI qui attribue un **score de risque** à chaque virement SE
 ```bash
 python -m venv .venv
 .venv\Scripts\activate        # Windows
-# source .venv/bin/activate   # Linux/macOS
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
@@ -19,48 +18,47 @@ Documentation interactive : `http://localhost:8000/docs`
 
 ## Endpoints
 
-| Méthode | Chemin        | Description                                  |
-|---------|---------------|----------------------------------------------|
-| GET     | `/health`     | Vérification de disponibilité                |
-| POST    | `/api/detect` | Analyse des transactions → scores de risque  |
+| Méthode | Chemin               | Description |
+|---------|----------------------|-------------|
+| GET     | `/health`            | Disponibilité du service |
+| GET     | `/model/health`      | Version du modèle, source et taille du jeu d'entraînement |
+| POST    | `/anomalies/detect`  | Score de suspicion (0-1), décision et raisons pour chaque paiement |
+| POST    | `/model/train`       | Réentraînement (corps vide = données synthétiques, sinon paiements réels) |
+| GET     | `/model/metrics`     | Rapport d'évaluation du modèle en service (202 pendant le calcul) |
+| POST    | `/api/face/encode`, `/api/face/verify` | Reconnaissance faciale (YuNet + SFace) |
 
-### Exemple de requête
+## Modèle de détection
 
-```json
-POST /api/detect
-{
-  "transactions": [
-    {"transactionId": 1, "employeId": "E001", "iban": "FR7630006000011234567890189", "montant": 2500.0},
-    {"transactionId": 2, "employeId": "E002", "iban": "FR7630006000011234567890189", "montant": 98000.0}
-  ]
-}
+- **Isolation Forest** (non supervisé, 200 arbres, contamination 1 %) sur 6 variables :
+  montant, écart à la moyenne du salarié (6 mois), z-score dans le client, variation vs mois précédent,
+  IBAN modifié, nombre de paiements sur le même IBAN.
+- **Règle complémentaire « IBAN modifié »** : un changement d'IBAN seul (montant normal) n'isole pas le point
+  dans les arbres (rappel mesuré : 0 %) ; il est donc toujours signalé pour vérification.
+- Décision : anomalie si prédiction Isolation Forest = -1, score ≥ seuil (0,6) ou IBAN modifié.
+- Raisons lisibles produites pour chaque alerte (`features.build_reasons`).
+
+Paramètres (variables d'environnement) : `AI_SCORE_THRESHOLD`, `AI_CONTAMINATION`, `AI_N_ESTIMATORS`,
+`AI_HISTORY_MONTHS`, `AI_REGLE_IBAN_CHANGE`.
+
+## Évaluation
+
+Après chaque entraînement, le modèle est évalué en arrière-plan et le rapport est écrit dans
+`app/montant_suspect/models/metrics.json` (exposé par `/model/metrics` et l'écran « Intelligence artificielle »).
+
+- 5 jeux de test synthétiques étiquetés de 1 000 paiements (3 % d'anomalies de 3 types), indépendants du jeu d'entraînement ;
+- métriques en moyenne ± écart-type : accuracy, accuracy équilibrée, précision, rappel, F1, ROC-AUC, PR-AUC ;
+- matrice de confusion cumulée et rappel par type d'anomalie ;
+- comparaison : Isolation Forest seul, règle simple (montant > 2× moyenne), Local Outlier Factor, One-Class SVM.
+
+```bash
+python -m scripts.compare_models --json rapport.json
 ```
 
-### Réponse
+L'accuracy seule est trompeuse (classes déséquilibrées) : un modèle qui ne signale rien obtient ~97 %.
+Les indicateurs pertinents sont le rappel, la précision, le F1 et le PR-AUC.
 
-```json
-[
-  {"transactionId": 1, "scoreRisque": 0.12, "niveauRisque": "FAIBLE", "explication": "aucune anomalie détectée"},
-  {"transactionId": 2, "scoreRisque": 0.91, "niveauRisque": "CRITIQUE", "explication": "montant statistiquement anormal"}
-]
-```
+## Tests
 
-## Méthodes de détection
-
-- **Isolation Forest** — anomalies globales sur les montants
-- **Local Outlier Factor** — anomalies de densité locale
-- **Z-score** — écart statistique par rapport à la moyenne
-- **Doublons** — même IBAN + même montant
-- **IBAN atypiques** — longueur hors norme ISO 13616
-
-## Structure
-
-```
-ai-module/
-├── app/
-│   ├── main.py              # API FastAPI
-│   ├── schemas.py           # Modèles Pydantic
-│   └── anomaly_detector.py  # Moteur de détection
-├── requirements.txt
-└── Dockerfile
+```bash
+python -m pytest -q
 ```

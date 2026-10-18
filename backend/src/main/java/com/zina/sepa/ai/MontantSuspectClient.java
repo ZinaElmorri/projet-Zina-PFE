@@ -1,10 +1,12 @@
 package com.zina.sepa.ai;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.zina.sepa.ai.dto.AiHealth;
 import com.zina.sepa.ai.dto.MontantSuspectRequest;
 import com.zina.sepa.ai.dto.MontantSuspectResponse;
 import com.zina.sepa.ai.dto.TrainResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -35,6 +37,14 @@ public class MontantSuspectClient {
                 .body(request != null ? request : new MontantSuspectRequest(null, java.util.List.of()))
                 .retrieve()
                 .body(TrainResponse.class);
+    }
+
+    /** Rapport d'évaluation du modèle (statut 202 tant que le calcul est en cours). */
+    public ResponseEntity<JsonNode> metrics() {
+        return aiRestClient.get()
+                .uri("/model/metrics")
+                .retrieve()
+                .toEntity(JsonNode.class);
     }
 
     public AiHealth health() {

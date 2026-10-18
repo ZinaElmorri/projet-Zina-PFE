@@ -30,3 +30,7 @@ generated-xml/
 # OS
 .DS_Store
 Thumbs.db
+
+# Modèle IA : métriques recalculées à chaque entraînement
+ai-module/app/montant_suspect/models/metrics.json
+.pytest_cache/
