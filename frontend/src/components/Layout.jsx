@@ -10,7 +10,6 @@ import {
   FileSearchOutlined,
   HistoryOutlined,
   LogoutOutlined,
-  RobotOutlined,
   SendOutlined,
   SwapOutlined,
   TeamOutlined,
@@ -37,15 +36,13 @@ const FIL_ARIANE = {
   [HISTORIQUE]: ['Paie et virements', 'Historique SEPA'],
   '/anomalies': ['Contrôle', 'Anomalies'],
   '/xsd': ['Contrôle', 'Schémas XSD'],
-  '/ia': ['Contrôle', 'Intelligence artificielle'],
   '/users': ['Administration', 'Utilisateurs'],
   '/audit': ['Administration', "Journal d'audit"],
   '/profil': ['Mon compte', 'Profil'],
 }
 
 // Pages déjà migrées vers antd : elles gèrent elles-mêmes leurs blocs blancs.
-const PAGES_MIGREES = new Set(['/ia'])
-const ROLES_IA = ['ADMINISTRATEUR', 'GESTIONNAIRE_RH', 'VALIDATEUR']
+const PAGES_MIGREES = new Set([])
 
 function menuItems(role) {
   const estAdmin = role === 'ADMINISTRATEUR'
@@ -67,7 +64,6 @@ function menuItems(role) {
       type: 'group', label: 'Contrôle', children: [
         { key: '/anomalies', icon: <AlertOutlined />, label: 'Anomalies' },
         { key: '/xsd', icon: <FileSearchOutlined />, label: 'Schémas XSD' },
-        ...(ROLES_IA.includes(role) ? [{ key: '/ia', icon: <RobotOutlined />, label: 'Intelligence artificielle' }] : []),
       ],
     },
     {

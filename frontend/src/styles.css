@@ -69,23 +69,6 @@ a { text-decoration: none; color: var(--primary); }
 .content-panel .masse-bloc { overflow-x: auto; }
 .page-header { margin-bottom: 16px; }
 
-/* Page Intelligence artificielle */
-.ia-page .ant-card { border-color: var(--border); }
-.ia-metrique { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.35; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.ia-metrique__ecart { font-size: 12px; color: #8A94A6; }
-.ia-ligne-service > td { background: #F0F4FA !important; }
-.ia-matrice { display: grid; grid-template-columns: 130px 1fr 1fr; gap: 8px; align-items: center; margin-bottom: 12px; }
-.ia-matrice__entete { text-align: center; font-size: 13px; }
-.ia-matrice__entete--ligne { text-align: left; }
-.ia-matrice__cellule { border: 1px solid var(--border); border-radius: 6px; padding: 12px; text-align: center; display: flex; flex-direction: column; }
-.ia-matrice__cellule--ok { background: #F1F8F3; }
-.ia-matrice__cellule--warn { background: #FFF7EC; }
-.ia-matrice__cellule--ko { background: #FDF1F1; }
-.ia-matrice__valeur { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
-.ia-matrice__libelle { font-size: 12px; color: #6B7280; }
-.ia-type { margin-bottom: 12px; }
-.ia-type__note { font-size: 12px; }
-
 /* Anciens styles : limités aux éléments hors antd (pages non encore migrées) */
 :where(button:not([class*="ant-"])) {
   background: var(--primary);

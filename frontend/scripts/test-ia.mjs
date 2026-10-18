@@ -72,13 +72,8 @@ async function page(s) {
 }
 
 const a = await page(admin)
-await a.p.goto(`${FRONT}/ia`, { waitUntil: 'networkidle' })
-await a.p.getByText('Comparaison des modèles').waitFor()
-await a.p.locator('.ant-table-row').first().waitFor({ timeout: 20000 })
-ok('page IA (admin) : tableau des modèles', await a.p.locator('.ant-table-row').count() === 5)
-ok('page IA (admin) : boutons de réentraînement', await a.p.getByRole('button', { name: /données réelles/ }).count() === 1)
-ok('page IA : matrice de confusion', await a.p.locator('.ia-matrice__cellule').count() === 4)
-await a.p.screenshot({ path: 'test-ia-admin.png', fullPage: true })
+await a.p.goto(`${FRONT}/`, { waitUntil: 'networkidle' })
+ok('admin : plus d’onglet Intelligence artificielle', await a.p.locator('.app-sider').getByText('Intelligence artificielle').count() === 0)
 
 await a.p.goto(`${FRONT}/transactions`, { waitUntil: 'networkidle' })
 ok('Transactions : un seul bouton IA', await a.p.getByRole('button', { name: 'Analyser (IA)' }).count() === 1
@@ -97,7 +92,6 @@ if (options.length > 1) {
   await a.p.getByRole('button', { name: 'Contrôle IA des montants' }).click()
   await a.p.locator('.ia-alert').filter({ hasText: 'Contrôle IA' }).waitFor({ timeout: 60000 })
   ok('Virements de masse : contrôle IA', true, (await a.p.locator('.ia-alert').filter({ hasText: 'Contrôle IA' }).innerText()).split('\n')[0])
-  await a.p.screenshot({ path: 'test-ia-masse.png' })
 } else {
   ok('Virements de masse : aucune période disponible pour tester', false)
 }
@@ -105,10 +99,7 @@ await a.ctx.close()
 
 const r = await page(rh)
 await r.p.goto(`${FRONT}/ia`, { waitUntil: 'networkidle' })
-await r.p.getByText('Comparaison des modèles').waitFor()
-ok('page IA (RH) : consultation sans bouton de réentraînement',
-  await r.p.getByRole('button', { name: /données réelles/ }).count() === 0
-  && await r.p.locator('.app-sider').getByText('Intelligence artificielle').count() === 1)
+ok('route /ia supprimée (retour au tableau de bord)', new URL(r.p.url()).pathname === '/')
 await r.ctx.close()
 
 const au = await page(auditeur)

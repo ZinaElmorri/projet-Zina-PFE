@@ -8,7 +8,6 @@ import { useAuth } from './context/AuthContext.jsx'
 const Audit = lazy(() => import('./pages/Audit.jsx'))
 const Anomalies = lazy(() => import('./pages/Anomalies.jsx'))
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'))
-const IntelligenceArtificielle = lazy(() => import('./pages/IntelligenceArtificielle.jsx'))
 const KpiDashboard = lazy(() => import('./pages/KpiDashboard.jsx'))
 const Login = lazy(() => import('./pages/Login.jsx'))
 const Profil = lazy(() => import('./pages/Profil.jsx'))
@@ -42,7 +41,6 @@ export default function App() {
           <Route path="/anomalies" element={<Anomalies />} />
           <Route path="/virements-masse" element={<VirementsMasse />} />
           <Route path="/xsd" element={<Xsd />} />
-          <Route path="/ia" element={<IntelligenceArtificielle />} />
           <Route path="/audit" element={<Audit />} />
           <Route path="/users" element={<Users />} />
           <Route path="/profil" element={<Profil />} />
