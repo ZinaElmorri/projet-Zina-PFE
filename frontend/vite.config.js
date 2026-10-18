@@ -12,7 +12,8 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (!id.includes('node_modules')) return undefined
-          if (/node_modules[\\/](antd|@ant-design|rc-[^\\/]+|@rc-component)[\\/]/.test(id)) return 'vendor-antd'
+          // antd est découpé automatiquement par Rollup : chaque page ne charge que ses composants.
+          if (/node_modules[\\/](antd|@ant-design|rc-[^\\/]+|@rc-component)[\\/]/.test(id)) return undefined
           return 'vendor'
         },
       },
