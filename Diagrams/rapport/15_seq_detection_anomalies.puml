@@ -1,0 +1,74 @@
+@startuml 15_seq_detection_anomalies
+!include _style.iuml
+title Diagramme de séquence : détection et traitement des anomalies
+autonumber "<b>0."
+skinparam responseMessageBelowArrow true
+
+actor "Gestionnaire RH\nou Validateur" as U
+boundary "Interface React\n(Anomalies.jsx)" as UI
+control "AnomalieController" as ACT
+control "AnomalieService" as AS
+participant "BusinessControlService" as BC
+participant "AiAnomalyService" as AI
+participant "CatalogRecommendationEngine" as RE
+database "PostgreSQL" as DB
+
+== Détection ==
+U -> UI : clique « Lancer la détection »
+UI -> ACT : POST /api/anomalies/detecter
+activate ACT
+ACT -> AS : detecter()
+activate AS
+AS -> DB : charger toutes les transactions
+
+group Règles métier
+  loop pour chaque transaction
+    AS -> BC : ibanValide(iban), bicValide(bic)
+    AS -> AS : montant <= 0 ?
+  end
+  AS -> AS : regrouper par IBAN + montant (DOUBLON_PAIEMENT)
+  AS -> AS : regrouper par IBAN (IBAN_PARTAGE)
+end
+
+group Intelligence artificielle
+  AS -> AI : analyser(transactions)
+  alt module IA disponible
+    AI --> AS : résultats (score, isAnomaly, raisons)
+    AS -> AS : créer les anomalies MONTANT_SUSPECT
+  else module IA indisponible
+    AI --> AS : disponible = false
+    AS -> AS : MONTANT_SUSPECT non évalué\n(les anomalies existantes restent ouvertes)
+  end
+end
+
+group Réconciliation avec le registre
+  AS -> DB : charger les anomalies existantes (par signature)
+  loop pour chaque anomalie détectée
+    alt nouvelle signature
+      AS -> RE : recommander(anomalie)
+      RE --> AS : recommandation de correction
+      AS -> DB : enregistrer (statut OUVERTE)
+    else déjà connue et non ignorée
+      AS -> DB : mettre à jour (rouverte si elle était CORRIGEE)
+    end
+  end
+  AS -> DB : anomalies OUVERTE plus détectées -> CORRIGEE\n(clôture automatique, corrigeePar = null)
+end
+AS --> ACT : DetectionResume(nouvelles, ouvertes, corrigées, ignorées)
+deactivate AS
+ACT --> UI : 200
+deactivate ACT
+UI --> U : liste paginée des anomalies et recommandations
+
+== Traitement manuel ==
+U -> UI : « Corriger » ou « Ignorer » (+ commentaire)
+UI -> ACT : PATCH /api/anomalies/{id}/statut
+ACT -> AS : changerStatut(id, statut, commentaire)
+alt IGNOREE sans commentaire
+  AS --> UI : 400 « commentaire obligatoire »
+else valide
+  AS -> DB : statut, commentaire, corrigeePar, corrigeeLe
+  AS --> UI : 200 AnomalieDto
+  UI --> U : statut mis à jour
+end
+@enduml

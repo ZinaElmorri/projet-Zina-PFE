@@ -1,0 +1,31 @@
+@startuml 23_etat_paiement
+!include _style.iuml
+title Diagramme d'états-transitions : paiement (Transaction)
+hide empty description
+
+[*] --> Paiement : saisie par le gestionnaire RH
+Paiement --> [*] : supprimer
+
+state "Paiement" as Paiement {
+  state "Brouillon" as Brouillon
+  state "Approuvé" as Approuve : peut figurer dans\nun fichier SEPA de masse
+  [*] --> Brouillon
+  Brouillon --> Brouillon : approuver\n[contrôle métier en échec]\n/ refus avec erreurs
+  Brouillon --> Approuve : approuver\n[IBAN, BIC et montant valides]
+  --
+  state "Non analysé" as NonAnalyse
+  state "Suspect IA" as SuspectIA : score, niveau de risque,\nraisons, version du modèle
+  state "Normal" as Normal
+  [*] --> NonAnalyse
+  NonAnalyse --> SuspectIA : analyse IA\n[score >= 0,6 ou IBAN modifié]
+  NonAnalyse --> Normal : analyse IA [sinon]
+  SuspectIA --> Normal : nouvelle analyse\n[plus suspect] / champs IA purgés
+  Normal --> SuspectIA : nouvelle analyse [suspect]
+}
+
+note right of Paiement
+  Les deux régions évoluent en parallèle :
+  l'alerte IA est un avertissement non bloquant,
+  elle n'empêche ni l'approbation ni la génération.
+end note
+@enduml

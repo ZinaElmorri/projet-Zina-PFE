@@ -1,0 +1,76 @@
+@startuml 12_seq_inscription_approbation
+!include _style.iuml
+title Diagramme de séquence : inscription avec photo et approbation par l'administrateur
+autonumber "<b>0."
+skinparam responseMessageBelowArrow true
+
+actor "Visiteur" as V
+actor "Administrateur\nsystème" as ADM
+boundary "Interface React\n(Register.jsx / Users.jsx)" as UI
+control "AuthController" as AC
+control "UserController" as UC
+control "UserService" as US
+control "FaceService" as FS
+participant "Module IA\n/api/face/encode" as IA
+database "PostgreSQL" as DB
+
+== Demande d'inscription ==
+V -> UI : renseigne nom complet, email, identifiant,\nmot de passe et type d'utilisateur (rôle)
+V -> UI : capture une photo de son visage (webcam)
+UI -> AC : POST /api/auth/register
+activate AC
+AC -> AC : valider la requête (@Valid)
+AC -> US : register(request)
+activate US
+US -> DB : existsByUsername / existsByEmail
+alt identifiant ou email déjà utilisé
+  US --> AC : exception
+  AC --> UI : 400 « déjà utilisé »
+else données uniques
+  US -> FS : encoder(image)
+  activate FS
+  FS -> IA : POST /api/face/encode
+  IA --> FS : vecteur du visage
+  FS --> US : encodage JSON
+  deactivate FS
+  US -> DB : enregistrer User\n(mot de passe BCrypt, actif = false, approuve = false)
+  US --> AC : User
+  deactivate US
+  AC --> UI : 201 « Demande envoyée, en attente d'approbation »
+  deactivate AC
+  UI --> V : message de confirmation
+end
+
+== Traitement par l'administrateur ==
+ADM -> UI : ouvre la page Utilisateurs
+UI -> UC : GET /api/users
+UC -> US : findAll()
+US -> DB : lister (demandes en attente en premier)
+UC --> UI : liste des comptes
+UI --> ADM : demandes « En attente d'approbation »
+
+alt approuver
+  ADM -> UI : clique « Approuver »
+  UI -> UC : POST /api/users/{id}/approuver
+  UC -> US : approuver(id)
+  US -> DB : approuve = true, actif = true
+  UC --> UI : 200 User
+  UI --> ADM : compte « Actif »
+else rejeter
+  ADM -> UI : clique « Rejeter »
+  UI -> UC : POST /api/users/{id}/rejeter
+  UC -> US : rejeter(id)
+  alt compte déjà approuvé
+    US --> UC : exception (409)
+  else demande en attente
+    US -> DB : supprimer le compte
+    UC --> UI : 204
+  end
+  UI --> ADM : liste mise à jour
+end
+
+note over V, DB
+  Tant que le compte n'est pas approuvé, la connexion est refusée
+  avec le message « Compte en attente d'approbation par l'administrateur ».
+end note
+@enduml

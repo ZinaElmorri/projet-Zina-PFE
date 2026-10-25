@@ -1,0 +1,21 @@
+@startuml 26_etat_defi_otp
+!include _style.iuml
+title Diagramme d'états-transitions : défi OTP (OtpChallenge)
+hide empty description
+
+state "En attente du code" as Attente : code haché (BCrypt)\nexpiration = envoi + 5 min
+state "Validé (consommé)" as Valide
+state "Expiré" as Expire
+state "Bloqué" as Bloque
+
+[*] --> Attente : mot de passe ou visage valide\n/ envoi du code par email
+Attente --> Attente : code invalide\n[tentatives < 5] / tentatives + 1
+Attente --> Attente : renvoyer le code\n[renvois < 3 et délai de 30 s écoulé]\n/ nouveau code, tentatives = 0
+Attente --> Valide : code correct\n/ émission du jeton JWT
+Attente --> Expire : délai de 5 minutes dépassé
+Attente --> Bloque : 5e code invalide
+Attente --> [*] : nouvelle connexion\n(ancien défi remplacé)
+Valide --> [*] : défi supprimé
+Expire --> [*] : défi supprimé
+Bloque --> [*] : défi supprimé
+@enduml

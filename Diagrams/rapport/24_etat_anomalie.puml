@@ -1,0 +1,27 @@
+@startuml 24_etat_anomalie
+!include _style.iuml
+title Diagramme d'états-transitions : anomalie
+hide empty description
+
+state "Ouverte" as Ouverte
+state "Corrigée" as Corrigee
+state "Ignorée" as Ignoree
+
+[*] --> Ouverte : détectée\n/ recommandation générée
+Ouverte --> Corrigee : marquer corrigée\n/ corrigeePar = utilisateur
+Ouverte --> Corrigee : plus détectée lors d'une détection\n[type évalué] / clôture automatique
+Ouverte --> Ignoree : ignorer\n[commentaire saisi]
+Corrigee --> Ouverte : détectée à nouveau
+Corrigee --> Ignoree : ignorer\n[commentaire saisi]
+Ignoree --> Corrigee : marquer corrigée
+
+note bottom of Ignoree
+  Une anomalie ignorée n'est jamais rouverte
+  automatiquement par la détection.
+end note
+note right of Corrigee
+  Si le module IA est indisponible,
+  les anomalies MONTANT_SUSPECT ne sont
+  pas clôturées automatiquement.
+end note
+@enduml

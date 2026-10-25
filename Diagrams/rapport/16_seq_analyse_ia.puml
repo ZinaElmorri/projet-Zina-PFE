@@ -1,0 +1,63 @@
+@startuml 16_seq_analyse_ia
+!include _style.iuml
+title Diagramme de séquence : analyse IA des montants suspects
+autonumber "<b>0."
+skinparam responseMessageBelowArrow true
+
+participant "Service appelant\n(MassPaymentService,\nAnomalieService...)" as CALL
+control "AiAnomalyService" as AI
+participant "MontantSuspectClient" as CL
+database "PostgreSQL" as DB
+box "Module IA (Python / FastAPI)" #FAFBFD
+  participant "router\n/anomalies/detect" as R
+  participant "features" as F
+  participant "MontantSuspectModel" as M
+end box
+
+CALL -> AI : analyser(lot de transactions)
+activate AI
+alt IA désactivée (app.ai.enabled = false)
+  AI --> CALL : AnalyseResult(disponible = false)
+else IA activée
+  AI -> DB : findByEmployeIdIn(salariés du lot)\n(historique en une seule requête)
+  loop pour chaque paiement
+    AI -> AI : historique des 6 derniers montants\n+ ibanChange (IBAN différent du précédent)
+  end
+  AI -> CL : detect(MontantSuspectRequest)
+  activate CL
+  CL -> R : POST /anomalies/detect (JSON)
+  activate R
+  R -> F : compute_features(paiements)
+  F --> R : DataFrame : montant, ecart_moyenne_salarie, zscore_client,\nvariation_mois_precedent, iban_change_recent, nb_paiements_meme_iban
+  R -> M : score(features)
+  activate M
+  M -> M : normaliser (StandardScaler)
+  M -> M : Isolation Forest : decision_function\nscore = 1 / (1 + e^(8 x decision))
+  M -> M : anomalie si prédiction = -1\nou score >= seuil (0,6)
+  M -> M : règle métier : IBAN modifié\ntoujours signalé (score >= seuil)
+  M --> R : scores, drapeaux
+  deactivate M
+  loop pour chaque paiement signalé
+    R -> F : build_reasons(ligne)
+    F --> R : raisons lisibles
+  end
+  R --> CL : modelVersion, résultats (ficheId, score, isAnomaly, raisons)
+  deactivate R
+  CL --> AI : MontantSuspectResponse
+  deactivate CL
+  alt réponse valide
+    loop pour chaque transaction
+      alt isAnomaly
+        AI -> DB : scoreRisque, niveauRisque, typeAnomalie = MONTANT_SUSPECT,\nsourceAnomalie = IA, modelVersion, raisons, recommandation
+      else ancienne anomalie IA
+        AI -> DB : purger les champs IA
+      end
+    end
+    AI --> CALL : AnalyseResult(true, modelVersion, résultats)
+  else erreur réseau / délai dépassé
+    AI --> CALL : AnalyseResult(disponible = false)
+    note right of CALL : le traitement continue\nsans bloquer l'utilisateur
+  end
+end
+deactivate AI
+@enduml

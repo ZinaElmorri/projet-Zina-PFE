@@ -1,0 +1,53 @@
+@startuml 19_act_authentification
+!include _style.iuml
+title Diagramme d'activité : authentification à deux facteurs
+
+start
+:Ouvrir la page de connexion;
+if (Mode de connexion ?) then (mot de passe)
+  :Saisir identifiant et mot de passe;
+  :Vérifier les identifiants (BCrypt);
+  if (Identifiants corrects ?) then (non)
+    :Journaliser l'échec (audit);
+    :Afficher « Identifiants invalides »;
+    stop
+  else (oui)
+  endif
+  if (Compte approuvé et actif ?) then (non)
+    :Journaliser l'échec (audit);
+    :Afficher « Compte en attente d'approbation »\nou « Compte désactivé »;
+    stop
+  else (oui)
+  endif
+else (reconnaissance faciale)
+  :Saisir l'identifiant;
+  :Capturer le visage (webcam);
+  :Extraire le vecteur du visage (SFace);
+  :Comparer au visage de référence\n(similarité cosinus);
+  if (Similarité >= 0,363 ?) then (non)
+    :Journaliser l'échec (audit);
+    :Afficher « Visage non reconnu »;
+    stop
+  else (oui)
+  endif
+endif
+
+:Générer un code OTP à 6 chiffres\n(haché, valable 5 minutes);
+:Envoyer le code par email;
+repeat
+  :Saisir le code reçu;
+  :Vérifier le code;
+  if (Code expiré ou 5 échecs ?) then (oui)
+    :Supprimer le défi;
+    :Afficher « veuillez vous reconnecter »;
+    stop
+  else (non)
+  endif
+  backward:Afficher « Code invalide »\n(renvoi possible);
+repeat while (Code correct ?) is (non) not (oui)
+:Générer le jeton JWT;
+:Mettre à jour la dernière connexion;
+:Journaliser la connexion réussie;
+:Afficher le tableau de bord selon le rôle;
+stop
+@enduml

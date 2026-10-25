@@ -1,0 +1,72 @@
+@startuml 11_seq_connexion_faciale
+!include _style.iuml
+title Diagramme de séquence : connexion par reconnaissance faciale
+autonumber "<b>0."
+skinparam responseMessageBelowArrow true
+
+actor "Utilisateur" as U
+boundary "Interface React\n(Login.jsx + WebcamCapture)" as UI
+control "AuthController" as AC
+control "AuthService" as AS
+control "FaceService" as FS
+participant "FaceClient" as FC
+database "PostgreSQL" as DB
+box "Module IA (FastAPI)" #FAFBFD
+  participant "/api/face/verify" as API
+  participant "FaceEngine\n(YuNet + SFace)" as FE
+end box
+
+U -> UI : choisit « Reconnaissance faciale »\net saisit son nom d'utilisateur
+UI -> U : demande l'accès à la caméra
+U -> UI : capture de son visage
+UI -> AC : POST /api/auth/face-login (username, image base64)
+activate AC
+AC -> AS : faceLogin(request)
+activate AS
+AS -> FS : authentifier(username, image)
+activate FS
+FS -> DB : charger l'utilisateur
+alt utilisateur inconnu, inactif ou sans visage enregistré
+  FS --> AS : exception « Visage non reconnu »
+else visage de référence disponible
+  FS -> FS : désérialiser l'encodage de référence (JSON)
+  FS -> FC : verify(image, reference)
+  activate FC
+  FC -> API : POST /api/face/verify
+  activate API
+  API -> FE : decode_image(image)
+  API -> FE : détecter le visage (YuNet)
+  alt aucun visage ou plusieurs visages
+    API --> FC : 400 « aucun visage détecté »
+  else un visage détecté
+    API -> FE : aligner et extraire le vecteur (SFace, 128 dimensions)
+    API -> FE : similarité cosinus avec la référence
+    FE --> API : similarité
+    API --> FC : match = (similarité >= 0,363), score
+  end
+  deactivate API
+  FC --> FS : VerifyResponse
+  deactivate FC
+  alt match = false
+    FS --> AS : exception « Visage non reconnu »
+  else match = true
+    FS --> AS : user
+  end
+end
+deactivate FS
+
+alt échec
+  AS -> AS : log(LOGIN, ECHEC)
+  AS --> AC : exception
+  AC --> UI : 400
+  UI --> U : « Visage non reconnu »
+else succès
+  AS -> AS : finaliserConnexion(user)
+  ref over AS, DB : Envoi et vérification du code OTP\n(voir diagramme « connexion par mot de passe et code OTP », étape 2)
+  AS --> AC : AuthResponse(otpRequis = true, challengeId)
+  AC --> UI : 200 OK
+  UI --> U : écran de saisie du code OTP
+end
+deactivate AS
+deactivate AC
+@enduml

@@ -1,0 +1,100 @@
+' Style commun aux diagrammes du rapport (sobre, imprimable en couleur ou en niveaux de gris)
+skinparam dpi 150
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam roundCorner 8
+skinparam ArrowColor #2F3B4C
+skinparam ArrowFontSize 11
+skinparam titleFontSize 16
+skinparam titleFontStyle bold
+skinparam wrapWidth 260
+skinparam maxMessageSize 260
+
+skinparam actor {
+  BorderColor #1F3864
+  BackgroundColor #FFFFFF
+  FontStyle bold
+}
+skinparam usecase {
+  BorderColor #1F3864
+  BackgroundColor #EAF1FB
+}
+skinparam rectangle {
+  BorderColor #1F3864
+  BackgroundColor #FFFFFF
+  FontStyle bold
+}
+skinparam package {
+  BorderColor #7F8FA6
+  BackgroundColor #F7F9FC
+  FontStyle bold
+}
+skinparam class {
+  BorderColor #1F3864
+  BackgroundColor #FFFFFF
+  HeaderBackgroundColor #EAF1FB
+  ArrowColor #2F3B4C
+  StereotypeFontColor #555555
+}
+skinparam classAttributeIconSize 0
+skinparam note {
+  BackgroundColor #FFF8E1
+  BorderColor #B8860B
+}
+skinparam sequence {
+  ParticipantBorderColor #1F3864
+  ParticipantBackgroundColor #EAF1FB
+  ParticipantFontStyle bold
+  ActorBorderColor #1F3864
+  ActorBackgroundColor #FFFFFF
+  LifeLineBorderColor #8C8C8C
+  LifeLineBackgroundColor #DDE7F5
+  GroupBorderColor #7F8FA6
+  GroupBackgroundColor #F2F5FA
+  GroupHeaderFontStyle bold
+  BoxBorderColor #7F8FA6
+  BoxBackgroundColor #FAFBFD
+  DividerBackgroundColor #EAF1FB
+  ReferenceBackgroundColor #F2F5FA
+}
+skinparam activity {
+  BorderColor #1F3864
+  BackgroundColor #EAF1FB
+  DiamondBorderColor #1F3864
+  DiamondBackgroundColor #FFFFFF
+  StartColor #1F3864
+  EndColor #1F3864
+  BarColor #1F3864
+}
+skinparam partition {
+  BorderColor #7F8FA6
+  BackgroundColor #F7F9FC
+}
+skinparam state {
+  BorderColor #1F3864
+  BackgroundColor #EAF1FB
+  StartColor #1F3864
+  EndColor #1F3864
+}
+skinparam component {
+  BorderColor #1F3864
+  BackgroundColor #EAF1FB
+}
+skinparam node {
+  BorderColor #1F3864
+  BackgroundColor #F7F9FC
+}
+skinparam database {
+  BorderColor #1F3864
+  BackgroundColor #EAF1FB
+}
+skinparam artifact {
+  BorderColor #1F3864
+  BackgroundColor #FFFFFF
+}
+skinparam entity {
+  BorderColor #1F3864
+  BackgroundColor #FFFFFF
+}

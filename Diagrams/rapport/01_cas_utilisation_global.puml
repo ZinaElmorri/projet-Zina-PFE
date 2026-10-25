@@ -1,0 +1,83 @@
+@startuml 01_cas_utilisation_global
+!include _style.iuml
+title Diagramme de cas d'utilisation global
+left to right direction
+skinparam nodesep 12
+skinparam ranksep 90
+
+actor "Visiteur" as V
+actor "Utilisateur\nauthentifié" as U
+actor "Administrateur\nsystème" as ADM
+actor "Gestionnaire RH" as RH
+actor "Validateur" as VAL
+actor "Auditeur" as AUD
+actor "Module IA\n<<système>>" as IA
+actor "Serveur mail\n<<système>>" as MAIL
+
+rectangle "Plateforme de gestion des virements SEPA" {
+  usecase "S'inscrire\n(photo du visage + rôle)" as UC_INSC
+  usecase "S'authentifier\n(mot de passe ou visage + OTP)" as UC_AUTH
+  usecase "Gérer son profil\n(visage de référence)" as UC_PROFIL
+  usecase "Consulter le tableau\nde bord et les KPI" as UC_KPI
+
+  usecase "Gérer les utilisateurs et\napprouver les inscriptions" as UC_USERS
+  usecase "Superviser et réentraîner\nle modèle IA" as UC_TRAIN
+
+  usecase "Gérer les paiements\net les contrôles métier" as UC_PAI
+  usecase "Gérer les schémas XSD" as UC_XSD
+  usecase "Générer un fichier\nSEPA de masse" as UC_MASSE
+  usecase "Contrôler les montants\npar l'IA" as UC_IA
+  usecase "Détecter et traiter\nles anomalies" as UC_ANO
+  usecase "Consulter l'historique\ndes fichiers SEPA" as UC_HIST
+
+  usecase "Approuver un paiement" as UC_APPR
+
+  usecase "Consulter les anomalies" as UC_ANO_LIRE
+  usecase "Consulter le journal\nd'audit" as UC_AUDIT
+}
+
+' Hiérarchie des acteurs (empilés verticalement)
+V -[hidden]right- U
+U -[hidden]right- ADM
+ADM -right-|> RH
+ADM -right-|> VAL
+RH -right-|> U
+VAL -right-|> U
+AUD -right-|> U
+
+V -- UC_INSC
+U -- UC_AUTH
+U -- UC_PROFIL
+U -- UC_KPI
+
+ADM -- UC_USERS
+ADM -- UC_TRAIN
+
+RH -- UC_PAI
+RH -- UC_XSD
+RH -- UC_MASSE
+RH -- UC_IA
+RH -- UC_ANO
+RH -- UC_HIST
+
+VAL -- UC_APPR
+VAL -- UC_IA
+VAL -- UC_ANO
+VAL -- UC_HIST
+
+AUD -- UC_ANO_LIRE
+AUD -- UC_AUDIT
+ADM -- UC_AUDIT
+
+UC_INSC -- IA
+UC_AUTH -- IA
+UC_IA -- IA
+UC_ANO -- IA
+UC_TRAIN -- IA
+UC_AUTH -- MAIL
+
+note right of ADM
+  L'administrateur hérite des droits
+  du gestionnaire RH et du validateur.
+end note
+@enduml

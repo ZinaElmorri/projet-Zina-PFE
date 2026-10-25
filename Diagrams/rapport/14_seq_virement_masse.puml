@@ -1,0 +1,85 @@
+@startuml 14_seq_virement_masse
+!include _style.iuml
+title Diagramme de séquence : génération d'un fichier SEPA de masse (pain.001)
+autonumber "<b>0."
+skinparam responseMessageBelowArrow true
+
+actor "Gestionnaire RH" as RH
+boundary "Interface React\n(VirementsMasse.jsx)" as UI
+control "MassController" as MC
+control "MassPaymentService" as MS
+participant "AiAnomalyService" as AI
+participant "BusinessControlService" as BC
+participant "XsdPain001Reader" as XR
+participant "MassPaymentXmlGenerator" as GEN
+participant "XsdErrorCollector" as XE
+database "PostgreSQL" as DB
+
+== Sélection des paiements ==
+RH -> UI : choisit société, période, matricules
+UI -> MC : GET /api/masse/paiements
+MC -> MS : paiements(clientId, periode, matricules, statuts)
+MS -> DB : filtrer (paiements APPROUVEE de la période)
+MC --> UI : liste des paiements + total
+UI --> RH : tableau des paiements
+
+== Contrôle IA des montants (facultatif) ==
+RH -> UI : clique « Contrôle IA des montants »
+UI -> MC : POST /api/masse/analyse-ia
+MC -> MS : analyserIa(...)
+MS -> AI : analyser(transactions)
+ref over AI : Analyse d'un lot par le module IA\n(diagramme « analyse IA des montants »)
+AI --> MS : AnalyseResult(disponible, modelVersion)
+MC --> UI : AnalyseIaMasse (nb suspects, score et raisons par ligne)
+UI --> RH : colonne IA + alerte récapitulative
+
+== Aperçu et validation XSD ==
+RH -> UI : choisit le schéma XSD et le débiteur,\nclique « Générer l'aperçu »
+UI -> MC : POST /api/masse/apercu
+activate MC
+MC -> MS : apercu(request)
+activate MS
+MS -> DB : charger le schéma XSD
+MS -> XR : meta(xsd)
+alt schéma non compatible pain.001
+  MS --> UI : 400 « Choisissez un schéma pain.001 compatible »
+else schéma compatible
+  MS -> DB : sélectionner les paiements
+  alt un paiement n'est pas APPROUVEE
+    MS --> UI : 409 « Génération refusée : paiements non approuvés »
+  else tous approuvés
+    MS -> BC : controle(transactions)
+    BC --> MS : erreurs et avertissements métier
+    MS -> MS : ajouter les avertissements IA\n(non bloquants)
+    MS -> GEN : generer(namespace, version, transactions, débiteur, ...)
+    GEN --> MS : XML pain.001 + MsgId + CtrlSum
+    MS -> XE : valider(xml, xsd)
+    XE --> MS : erreurs XSD (ligne, colonne, élément)
+    MS -> MS : audit XML_GENERE (aperçu)
+    MS --> MC : ApercuResponse(xml, valideXsd, erreurs, avertissements)
+    MC --> UI : 200
+    UI --> RH : XML avec lignes en erreur (rouge)\net avertissements (orange)
+  end
+end
+deactivate MS
+deactivate MC
+
+== Enregistrement et téléchargement ==
+RH -> UI : clique « Enregistrer »
+UI -> MC : POST /api/masse/fichiers
+MC -> MS : enregistrer(request)
+MS -> MS : reconstruire et revalider le XML
+alt XML non conforme au XSD
+  MS --> UI : 409 « enregistrement interdit »
+else XML conforme
+  MS -> DB : enregistrer FichierSepaGenere (contenu figé)
+  MS -> MS : audit XML_GENERE (enregistrement)
+  MC --> UI : 200 FichierResume
+  RH -> UI : clique « Télécharger »
+  UI -> MC : GET /api/masse/fichiers/{id}/telecharger
+  MC -> MS : pourTelecharger(id)
+  MS -> DB : charger le fichier
+  MC --> UI : fichier XML (application/xml)
+  UI --> RH : téléchargement du fichier SEPA
+end
+@enduml

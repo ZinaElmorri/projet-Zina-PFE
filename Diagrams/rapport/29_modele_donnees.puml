@@ -1,0 +1,144 @@
+@startuml 29_modele_donnees
+!include _style.iuml
+title Modèle physique des données (PostgreSQL)
+skinparam linetype ortho
+skinparam nodesep 50
+skinparam ranksep 60
+hide circle
+hide methods
+hide stereotype
+
+!define PK(x) <b><u>x</u></b>
+!define FK(x) <i>x</i>
+
+entity "utilisateurs" as utilisateurs {
+  PK(id) : bigserial
+  --
+  username : varchar(255) <<unique>>
+  password : varchar(255)
+  nom_complet : varchar(255)
+  email : varchar(255) <<unique>>
+  role : varchar(255)
+  face_encoding : text
+  actif : boolean
+  approuve : boolean
+  cree_le : timestamp
+  derniere_connexion : timestamp
+}
+
+entity "otp_challenges" as otp {
+  PK(id) : bigserial
+  --
+  challenge_id : varchar(64) <<unique>>
+  FK(username) : varchar(255)
+  email : varchar(255)
+  code_hash : varchar(255)
+  expire_le : timestamp
+  dernier_envoi : timestamp
+  tentatives : integer
+  renvois : integer
+}
+
+entity "audit_logs" as audit {
+  PK(id) : bigserial
+  --
+  FK(username) : varchar(255)
+  action : varchar(255)
+  details : text
+  adresse_ip : varchar(255)
+  resultat : varchar(255)
+  horodatage : timestamp
+}
+
+entity "transactions" as tx {
+  PK(id) : bigserial
+  --
+  employe_id : varchar(255)
+  client_id : varchar(60)
+  nom_beneficiaire : varchar(255)
+  iban : varchar(255)
+  bic : varchar(255)
+  montant : numeric(15,2)
+  devise : varchar(255)
+  libelle : varchar(255)
+  statut : varchar(255)
+  score_risque : float8
+  niveau_risque : varchar(255)
+  type_anomalie : varchar(40)
+  source_anomalie : varchar(10)
+  model_version : varchar(40)
+  raisons_anomalie : text
+  recommandation : text
+  cree_le : timestamp
+  modifie_le : timestamp
+}
+
+entity "anomalies" as ano {
+  PK(id) : bigserial
+  --
+  signature : varchar(200)
+  type : varchar(40)
+  matricule : varchar(60)
+  iban : varchar(40)
+  montant : numeric(15,2)
+  periode : varchar(10)
+  details : text
+  FK(transaction_id) : bigint
+  recommandation : text
+  statut : varchar(10)
+  commentaire_correction : text
+  FK(corrigee_par) : varchar(60)
+  corrigee_le : timestamp
+  cree_le : timestamp
+  modifie_le : timestamp
+}
+
+entity "xsd_schemas" as xsd {
+  PK(id) : bigserial
+  --
+  nom : varchar(255)
+  version : integer
+  chemin_fichier : varchar(255)
+  contenu : text
+  FK(importe_par) : varchar(255)
+  importe_le : timestamp
+}
+
+entity "sepa_fichiers_generes" as fic {
+  PK(id) : bigserial
+  --
+  msg_id : varchar(35)
+  nom_fichier : varchar(200)
+  contenu_xml : text
+  FK(xsd_schema_id) : bigint
+  xsd_nom : varchar(120)
+  version_message : varchar(20)
+  client_id : varchar(60)
+  periode : varchar(10)
+  matricules : text
+  transaction_ids : text
+  nb_transactions : integer
+  ctrl_sum : numeric(18,2)
+  nom_debiteur : varchar(140)
+  iban_debiteur : varchar(40)
+  date_execution : varchar(12)
+  valide_xsd : boolean
+  erreurs_xsd : text
+  FK(genere_par) : varchar(60)
+  genere_le : timestamp
+}
+
+utilisateurs ||..o{ otp : username
+utilisateurs ||..o{ audit : username
+utilisateurs ||..o{ xsd : importe_par
+utilisateurs ||..o{ fic : genere_par
+utilisateurs |o..o{ ano : corrigee_par
+tx ||..o{ ano : transaction_id
+xsd ||..o{ fic : xsd_schema_id
+fic }o..|{ tx : transaction_ids
+
+legend bottom left
+  <b>Souligné</b> : clé primaire ; <i>italique</i> : référence logique (sans contrainte de clé étrangère).
+  Les références par identifiant conservent l'historique (audit, fichiers SEPA) même après suppression.
+endlegend
+@enduml

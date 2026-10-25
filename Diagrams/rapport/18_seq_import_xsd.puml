@@ -1,0 +1,36 @@
+@startuml 18_seq_import_xsd
+!include _style.iuml
+title Diagramme de séquence : import d'un schéma XSD
+autonumber "<b>0."
+skinparam responseMessageBelowArrow true
+
+actor "Gestionnaire RH" as RH
+boundary "Interface React\n(Xsd.jsx)" as UI
+control "XsdController" as C
+control "XsdService" as S
+participant "AuditService" as AUD
+database "PostgreSQL" as DB
+
+RH -> UI : sélectionne un fichier .xsd
+UI -> C : POST /api/xsd/import (multipart)
+activate C
+C -> S : importer(fichier, username)
+activate S
+S -> S : lire le contenu du fichier
+S -> DB : rechercher la dernière version du même nom
+S -> S : version = dernière version + 1 (ou 1)
+S -> DB : enregistrer XsdSchema\n(nom, version, contenu, importePar)
+S --> C : XsdSchema
+deactivate S
+C -> AUD : log(XSD_IMPORTE)
+C --> UI : 200 XsdSchema
+deactivate C
+UI --> RH : schéma ajouté à la liste
+
+RH -> UI : consulte les éléments du schéma
+UI -> C : GET /api/xsd/{id}/elements
+C -> S : analyserElements(id)
+S -> S : parser le XSD (éléments déclarés)
+C --> UI : liste des éléments
+UI --> RH : affichage des éléments
+@enduml

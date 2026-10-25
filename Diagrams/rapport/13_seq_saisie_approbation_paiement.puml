@@ -1,0 +1,54 @@
+@startuml 13_seq_saisie_approbation_paiement
+!include _style.iuml
+title Diagramme de séquence : saisie et approbation d'un paiement
+autonumber "<b>0."
+skinparam responseMessageBelowArrow true
+
+actor "Gestionnaire RH" as RH
+actor "Validateur" as VAL
+boundary "Interface React\n(Transactions.jsx)" as UI
+participant "JwtAuthenticationFilter" as JF
+control "TransactionController" as TC
+control "BusinessControlService" as BC
+participant "AuditService" as AUD
+database "PostgreSQL" as DB
+
+== Saisie ==
+RH -> UI : saisit matricule, bénéficiaire, IBAN, BIC, montant
+UI -> JF : POST /api/transactions (Bearer JWT)
+JF -> JF : valider le jeton et le rôle\n(ADMINISTRATEUR ou GESTIONNAIRE_RH)
+JF -> TC : create(request)
+activate TC
+TC -> DB : enregistrer Transaction (statut = BROUILLON)
+TC -> AUD : log(TRANSACTION_CREEE)
+TC --> UI : 200 Transaction
+deactivate TC
+UI --> RH : paiement ajouté « Brouillon »
+
+== Approbation ==
+VAL -> UI : clique « Approuver »
+UI -> JF : PUT /api/transactions/{id}/approuver
+JF -> JF : rôle ADMINISTRATEUR ou VALIDATEUR ?
+alt rôle non autorisé
+  JF --> UI : 403 Accès refusé
+else rôle autorisé
+  JF -> TC : approuver(id)
+  activate TC
+  TC -> DB : findById(id)
+  TC -> BC : controle([transaction])
+  activate BC
+  BC -> BC : IBAN valide (modulo 97) ?\nBIC valide ? montant > 0 ?
+  BC --> TC : ValidationResult(valide, erreurs)
+  deactivate BC
+  alt contrôle en échec
+    TC --> UI : 409 « Approbation refusée : corrigez les données… »
+    UI --> VAL : affiche les erreurs
+  else contrôle réussi
+    TC -> DB : statut = APPROUVEE
+    TC -> AUD : log(TRANSACTION_APPROUVEE)
+    TC --> UI : 200 Transaction
+    UI --> VAL : paiement « Approuvé »
+  end
+  deactivate TC
+end
+@enduml

@@ -1,0 +1,74 @@
+@startuml 17_seq_reentrainement_ia
+!include _style.iuml
+title Diagramme de séquence : supervision et réentraînement du modèle IA
+autonumber "<b>0."
+skinparam responseMessageBelowArrow true
+
+actor "Administrateur\nsystème" as ADM
+participant "Client HTTP\n(Swagger / API)" as UI
+control "AdminAiController" as C
+control "AiSupervisionService" as S
+participant "AiAnomalyService" as AI
+participant "MontantSuspectClient" as CL
+database "PostgreSQL" as DB
+box "Module IA (Python / FastAPI)" #FAFBFD
+  participant "router" as R
+  participant "MontantSuspectModel" as M
+  participant "evaluation" as E
+end box
+
+== Consultation de l'état et des métriques ==
+ADM -> UI : GET /api/admin/ai/metrics
+UI -> C : metrics()
+C -> S : metriques()
+S -> CL : metrics()
+CL -> R : GET /model/metrics
+alt évaluation en cours
+  R --> CL : 202 EN_COURS
+else évaluation disponible
+  R --> CL : 200 accuracy, précision, rappel, F1,\nROC-AUC, PR-AUC, comparaison des modèles
+end
+S -> DB : compter les anomalies IA confirmées / ignorées / en attente
+S --> C : évaluation + précision observée
+C --> UI : 200
+UI --> ADM : rapport de métriques
+
+== Réentraînement ==
+ADM -> UI : POST /api/admin/ai/train?source=reel
+UI -> C : train(source)
+activate C
+C -> S : reentrainer(source)
+activate S
+alt source = reel
+  S -> DB : transactions des anomalies IA confirmées\n(à exclure de l'apprentissage)
+  S -> AI : reentrainerSurDonneesReelles(idsExclus)
+  AI -> DB : charger les paiements réels
+  alt moins de 100 paiements exploitables
+    AI --> C : exception
+    C --> UI : 409 « Réentraînement impossible »
+  else au moins 100 paiements
+    AI -> CL : train(paiements)
+  end
+else source = synthetique
+  S -> AI : reentrainer()
+  AI -> CL : train(null)
+end
+CL -> R : POST /model/train
+activate R
+R -> M : train(features, source)
+activate M
+M -> M : StandardScaler + IsolationForest\n(200 arbres, contamination 1 %)
+M -> M : sauvegarder model.joblib\n(version horodatée, source, nb d'exemples)
+M ->> E : lancer l'évaluation en arrière-plan\n(5 jeux x 1000 paiements, 3 % d'anomalies)
+M --> R : nouvelle version
+deactivate M
+R --> CL : TrainResponse(modelVersion, message)
+deactivate R
+CL --> S : TrainResponse
+S --> C : TrainResponse
+deactivate S
+C --> UI : 200
+deactivate C
+UI --> ADM : nouvelle version du modèle
+E -> E : calculer les métriques\net les écrire dans metrics.json
+@enduml

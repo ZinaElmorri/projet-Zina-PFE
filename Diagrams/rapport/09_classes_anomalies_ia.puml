@@ -1,0 +1,144 @@
+@startuml 09_classes_anomalies_ia
+!include _style.iuml
+title Diagramme de classes de conception : anomalies et intelligence artificielle
+skinparam linetype ortho
+skinparam nodesep 35
+skinparam ranksep 60
+skinparam wrapWidth 480
+hide empty members
+
+package "Backend Spring Boot" {
+  package "Présentation" {
+    class AnomalieController <<RestController>> {
+      + lister(statut : String) : List<AnomalieDto>
+      + detecter() : DetectionResume
+      + changerStatut(id : Long, req : ChangementStatutRequest) : AnomalieDto
+    }
+    class AiDetectionController <<RestController>> {
+      + detect() : AnalyseResult
+    }
+    class AdminAiController <<RestController>> {
+      + health() : Map
+      + metrics() : Map
+      + train(source : String) : TrainResponse
+    }
+  }
+
+  package "Métier" {
+    class AnomalieService <<Service>> {
+      + detecter() : DetectionResume
+      + lister(statut : String) : List<AnomalieDto>
+      + changerStatut(id, statut, commentaire) : AnomalieDto
+      - anomaliesReglesMetier(transactions) : List<Anomalie>
+      - anomaliesIa(transactions) : List<Anomalie>
+      - reconcilier(courantes, typesNonEvalues) : int
+    }
+    interface RecommendationEngine {
+      + recommander(a : Anomalie) : String
+    }
+    class CatalogRecommendationEngine {
+      + recommander(a : Anomalie) : String
+    }
+    class BusinessControlService <<Service>> {
+      + ibanValide(iban) : boolean
+      + bicValide(bic) : boolean
+    }
+    class AiAnomalyService <<Service>> {
+      + analyser(lot : List<Transaction>) : AnalyseResult
+      + disponible() : boolean
+      + reentrainer() : TrainResponse
+      + reentrainerSurDonneesReelles(idsExclus : Set<Long>) : TrainResponse
+      - construireRequete(lot) : MontantSuspectRequest
+    }
+    class AiSupervisionService <<Service>> {
+      + etat() : Map
+      + metriques() : Map
+      + retours() : Map
+      + reentrainer(source : String) : TrainResponse
+    }
+    class MontantSuspectClient {
+      + detect(req : MontantSuspectRequest) : MontantSuspectResponse
+      + train(req : MontantSuspectRequest) : TrainResponse
+      + metrics() : ResponseEntity<JsonNode>
+      + health() : AiHealth
+    }
+    class AiProperties <<ConfigurationProperties>> {
+      - enabled : boolean
+      - url : String
+      - timeoutMs : int
+      - scoreThreshold : double
+      - historyMonths : int
+    }
+  }
+
+  package "Données" {
+    interface AnomalieRepository <<JpaRepository>>
+    interface TransactionRepository <<JpaRepository>>
+    class Anomalie <<Entity>>
+    class Transaction <<Entity>>
+  }
+}
+
+package "Module IA (Python / FastAPI)" {
+  class "router montant_suspect" as Router <<FastAPI>> {
+    + GET /model/health
+    + GET /model/metrics
+    + POST /anomalies/detect
+    + POST /model/train
+  }
+  class MontantSuspectModel {
+    - model : IsolationForest
+    - scaler : StandardScaler
+    - version : str
+    - source : str
+    - nb_entrainement : int
+    + load_or_train() : void
+    + train(features : DataFrame, source : str) : str
+    + train_synthetic() : str
+    + score_isolation_forest(features) : (scores, flags)
+    + score(features) : (scores, flags)
+    + metriques() : dict
+  }
+  class "features" as Features <<module>> {
+    + compute_features(paiements) : DataFrame
+    + build_reasons(ligne) : List[str]
+  }
+  class "evaluation" as Evaluation <<module>> {
+    + evaluer(modele, source, nb, temps) : dict
+  }
+  class "synthetic" as Synthetic <<module>> {
+    + generate() : (paiements, labels)
+    + generate_with_types(...) : (paiements, labels, types)
+  }
+}
+
+AnomalieController --> AnomalieService
+AiDetectionController --> AiAnomalyService
+AdminAiController --> AiSupervisionService
+
+AnomalieService --> BusinessControlService
+AnomalieService --> AiAnomalyService
+AnomalieService --> RecommendationEngine
+AnomalieService --> AnomalieRepository
+AnomalieService --> TransactionRepository
+CatalogRecommendationEngine ..|> RecommendationEngine
+
+AiSupervisionService --> AiAnomalyService
+AiSupervisionService --> MontantSuspectClient
+AiSupervisionService --> AnomalieRepository
+AiAnomalyService --> MontantSuspectClient
+AiAnomalyService --> TransactionRepository
+AiAnomalyService --> AiProperties
+
+AnomalieRepository ..> Anomalie
+TransactionRepository ..> Transaction
+Anomalie "0..*" -- "1" Transaction : transactionId >
+
+MontantSuspectClient ..> Router : HTTP REST (JSON)
+Router --> MontantSuspectModel
+Router --> Features
+MontantSuspectModel --> Features
+MontantSuspectModel --> Evaluation
+MontantSuspectModel --> Synthetic
+Evaluation --> Synthetic
+@enduml

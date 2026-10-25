@@ -1,0 +1,30 @@
+@startuml 25_etat_compte_utilisateur
+!include _style.iuml
+title Diagramme d'états-transitions : compte utilisateur
+hide empty description
+
+state "En attente d'approbation" as Attente : actif = false\napprouve = false
+state "Actif" as Actif : actif = true\napprouve = true
+state "Désactivé" as Desactive : actif = false\napprouve = true
+
+[*] --> Attente : inscription publique\n(photo du visage obligatoire)
+[*] --> Actif : création par l'administrateur
+Attente --> Actif : approuver (administrateur)
+Attente --> [*] : rejeter (compte supprimé)
+Actif --> Desactive : désactiver (administrateur)
+
+state Actif {
+  state "Sans visage enregistré" as SansVisage
+  state "Avec visage enregistré" as AvecVisage : connexion faciale possible
+  [*] --> SansVisage : [créé par l'administrateur]
+  [*] --> AvecVisage : [issu d'une inscription]
+  SansVisage --> AvecVisage : enregistrer son visage
+  AvecVisage --> SansVisage : supprimer son visage
+  AvecVisage --> AvecVisage : remplacer son visage
+}
+
+note right of Attente
+  Connexion refusée :
+  « Compte en attente d'approbation ».
+end note
+@enduml

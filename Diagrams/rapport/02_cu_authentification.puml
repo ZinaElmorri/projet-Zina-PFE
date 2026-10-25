@@ -1,0 +1,57 @@
+@startuml 02_cu_authentification
+!include _style.iuml
+title Cas d'utilisation : authentification et gestion des comptes
+left to right direction
+
+actor "Visiteur" as V
+actor "Utilisateur" as U
+actor "Administrateur\nsystème" as ADM
+actor "Serveur mail\n<<système>>" as MAIL
+actor "Module IA - vision\n<<système>>" as IA
+
+ADM --|> U
+
+rectangle "Authentification et comptes" {
+  usecase "S'inscrire" as INSC
+  usecase "Choisir le type\nd'utilisateur (rôle)" as ROLE
+  usecase "Capturer une photo\ndu visage (webcam)" as CAP
+  usecase "S'authentifier" as AUTH
+  usecase "Se connecter par\nmot de passe" as PWD
+  usecase "Se connecter par\nreconnaissance faciale" as FACE
+  usecase "Vérifier le code OTP" as OTP
+  usecase "Renvoyer le code OTP" as RENV
+  usecase "Enregistrer son visage" as ENR
+  usecase "Supprimer son visage" as SUP
+  usecase "Se déconnecter" as LOGOUT
+  usecase "Consulter les comptes\net demandes d'inscription" as LIST
+  usecase "Approuver une inscription" as APP
+  usecase "Rejeter une inscription" as REJ
+  usecase "Créer un utilisateur" as CREER
+  usecase "Désactiver un utilisateur" as DESACT
+}
+
+V -- INSC
+INSC ..> ROLE : <<include>>
+INSC ..> CAP : <<include>>
+
+U -- AUTH
+PWD -right-|> AUTH
+FACE -left-|> AUTH
+AUTH ..> OTP : <<include>>
+RENV ..> OTP : <<extend>>
+FACE ..> CAP : <<include>>
+
+U -- ENR
+U -- SUP
+U -- LOGOUT
+ENR ..> CAP : <<include>>
+
+ADM -- LIST
+APP .right.> LIST : <<extend>>
+REJ .left.> LIST : <<extend>>
+ADM -- CREER
+ADM -- DESACT
+
+OTP -- MAIL
+CAP -- IA
+@enduml

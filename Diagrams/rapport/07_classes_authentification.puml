@@ -1,0 +1,149 @@
+@startuml 07_classes_authentification
+!include _style.iuml
+title Diagramme de classes de conception : authentification et sécurité
+skinparam linetype ortho
+skinparam nodesep 35
+skinparam ranksep 60
+skinparam wrapWidth 480
+hide empty members
+
+package "Présentation (contrôleurs REST)" {
+  class AuthController <<RestController>> {
+    + register(req : RegisterRequest) : Map
+    + login(req : LoginRequest) : AuthResponse
+    + verifyOtp(req : VerifyOtpRequest) : AuthResponse
+    + resendOtp(req : ResendOtpRequest) : AuthResponse
+    + faceLogin(req : FaceLoginRequest) : AuthResponse
+  }
+  class UserController <<RestController>> {
+    + list() : List<User>
+    + create(req : CreateUserRequest) : User
+    + approuver(id : Long) : User
+    + rejeter(id : Long) : void
+    + deactivate(id : Long) : void
+  }
+  class FaceController <<RestController>> {
+    + statut(auth) : Map
+    + enregistrer(req : FaceImageRequest, auth) : Map
+    + supprimer(auth) : void
+  }
+}
+
+package "Sécurité" {
+  class SecurityConfig <<Configuration>> {
+    + filterChain(http : HttpSecurity) : SecurityFilterChain
+    + passwordEncoder() : PasswordEncoder
+  }
+  class JwtAuthenticationFilter {
+    # doFilterInternal(req, res, chain) : void
+  }
+  class JwtService {
+    + generateToken(ud : UserDetails) : String
+    + extractUsername(token : String) : String
+    + isTokenValid(token : String, ud : UserDetails) : boolean
+  }
+  class CustomUserDetailsService {
+    + loadUserByUsername(username : String) : UserDetails
+  }
+}
+
+package "Métier (services)" {
+  class AuthService <<Service>> {
+    + login(req, http) : AuthResponse
+    + faceLogin(req, http) : AuthResponse
+    + verifierOtp(req, http) : AuthResponse
+    + renvoyerOtp(req) : AuthResponse
+    - finaliserConnexion(user, ip, details) : AuthResponse
+    - emettreToken(user, ip, details) : AuthResponse
+  }
+  class OtpService <<Service>> {
+    - expirationMinutes : int = 5
+    - maxAttempts : int = 5
+    - maxResends : int = 3
+    - resendCooldownSeconds : int = 30
+    + demarrer(user : User) : OtpEnvoi
+    + renvoyer(challengeId : String) : OtpEnvoi
+    + verifier(challengeId : String, code : String) : String
+  }
+  class UserService <<Service>> {
+    + register(req : RegisterRequest) : User
+    + approuver(id : Long) : User
+    + rejeter(id : Long) : void
+    + create(req : CreateUserRequest) : User
+    + findAll() : List<User>
+    + deactivate(id : Long) : void
+  }
+  class FaceService <<Service>> {
+    + estEnregistre(username : String) : boolean
+    + enregistrer(username : String, image : String) : void
+    + encoder(image : String) : String
+    + supprimer(username : String) : void
+    + authentifier(username : String, image : String) : User
+  }
+  class FaceClient {
+    + encode(image : String) : List<Double>
+    + verify(image : String, reference : List<Double>) : VerifyResponse
+  }
+  class AuditService <<Service>> {
+    + log(action, details, resultat, http) : void
+    + findAll(page : Pageable) : Page<AuditLog>
+  }
+}
+
+package "Accès aux données" {
+  interface UserRepository <<JpaRepository>>
+  interface OtpChallengeRepository <<JpaRepository>>
+  interface AuditLogRepository <<JpaRepository>>
+}
+
+package "Modèle" {
+  class User <<Entity>>
+  class OtpChallenge <<Entity>>
+  class AuditLog <<Entity>>
+  class AuthResponse <<DTO>> {
+    + token : String
+    + username : String
+    + role : String
+    + otpRequis : boolean
+    + challengeId : String
+    + emailMasque : String
+  }
+}
+
+interface JavaMailSender <<Spring Mail>>
+class "Module IA (vision)" as IAFACE <<FastAPI>> {
+  + POST /api/face/encode
+  + POST /api/face/verify
+}
+
+AuthController --> AuthService
+AuthController --> UserService
+UserController --> UserService
+FaceController --> FaceService
+
+AuthService --> OtpService
+AuthService --> FaceService
+AuthService --> JwtService
+AuthService --> CustomUserDetailsService
+AuthService --> AuditService
+AuthService --> UserRepository
+AuthService ..> AuthResponse : <<create>>
+
+UserService --> FaceService
+UserService --> UserRepository
+FaceService --> FaceClient
+FaceService --> UserRepository
+FaceClient ..> IAFACE : HTTP REST
+OtpService --> OtpChallengeRepository
+OtpService --> JavaMailSender
+AuditService --> AuditLogRepository
+
+SecurityConfig --> JwtAuthenticationFilter
+JwtAuthenticationFilter --> JwtService
+JwtAuthenticationFilter --> CustomUserDetailsService
+CustomUserDetailsService --> UserRepository
+
+UserRepository ..> User
+OtpChallengeRepository ..> OtpChallenge
+AuditLogRepository ..> AuditLog
+@enduml

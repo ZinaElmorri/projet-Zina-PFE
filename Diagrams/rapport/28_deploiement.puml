@@ -1,0 +1,43 @@
+@startuml 28_deploiement
+!include _style.iuml
+title Diagramme de déploiement (Docker Compose)
+skinparam nodesep 45
+skinparam ranksep 60
+
+node "Poste de l'utilisateur" as PC {
+  component "Navigateur web\n(Chrome, Edge, Firefox)" as NAV
+  component "Caméra (webcam)" as WEBCAM
+}
+
+node "Hôte Docker (docker compose)" as HOST {
+  node "sepa-frontend\n<<conteneur node:20-alpine>>" as C_FE {
+    artifact "dist/ (application React compilée)\nservie par serve : 5173" as A_FE
+  }
+  node "sepa-backend\n<<conteneur eclipse-temurin:17-jre>>" as C_BE {
+    artifact "app.jar (Spring Boot)\n: 8080" as A_BE
+  }
+  node "sepa-ai\n<<conteneur python:3.11-slim>>" as C_AI {
+    artifact "app.main:app (uvicorn / FastAPI)\n: 8000" as A_AI
+    artifact "modèles ONNX YuNet / SFace" as A_ONNX
+  }
+  node "sepa-postgres\n<<conteneur postgres:16-alpine>>" as C_DB {
+    database "sepa_db\n: 5432" as DB
+  }
+  node "sepa-mailhog\n<<conteneur mailhog>>" as C_MAIL {
+    artifact "SMTP : 1025\nInterface web : 8025" as A_MAIL
+  }
+  storage "volume pgdata" as V_PG
+  storage "volume ai-models\n(model.joblib, metrics.json)" as V_AI
+}
+
+WEBCAM -- NAV
+NAV --> A_FE : HTTP 5173\n(chargement de l'application)
+NAV --> A_BE : HTTP 8080\nREST / JSON + JWT
+NAV ..> A_MAIL : HTTP 8025\n(lecture du code OTP)
+A_BE --> DB : JDBC 5432
+A_BE --> A_AI : HTTP 8000\nREST / JSON
+A_BE --> A_MAIL : SMTP 1025
+DB -- V_PG
+A_AI -- V_AI
+A_AI -- A_ONNX
+@enduml

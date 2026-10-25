@@ -1,0 +1,42 @@
+@startuml 03_cu_paiements_xsd
+!include _style.iuml
+title Cas d'utilisation : paiements et schémas XSD
+left to right direction
+
+actor "Gestionnaire RH" as RH
+actor "Validateur" as VAL
+actor "Administrateur\nsystème" as ADM
+actor "Module IA\n<<système>>" as IA
+
+ADM -right-|> RH
+ADM -right-|> VAL
+
+rectangle "Paiements et schémas XSD" {
+  usecase "Saisir un paiement" as SAISIR
+  usecase "Supprimer un paiement" as SUPPR
+  usecase "Importer un schéma XSD" as IMPXSD
+  usecase "Mettre à jour / supprimer\nun schéma XSD" as MAJXSD
+  usecase "Consulter les éléments\nd'un schéma XSD" as ELTXSD
+  usecase "Consulter les paiements" as CONS
+  usecase "Analyser les paiements\npar l'IA" as ANIA
+  usecase "Lancer les contrôles métier\n(IBAN, BIC, montant)" as CTRL
+  usecase "Approuver un paiement" as APPR
+}
+
+RH -- SAISIR
+RH -- SUPPR
+RH -- IMPXSD
+RH -- MAJXSD
+RH -- ELTXSD
+RH -- CONS
+RH -- ANIA
+RH -- CTRL
+
+VAL -- CONS
+VAL -- ANIA
+VAL -- CTRL
+VAL -- APPR
+
+APPR .right.> CTRL : <<include>>
+ANIA -- IA
+@enduml

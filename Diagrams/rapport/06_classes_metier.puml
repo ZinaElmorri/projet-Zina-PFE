@@ -1,0 +1,182 @@
+@startuml 06_classes_metier
+!include _style.iuml
+title Diagramme de classes métier (entités persistées)
+skinparam linetype ortho
+skinparam nodesep 60
+skinparam ranksep 70
+hide methods
+hide empty members
+
+class User <<Entity>> {
+  - id : Long
+  - username : String
+  - password : String
+  - nomComplet : String
+  - email : String
+  - role : Role
+  - faceEncoding : String
+  - actif : boolean
+  - approuve : boolean
+  - creeLe : LocalDateTime
+  - derniereConnexion : LocalDateTime
+}
+
+class OtpChallenge <<Entity>> {
+  - id : Long
+  - challengeId : String
+  - username : String
+  - email : String
+  - codeHash : String
+  - expireLe : LocalDateTime
+  - dernierEnvoi : LocalDateTime
+  - tentatives : int
+  - renvois : int
+}
+
+class AuditLog <<Entity>> {
+  - id : Long
+  - username : String
+  - action : AuditAction
+  - details : String
+  - adresseIp : String
+  - resultat : String
+  - horodatage : LocalDateTime
+}
+
+class Transaction <<Entity>> {
+  - id : Long
+  - employeId : String
+  - clientId : String
+  - nomBeneficiaire : String
+  - iban : String
+  - bic : String
+  - montant : BigDecimal
+  - devise : String
+  - libelle : String
+  - statut : TransactionStatus
+  - scoreRisque : Double
+  - niveauRisque : RiskLevel
+  - typeAnomalie : String
+  - sourceAnomalie : String
+  - modelVersion : String
+  - raisonsAnomalie : String
+  - recommandation : String
+  - creeLe : LocalDateTime
+  - modifieLe : LocalDateTime
+}
+
+class Anomalie <<Entity>> {
+  - id : Long
+  - signature : String
+  - type : String
+  - matricule : String
+  - iban : String
+  - montant : BigDecimal
+  - periode : String
+  - details : String
+  - transactionId : Long
+  - recommandation : String
+  - statut : AnomalieStatut
+  - commentaireCorrection : String
+  - corrigeePar : String
+  - corrigeeLe : LocalDateTime
+  - creeLe : LocalDateTime
+  - modifieLe : LocalDateTime
+}
+
+class XsdSchema <<Entity>> {
+  - id : Long
+  - nom : String
+  - version : int
+  - cheminFichier : String
+  - contenu : String
+  - importePar : String
+  - importeLe : LocalDateTime
+}
+
+class FichierSepaGenere <<Entity>> {
+  - id : Long
+  - msgId : String
+  - nomFichier : String
+  - contenuXml : String
+  - xsdSchemaId : Long
+  - versionMessage : String
+  - clientId : String
+  - periode : String
+  - transactionIds : String
+  - nbTransactions : int
+  - ctrlSum : BigDecimal
+  - nomDebiteur : String
+  - ibanDebiteur : String
+  - dateExecution : String
+  - valideXsd : boolean
+  - erreursXsd : String
+  - generePar : String
+  - genereLe : LocalDateTime
+}
+
+enum Role {
+  ADMINISTRATEUR
+  GESTIONNAIRE_RH
+  VALIDATEUR
+  AUDITEUR
+}
+
+enum TransactionStatus {
+  BROUILLON
+  VALIDEE
+  APPROUVEE
+  REJETEE
+  SUPPRIMEE
+}
+
+enum RiskLevel {
+  FAIBLE
+  MOYEN
+  ELEVE
+  CRITIQUE
+}
+
+enum AnomalieStatut {
+  OUVERTE
+  CORRIGEE
+  IGNOREE
+}
+
+enum AuditAction {
+  LOGIN
+  LOGOUT
+  PAGE_VISITEE
+  XSD_IMPORTE
+  XML_GENERE
+  TRANSACTION_CREEE
+  TRANSACTION_MODIFIEE
+  TRANSACTION_APPROUVEE
+  TRANSACTION_SUPPRIMEE
+  ANOMALIE_DETECTEE
+  VALIDATION_EFFECTUEE
+}
+
+User "1" -- "0..*" OtpChallenge : reçoit >
+User "1" -- "0..*" AuditLog : déclenche >
+User "1" -- "0..*" XsdSchema : importe >
+User "1" -- "0..*" FichierSepaGenere : génère >
+User "0..1" -- "0..*" Anomalie : traite >
+Transaction "1" -- "0..*" Anomalie : concerne <
+FichierSepaGenere "0..*" -- "1..*" Transaction : regroupe >
+FichierSepaGenere "0..*" -- "1" XsdSchema : est validé par >
+
+User ..> Role
+Transaction ..> TransactionStatus
+Transaction ..> RiskLevel
+Anomalie ..> AnomalieStatut
+AuditLog ..> AuditAction
+
+legend bottom left
+  Les associations sont réalisées par identifiant ou nom d'utilisateur
+  (username, transactionId, xsdSchemaId, transactionIds, generePar, corrigeePar)
+  et non par des relations JPA : les historiques restent lisibles
+  même si l'objet référencé est supprimé.
+  Mot de passe et code OTP stockés hachés (BCrypt) ; faceEncoding = vecteur SFace (JSON).
+endlegend
+@enduml

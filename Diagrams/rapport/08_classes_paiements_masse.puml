@@ -1,0 +1,135 @@
+@startuml 08_classes_paiements_masse
+!include _style.iuml
+title Diagramme de classes de conception : paiements, XSD et virements de masse
+skinparam linetype ortho
+skinparam nodesep 35
+skinparam ranksep 60
+skinparam wrapWidth 480
+hide empty members
+
+package "Présentation (contrôleurs REST)" {
+  class TransactionController <<RestController>> {
+    + list() : List<Transaction>
+    + create(req : TransactionRequest) : Transaction
+    + approuver(id : Long) : Transaction
+    + supprimer(id : Long) : void
+    + controler() : ValidationResult
+    + generer(nomDebiteur, ibanDebiteur) : String
+  }
+  class XsdController <<RestController>> {
+    + list() : List<XsdSchema>
+    + importer(file : MultipartFile) : XsdSchema
+    + analyser(id : Long) : List<String>
+    + mettreAJour(id : Long, file) : XsdSchema
+    + supprimer(id : Long) : void
+  }
+  class MassController <<RestController>> {
+    + filtres(clientId, periode) : FiltresResponse
+    + paiements(clientId, periode, matricules, statuts) : PaiementsResponse
+    + analyseIa(clientId, periode, matricules, statuts) : AnalyseIaMasse
+    + xsd() : List<XsdUtilisable>
+    + apercu(req : ApercuRequest) : ApercuResponse
+    + enregistrer(req : ApercuRequest) : FichierResume
+    + historique(clientId, periode, valideXsd) : List<FichierResume>
+    + detail(id : Long) : FichierDetail
+    + telecharger(id : Long) : byte[]
+  }
+}
+
+package "Métier (services)" {
+  class BusinessControlService <<Service>> {
+    + controle(transactions : List<Transaction>) : ValidationResult
+    + ibanValide(iban : String) : boolean
+    + bicValide(bic : String) : boolean
+  }
+  class XmlGenerationService <<Service>> {
+    + genererPain001(transactions, nomDebiteur, ibanDebiteur) : String
+  }
+  class ValidationService <<Service>> {
+    + validerContreXsd(xml : String, xsd : String) : ValidationResult
+    + validerSyntaxe(xml : String) : ValidationResult
+  }
+  class XsdService <<Service>> {
+    + importer(fichier : MultipartFile, username : String) : XsdSchema
+    + findAll() : List<XsdSchema>
+    + mettreAJour(id : Long, fichier) : XsdSchema
+    + deleteById(id : Long) : void
+    + analyserElements(id : Long) : List<String>
+  }
+  class MassPaymentService <<Service>> {
+    + filtres(clientId, periode) : FiltresResponse
+    + paiements(clientId, periode, matricules, statuts) : PaiementsResponse
+    + analyserIa(clientId, periode, matricules, statuts) : AnalyseIaMasse
+    + xsdUtilisables() : List<XsdUtilisable>
+    + apercu(req, http) : ApercuResponse
+    + enregistrer(req, http) : FichierSepaGenere
+    + historique(clientId, periode, valideXsd) : List<FichierResume>
+    + pourTelecharger(id, http) : FichierSepaGenere
+    - construire(req : ApercuRequest) : Resultat
+  }
+  class MassPaymentXmlGenerator {
+    + generer(namespace, version, transactions, ...) : Genere
+  }
+  class XsdPain001Reader {
+    + meta(xsd : String) : MetaXsd
+    + analyser(xsd : String) : AnalyseXsd
+  }
+  class XsdErrorCollector {
+    + valider(xml : String, xsd : String) : List<ErreurXsd>
+  }
+  class AiAnomalyService <<Service>> {
+    + analyser(lot : List<Transaction>) : AnalyseResult
+  }
+  class AuditService <<Service>> {
+    + log(action, details, resultat, http) : void
+  }
+}
+
+package "Accès aux données" {
+  interface TransactionRepository <<JpaRepository>>
+  interface MassePaiementRepository <<JpaRepository>> {
+    + filtrer(statuts, debut, fin, clientId, ...) : List<Transaction>
+    + societes() : List<String>
+  }
+  interface XsdSchemaRepository <<JpaRepository>>
+  interface FichierSepaGenereRepository <<JpaRepository>>
+}
+
+package "Modèle" {
+  class Transaction <<Entity>>
+  class XsdSchema <<Entity>>
+  class FichierSepaGenere <<Entity>>
+  class ValidationResult <<DTO>> {
+    + valide : boolean
+    + erreurs : List<String>
+    + avertissements : List<String>
+  }
+}
+
+TransactionController --> BusinessControlService
+TransactionController --> XmlGenerationService
+TransactionController --> TransactionRepository
+TransactionController --> AuditService
+XsdController --> XsdService
+XsdController --> AuditService
+MassController --> MassPaymentService
+
+MassPaymentService --> MassePaiementRepository
+MassPaymentService --> XsdSchemaRepository
+MassPaymentService --> FichierSepaGenereRepository
+MassPaymentService --> BusinessControlService
+MassPaymentService --> MassPaymentXmlGenerator
+MassPaymentService --> XsdPain001Reader
+MassPaymentService --> XsdErrorCollector
+MassPaymentService --> ValidationService
+MassPaymentService --> AiAnomalyService
+MassPaymentService --> AuditService
+XsdService --> XsdSchemaRepository
+BusinessControlService ..> ValidationResult : <<create>>
+ValidationService ..> ValidationResult : <<create>>
+
+TransactionRepository ..> Transaction
+MassePaiementRepository ..> Transaction
+XsdSchemaRepository ..> XsdSchema
+FichierSepaGenereRepository ..> FichierSepaGenere
+@enduml

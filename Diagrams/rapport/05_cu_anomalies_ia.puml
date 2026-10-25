@@ -1,0 +1,60 @@
+@startuml 05_cu_anomalies_ia
+!include _style.iuml
+title Cas d'utilisation : anomalies, audit et intelligence artificielle
+left to right direction
+
+actor "Gestionnaire RH" as RH
+actor "Validateur" as VAL
+actor "Auditeur" as AUD
+actor "Administrateur\nsystème" as ADM
+actor "Module IA\n<<système>>" as IA
+
+ADM --|> RH
+ADM --|> VAL
+
+rectangle "Contrôle, anomalies et IA" {
+  usecase "Consulter les anomalies\net recommandations" as CONS
+  usecase "Filtrer par statut" as FILT
+  usecase "Lancer la détection\ndes anomalies" as DET
+  usecase "Appliquer les règles\nmétier" as REG
+  usecase "Détecter les montants\nsuspects (IA)" as DIA
+  usecase "Générer une\nrecommandation" as RECO
+  usecase "Marquer une anomalie\ncorrigée" as CORR
+  usecase "Ignorer une anomalie\n(commentaire obligatoire)" as IGN
+  usecase "Consulter le journal\nd'audit" as AUDIT
+  usecase "Consulter l'état et les\nmétriques du modèle IA" as SUP
+  usecase "Réentraîner le modèle IA\n(synthétique / réel)" as TRAIN
+}
+
+RH -- CONS
+RH -- DET
+RH -- CORR
+RH -- IGN
+RH -- SUP
+
+VAL -- CONS
+VAL -- DET
+VAL -- CORR
+VAL -- IGN
+VAL -- SUP
+
+AUD -- CONS
+AUD -- AUDIT
+
+ADM -- AUDIT
+ADM -- TRAIN
+
+FILT .right.> CONS : <<extend>>
+DET ..> REG : <<include>>
+DET ..> DIA : <<include>>
+DET ..> RECO : <<include>>
+
+DIA -- IA
+SUP -- IA
+TRAIN -- IA
+
+note bottom of AUD
+  Accès en lecture seule
+  aux anomalies.
+end note
+@enduml

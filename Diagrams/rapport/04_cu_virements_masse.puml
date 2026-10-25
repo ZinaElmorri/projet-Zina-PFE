@@ -1,0 +1,50 @@
+@startuml 04_cu_virements_masse
+!include _style.iuml
+title Cas d'utilisation : virements SEPA de masse
+left to right direction
+
+actor "Gestionnaire RH" as RH
+actor "Validateur" as VAL
+actor "Administrateur\nsystème" as ADM
+actor "Module IA\n<<système>>" as IA
+
+ADM -right-|> RH
+ADM -right-|> VAL
+
+rectangle "Virements SEPA de masse (pain.001)" {
+  usecase "Sélectionner les paiements\n(société, période, matricules)" as FILTRE
+  usecase "Contrôle IA des montants" as CTRLIA
+  usecase "Prévisualiser le XML\npain.001" as APERCU
+  usecase "Enregistrer le fichier SEPA" as ENREG
+  usecase "Consulter l'historique\ndes fichiers" as HIST
+  usecase "Télécharger un fichier\nSEPA conforme" as TELE
+  usecase "Appliquer les contrôles\nmétier" as CTRL
+  usecase "Valider le XML\ncontre le XSD" as VALXSD
+}
+
+RH -- FILTRE
+RH -- CTRLIA
+RH -- APERCU
+RH -- ENREG
+RH -- HIST
+RH -- TELE
+
+VAL -- FILTRE
+VAL -- CTRLIA
+VAL -- HIST
+VAL -- TELE
+
+CTRLIA .right.> FILTRE : <<include>>
+APERCU ..> CTRL : <<include>>
+APERCU ..> VALXSD : <<include>>
+ENREG ..> VALXSD : <<include>>
+TELE .right.> HIST : <<extend>>
+
+CTRLIA -- IA
+
+note bottom of ENREG
+  Enregistrement et téléchargement
+  interdits si le XML n'est pas
+  conforme au schéma XSD.
+end note
+@enduml

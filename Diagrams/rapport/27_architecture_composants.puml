@@ -1,0 +1,57 @@
+@startuml 27_architecture_composants
+!include _style.iuml
+title Architecture logique de la plateforme (diagramme de composants)
+skinparam nodesep 40
+skinparam ranksep 55
+
+actor "Utilisateur\n(RH, validateur,\nauditeur, admin)" as USER
+
+package "Frontend - React 18 / Vite / Ant Design" as FE {
+  component "Pages\n(Connexion, Inscription, Tableau de bord,\nPaiements, XSD, Virements de masse,\nAnomalies, Utilisateurs, Audit, Profil)" as PAGES
+  component "AuthContext\n(jeton JWT, rôle)" as CTX
+  component "WebcamCapture" as CAM
+  component "Client HTTP (axios)" as AX
+  PAGES --> CTX
+  PAGES --> CAM
+  PAGES --> AX
+}
+
+package "Backend - Spring Boot 3 (Java 17)" as BE {
+  component "Sécurité\n(Spring Security, filtre JWT,\ncontrôle des rôles)" as SEC
+  component "API REST\n(contrôleurs)" as API
+  package "Services métier" as SVC {
+    component "Authentification\n+ OTP + Visage" as S_AUTH
+    component "Utilisateurs" as S_USR
+    component "Paiements et\ncontrôles métier" as S_PAI
+    component "Schémas XSD" as S_XSD
+    component "Virements de masse\n(pain.001, validation XSD)" as S_MASSE
+    component "Anomalies et\nrecommandations" as S_ANO
+    component "Client IA\n+ supervision" as S_IA
+    component "Tableau de bord (KPI)" as S_KPI
+    component "Audit" as S_AUD
+  }
+  component "Repositories\n(Spring Data JPA)" as REPO
+  SEC --> API
+  API --> SVC
+  SVC --> REPO
+  S_MASSE --> S_IA
+  S_ANO --> S_IA
+}
+
+package "Module IA - Python / FastAPI" as AI {
+  component "Montants suspects\n(scikit-learn : Isolation Forest\n+ règle IBAN modifié)" as AI_MS
+  component "Reconnaissance faciale\n(OpenCV : YuNet + SFace)" as AI_FACE
+  component "Évaluation\n(métriques, comparaison)" as AI_EVAL
+  AI_MS --> AI_EVAL
+}
+
+database "PostgreSQL 16" as DB
+component "Serveur SMTP\n(MailHog)" as SMTP
+
+USER --> PAGES : navigateur web
+AX --> SEC : REST / JSON\n(Authorization: Bearer JWT)
+REPO --> DB : JDBC
+S_AUTH --> SMTP : SMTP (code OTP)
+S_AUTH --> AI_FACE : REST / JSON
+S_IA --> AI_MS : REST / JSON
+@enduml

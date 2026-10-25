@@ -1,0 +1,52 @@
+@startuml 20_act_generation_sepa
+!include _style.iuml
+title Diagramme d'activité : génération d'un fichier SEPA de masse
+
+|Gestionnaire RH|
+start
+:Choisir la société, la période\net les matricules;
+|Plateforme|
+:Rechercher les paiements approuvés;
+|Gestionnaire RH|
+if (Lancer le contrôle IA des montants ?) then (oui)
+  |Module IA|
+  :Calculer les indicateurs\net le score de chaque paiement;
+  :Signaler les montants suspects\navec leurs raisons;
+  |Gestionnaire RH|
+  :Examiner les paiements signalés;
+else (non)
+endif
+:Choisir le schéma XSD\net saisir le débiteur;
+|Plateforme|
+if (Schéma compatible pain.001 ?) then (non)
+  :Refuser : « choisir un schéma compatible »;
+  stop
+else (oui)
+endif
+if (Tous les paiements sont approuvés ?) then (non)
+  :Refuser la génération\n(liste des paiements non approuvés);
+  stop
+else (oui)
+endif
+fork
+  :Contrôles métier\n(IBAN, BIC, montant, doublons);
+fork again
+  :Ajouter les avertissements IA\n(non bloquants);
+end fork
+:Générer le XML pain.001\n(MsgId, CtrlSum, NbOfTxs);
+:Valider le XML contre le XSD;
+:Afficher l'aperçu : erreurs en rouge,\navertissements en orange;
+|Gestionnaire RH|
+if (XML conforme au XSD ?) then (non)
+  :Corriger les données des paiements;
+  stop
+else (oui)
+  :Enregistrer le fichier;
+  |Plateforme|
+  :Revalider puis archiver le fichier\n(contenu figé, auteur, date);
+  :Journaliser XML_GENERE;
+  |Gestionnaire RH|
+  :Télécharger le fichier SEPA;
+  stop
+endif
+@enduml

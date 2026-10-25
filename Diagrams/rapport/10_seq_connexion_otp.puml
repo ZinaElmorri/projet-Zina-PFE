@@ -1,0 +1,84 @@
+@startuml 10_seq_connexion_otp
+!include _style.iuml
+title Diagramme de séquence : connexion par mot de passe et code OTP
+autonumber "<b>0."
+skinparam responseMessageBelowArrow true
+
+actor "Utilisateur" as U
+boundary "Interface React\n(Login.jsx)" as UI
+control "AuthController" as AC
+control "AuthService" as AS
+participant "Spring Security\nAuthenticationManager" as AM
+control "OtpService" as OS
+participant "JwtService" as JWT
+participant "AuditService" as AUD
+database "PostgreSQL" as DB
+participant "Serveur mail\n(MailHog)" as MAIL
+
+== Étape 1 : vérification des identifiants ==
+U -> UI : saisit nom d'utilisateur et mot de passe
+UI -> AC : POST /api/auth/login
+activate AC
+AC -> AS : login(request)
+activate AS
+AS -> AM : authenticate(username, password)
+AM -> DB : charger l'utilisateur
+alt identifiants invalides, compte inactif ou non approuvé
+  AM --> AS : exception
+  AS -> AUD : log(LOGIN, ECHEC)
+  AS --> AC : IllegalArgumentException
+  AC --> UI : 400 « Identifiants invalides »\nou « Compte en attente d'approbation »
+  UI --> U : message d'erreur
+else identifiants valides
+  AM --> AS : authentification réussie
+  AS -> OS : demarrer(user)
+  activate OS
+  OS -> DB : supprimer les défis précédents
+  OS -> OS : générer un code à 6 chiffres\net un challengeId aléatoire
+  OS -> DB : enregistrer OtpChallenge\n(code haché BCrypt, expiration 5 min)
+  OS -> MAIL : envoyer le code par email (SMTP)
+  OS --> AS : OtpEnvoi(challengeId, emailMasque)
+  deactivate OS
+  AS -> AUD : log(LOGIN, EN_ATTENTE)
+  AS --> AC : AuthResponse(otpRequis = true, challengeId)
+  deactivate AS
+  AC --> UI : 200 OK
+  deactivate AC
+  UI --> U : écran de saisie du code
+end
+
+== Étape 2 : vérification du code OTP ==
+MAIL --> U : email contenant le code
+U -> UI : saisit le code reçu
+UI -> AC : POST /api/auth/verify-otp (challengeId, code)
+activate AC
+AC -> AS : verifierOtp(request)
+activate AS
+AS -> OS : verifier(challengeId, code)
+activate OS
+OS -> DB : rechercher le défi
+alt défi expiré ou nombre maximal de tentatives (5) atteint
+  OS -> DB : supprimer le défi
+  OS --> AS : exception
+  AS -> AUD : log(LOGIN, ECHEC)
+  AS --> UI : 400 « veuillez vous reconnecter »
+else code incorrect
+  OS -> DB : tentatives + 1
+  OS --> AS : exception « Code invalide (n tentative(s) restante(s)) »
+  AS --> UI : 400
+else code correct
+  OS -> DB : supprimer le défi (usage unique)
+  OS --> AS : username
+  deactivate OS
+  AS -> JWT : generateToken(userDetails)
+  JWT --> AS : jeton JWT signé
+  AS -> DB : mettre à jour derniereConnexion
+  AS -> AUD : log(LOGIN, SUCCES)
+  AS --> AC : AuthResponse(token, username, role)
+  deactivate AS
+  AC --> UI : 200 OK
+  deactivate AC
+  UI -> UI : mémoriser le jeton\n(en-tête Authorization: Bearer)
+  UI --> U : redirection vers le tableau de bord
+end
+@enduml

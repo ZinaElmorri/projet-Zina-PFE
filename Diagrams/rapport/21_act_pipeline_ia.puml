@@ -1,0 +1,42 @@
+@startuml 21_act_pipeline_ia
+!include _style.iuml
+title Diagramme d'activité : chaîne de détection des montants suspects (module IA)
+
+partition "Préparation (backend Spring Boot)" {
+  start
+  :Recevoir un lot de paiements;
+  :Charger l'historique des salariés\n(une seule requête);
+  :Pour chaque paiement : 6 derniers montants\net indicateur « IBAN modifié »;
+}
+
+partition "Calcul des indicateurs (features.py)" {
+  :montant;
+  :écart à la moyenne du salarié;
+  :variation par rapport au mois précédent;
+  :z-score du montant dans la société;
+  :IBAN modifié récemment (0/1);
+  :nombre de paiements vers le même IBAN;
+}
+
+partition "Décision (model.py)" {
+  :Normaliser les indicateurs (StandardScaler);
+  :Isolation Forest : score d'isolement\nramené entre 0 et 1;
+  if (Prédiction = anomalie\nou score >= 0,6 ?) then (oui)
+    :Marquer « suspect »;
+  else (non)
+    if (IBAN modifié ?) then (oui)
+      :Marquer « suspect »\n(règle métier complémentaire);
+    else (non)
+      :Paiement normal;
+      stop
+    endif
+  endif
+  :Générer les raisons lisibles\n(ex. « montant 3,2 fois la moyenne »);
+}
+
+partition "Restitution (backend)" {
+  :Enregistrer score, niveau de risque,\nraisons et version du modèle;
+  :Afficher l'alerte à l'utilisateur\n(non bloquante);
+  stop
+}
+@enduml

@@ -1,0 +1,40 @@
+@startuml 22_act_entrainement_evaluation_ia
+!include _style.iuml
+title Diagramme d'activité : entraînement et évaluation du modèle IA
+
+|Administrateur|
+start
+:Demander le réentraînement\n(source = synthétique ou réelle);
+|Backend|
+if (Source ?) then (réelle)
+  :Charger les paiements réels;
+  :Exclure les paiements dont l'anomalie IA\na été confirmée par un utilisateur;
+  if (Au moins 100 paiements ?) then (non)
+    :Refuser le réentraînement;
+    stop
+  else (oui)
+  endif
+else (synthétique)
+  :Utiliser le jeu synthétique de référence;
+endif
+|Module IA|
+:Calculer les indicateurs;
+:Ajuster StandardScaler\n+ Isolation Forest (200 arbres,\ncontamination 1 %);
+:Sauvegarder le modèle\n(version horodatée, source, taille);
+fork
+  |Module IA|
+  :Répondre immédiatement\navec la nouvelle version;
+  |Administrateur|
+  :Consulter la nouvelle version;
+fork again
+  |Module IA|
+  :Évaluation en arrière-plan;
+  repeat
+    :Générer un jeu de test\n(1000 paiements, 3 % d'anomalies typées);
+    :Mesurer 5 modèles : modèle en service,\nIsolation Forest seul, règle simple,\nLOF et One-Class SVM;
+  repeat while (5 jeux évalués ?) is (non) not (oui)
+  :Calculer moyenne et écart-type :\naccuracy, précision, rappel, F1,\nROC-AUC, PR-AUC, rappel par type;
+  :Écrire metrics.json;
+end fork
+stop
+@enduml
