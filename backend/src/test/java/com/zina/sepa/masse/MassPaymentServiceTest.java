@@ -403,4 +403,97 @@ class MassPaymentServiceTest {
         assertThat(service().detail(8L).xml()).isEqualTo("<Document>invalid</Document>");
         verifyNoInteractions(auditService);
     }
+
+    private SocieteService.Debiteur debiteurConnu() {
+        SocieteService.Debiteur debiteur = new SocieteService.Debiteur("Societe CLI1", "FR7630001007941234567890185", "BNPAFRPP");
+        when(societeService.debiteurPour("CLI1")).thenReturn(Optional.of(debiteur));
+        return debiteur;
+    }
+
+    @Test
+    void controle_exige_une_societe_et_ne_lance_aucun_traitement() {
+        ApercuRequest sansSociete = new ApercuRequest(1L, null, "2026-08", List.of(), List.of(1L),
+                null, null, null, "2026-10-07", List.of("APPROUVEE"), false);
+
+        assertThatThrownBy(() -> service().controler(sansSociete, null))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("société");
+        verifyNoInteractions(aiAnomalyService, generator, fichierRepository);
+    }
+
+    @Test
+    void controle_conserve_un_xml_non_conforme_avec_ses_erreurs_et_sans_ia() {
+        preparerGeneration(List.of(new ErreurXsd(4, 1, "Element invalide", "Document")));
+        debiteurConnu();
+        when(aiAnomalyService.analyser(any())).thenReturn(new AnalyseResult(false, null, List.of()));
+        when(fichierRepository.save(any(FichierSepaGenere.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        FichierSepaGenere f = service().controler(requete(), null);
+
+        assertThat(f.isValideXsd()).isFalse();
+        assertThat(f.getStatutFichier()).isEqualTo("NON_CONFORME");
+        assertThat(f.getNbErreurs()).isEqualTo(1);
+        assertThat(f.getNbSuspectsIa()).isNull();
+        assertThat(f.getNomDebiteur()).isEqualTo("Societe CLI1");
+        assertThat(f.getResultatIa()).contains("\"disponible\":false");
+    }
+
+    @Test
+    void resultat_regroupe_controles_metier_par_salarie_et_analyse_ia() {
+        preparerGeneration(List.of());
+        debiteurConnu();
+        Transaction suspect = tx();
+        suspect.setRecommandation("Vérifier la fiche de paie");
+        suspect.setSourceAnomalie("IA");
+        suspect.setScoreRisque(0.9);
+        Transaction invalide = tx();
+        invalide.setId(3L);
+        invalide.setEmployeId("EMP3");
+        invalide.setNomBeneficiaire("Carole");
+        invalide.setIban("FR7612345678901234567890123");
+        when(paiementRepository.findAllById(List.of(1L))).thenReturn(List.of(suspect, invalide));
+        when(aiAnomalyService.analyser(any())).thenReturn(new AnalyseResult(true, "iforest-test",
+                List.of(new com.zina.sepa.ai.dto.ResultatDto(1L, 0.9, true, List.of("Montant 3,7x la moyenne")),
+                        new com.zina.sepa.ai.dto.ResultatDto(3L, 0.1, false, List.of()))));
+        when(fichierRepository.save(any(FichierSepaGenere.class))).thenAnswer(invocation -> {
+            FichierSepaGenere enregistre = invocation.getArgument(0);
+            enregistre.setId(9L);
+            when(fichierRepository.findById(9L)).thenReturn(Optional.of(enregistre));
+            return enregistre;
+        });
+
+        FichierSepaGenere f = service().controler(requete(), null);
+        var resultat = service().resultat(f.getId());
+
+        assertThat(resultat.resume().statutFichier()).isEqualTo("BROUILLON");
+        assertThat(resultat.resume().nbSuspectsIa()).isEqualTo(1);
+        assertThat(resultat.ibanDebiteurMasque()).doesNotContain("30001007941234567890185");
+        assertThat(resultat.metier().erreurs()).singleElement().satisfies(e -> {
+            assertThat(e.matricule()).isEqualTo("EMP3");
+            assertThat(e.nom()).isEqualTo("Carole");
+            assertThat(e.message()).contains("IBAN invalide");
+        });
+        assertThat(resultat.ia().disponible()).isTrue();
+        assertThat(resultat.ia().nbSuspects()).isEqualTo(1);
+        assertThat(resultat.ia().lignes()).filteredOn(l -> l.suspect()).singleElement().satisfies(l -> {
+            assertThat(l.matricule()).isEqualTo("EMP1");
+            assertThat(l.raisons()).containsExactly("Montant 3,7x la moyenne");
+            assertThat(l.recommandation()).isEqualTo("Vérifier la fiche de paie");
+        });
+        // Les avertissements IA restent dans l'onglet IA, pas dans les contrôles métier.
+        assertThat(resultat.metier().avertissements()).noneMatch(a -> a.message().contains("Montant suspect (IA"));
+    }
+
+    @Test
+    void resultat_d_un_fichier_anterieur_au_parcours_a_des_sections_vides() {
+        FichierSepaGenere ancien = FichierSepaGenere.builder().id(5L).contenuXml("<Document/>")
+                .valideXsd(true).erreursXsd("[]").ibanDebiteur("FR7630001007941234567890185").build();
+        when(fichierRepository.findById(5L)).thenReturn(Optional.of(ancien));
+
+        var resultat = service().resultat(5L);
+
+        assertThat(resultat.resume().statutFichier()).isEqualTo("BROUILLON");
+        assertThat(resultat.ia().disponible()).isFalse();
+        assertThat(resultat.metier().erreurs()).isEmpty();
+        assertThat(resultat.erreursXsd()).isEmpty();
+    }
 }

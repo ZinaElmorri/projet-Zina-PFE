@@ -32,7 +32,7 @@ export const theme = {
       darkGroupTitleColor: 'rgba(255, 255, 255, 0.45)',
       itemBorderRadius: 4,
     },
-    Table: { headerBg: '#F7F9FC', rowHoverBg: '#F0F4FA' },
+    Table: { headerBg: '#F7F9FC', rowHoverBg: '#F0F4FA', rowSelectedBg: '#E8EEF7', rowSelectedHoverBg: '#DCE6F3' },
     Card: { headerFontSize: 15 },
   },
 }

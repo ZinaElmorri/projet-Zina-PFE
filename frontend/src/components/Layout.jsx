@@ -27,15 +27,17 @@ export const ROLES = {
   AUDITEUR: { label: 'Auditeur', color: 'purple' },
 }
 
-const HISTORIQUE = '/virements-masse?onglet=historique'
+const HISTORIQUE = '/virements-masse/historique'
+const RESULTAT = '/virements-masse/resultat'
 
 const FIL_ARIANE = {
   '/': ['Pilotage', 'Tableau de bord'],
   '/kpi': ['Pilotage', 'Indicateurs KPI'],
   '/transactions': ['Paie et virements', 'Transactions'],
-  '/virements-masse': ['Paie et virements', 'Virements de masse'],
+  '/virements-masse': ['Paie et virements', 'Virements de masse', 'Nouveau virement'],
+  [HISTORIQUE]: ['Paie et virements', 'Virements de masse', 'Historique des fichiers'],
+  [RESULTAT]: ['Paie et virements', 'Virements de masse', 'Résultat du contrôle'],
   '/societes': ['Paie et virements', 'Sociétés débitrices'],
-  [HISTORIQUE]: ['Paie et virements', 'Historique SEPA'],
   '/anomalies': ['Contrôle', 'Anomalies'],
   '/xsd': ['Contrôle', 'Schémas XSD'],
   '/users': ['Administration', 'Utilisateurs'],
@@ -82,7 +84,7 @@ function menuItems(role) {
 export default function Layout() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const { pathname, search } = useLocation()
+  const { pathname } = useLocation()
   const [collapsed, setCollapsed] = useState(false)
 
   const handleLogout = () => {
@@ -90,10 +92,10 @@ export default function Layout() {
     navigate('/login')
   }
 
-  const cleActive = pathname === '/virements-masse' && new URLSearchParams(search).get('onglet') === 'historique'
-    ? HISTORIQUE
-    : pathname
-  const [section, titre] = FIL_ARIANE[cleActive] || []
+  // Les pages de résultat restent rattachées à « Virements de masse » dans le menu.
+  const surResultat = pathname.startsWith(RESULTAT)
+  const cleActive = surResultat ? '/virements-masse' : pathname
+  const [section, titre, sousTitre] = FIL_ARIANE[surResultat ? RESULTAT : pathname] || []
   const role = ROLES[user?.role] || { label: user?.role, color: 'default' }
 
   const menuUtilisateur = {
@@ -139,7 +141,7 @@ export default function Layout() {
       </Sider>
       <AntLayout>
         <Header className="app-header">
-          <Breadcrumb items={[section, titre].filter(Boolean).map((t) => ({ title: t }))} />
+          <Breadcrumb items={[section, titre, sousTitre].filter(Boolean).map((t) => ({ title: t }))} />
           <Dropdown menu={menuUtilisateur} trigger={['click']} placement="bottomRight">
             <Space className="app-user" size={8}>
               <UserOutlined />

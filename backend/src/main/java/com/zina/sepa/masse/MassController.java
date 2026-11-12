@@ -71,6 +71,13 @@ public class MassController {
         return service.detail(f.getId()).resume();
     }
 
+    @PostMapping("/controle")
+    @PreAuthorize("hasAnyRole('ADMINISTRATEUR','GESTIONNAIRE_RH')")
+    public FichierResume controler(@RequestBody ApercuRequest req, HttpServletRequest http) {
+        FichierSepaGenere f = service.controler(req, http);
+        return service.detail(f.getId()).resume();
+    }
+
     @GetMapping("/fichiers")
     public List<FichierResume> historique(@RequestParam(required = false) String clientId,
                                           @RequestParam(required = false) String periode,
@@ -81,6 +88,11 @@ public class MassController {
     @GetMapping("/fichiers/{id}")
     public FichierDetail detail(@PathVariable Long id) {
         return service.detail(id);
+    }
+
+    @GetMapping("/fichiers/{id}/resultat")
+    public ResultatFichier resultat(@PathVariable Long id) {
+        return service.resultat(id);
     }
 
     @GetMapping("/fichiers/{id}/telecharger")

@@ -65,4 +65,30 @@ class SocieteServiceTest {
 
         assertThat(service().debiteurPour("SOC-1")).isEmpty();
     }
+
+    @Test
+    void coordonnees_signalent_une_societe_inconnue_ou_inactive_comme_incompletes() {
+        Societe inactive = Societe.builder().code("SOC-1").nom("Ancienne").iban("FR7630006000011234567890189")
+                .bic("AGRIFRPP").actif(false).build();
+        when(repository.findByCode("SOC-1")).thenReturn(Optional.of(inactive));
+        when(repository.findByCode("INCONNUE")).thenReturn(Optional.empty());
+
+        assertThat(service().coordonnees("INCONNUE").complet()).isFalse();
+        var coordonnees = service().coordonnees("SOC-1");
+        assertThat(coordonnees.complet()).isFalse();
+        assertThat(coordonnees.manquants()).containsExactly("société inactive");
+    }
+
+    @Test
+    void coordonnees_d_une_societe_active_sont_completes() {
+        Societe active = Societe.builder().code("SOC-1").nom("Ma société").iban("FR7630006000011234567890189")
+                .bic("AGRIFRPP").actif(true).build();
+        when(repository.findByCode("SOC-1")).thenReturn(Optional.of(active));
+
+        var coordonnees = service().coordonnees("SOC-1");
+
+        assertThat(coordonnees.complet()).isTrue();
+        assertThat(coordonnees.iban()).isEqualTo("FR7630006000011234567890189");
+        assertThat(coordonnees.ibanMasque()).isEqualTo("FR76 **** **** **** **** 0189");
+    }
 }

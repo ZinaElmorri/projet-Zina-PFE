@@ -131,7 +131,11 @@ public final class MasseDto {
             boolean valideXsd,
             int nbErreurs,
             String generePar,
-            String genereLe
+            String genereLe,
+            String statutFichier,
+            Integer nbErreursTotal,
+            Integer nbAvertissements,
+            Integer nbSuspectsIa
     ) {}
 
     public record FichierDetail(
@@ -141,5 +145,49 @@ public final class MasseDto {
             String nomDebiteur,
             String ibanDebiteur,
             String dateExecution
+    ) {}
+
+    // --- Résultat du contrôle (parcours en plusieurs pages) ---
+
+    /** Message de contrôle métier rattaché à un salarié (matricule nul si non identifiable). */
+    public record LigneControle(String matricule, String nom, String message) {}
+
+    public record ResultatMetier(
+            List<LigneControle> erreurs,
+            List<LigneControle> avertissements,
+            List<ErreurXsd> erreursXml,
+            List<ErreurXsd> avertissementsXml
+    ) {}
+
+    public record LigneIa(
+            Long transactionId,
+            String matricule,
+            String nom,
+            BigDecimal montant,
+            Double score,
+            boolean suspect,
+            List<String> raisons,
+            String recommandation
+    ) {}
+
+    /** {@code disponible} est faux si l'IA est désactivée, injoignable ou si le fichier est antérieur à l'analyse. */
+    public record ResultatIa(
+            boolean disponible,
+            String modelVersion,
+            int nbAnalyses,
+            int nbSuspects,
+            List<LigneIa> lignes
+    ) {}
+
+    public record ResultatFichier(
+            FichierResume resume,
+            String xml,
+            String nomDebiteur,
+            String ibanDebiteurMasque,
+            String dateExecution,
+            List<ErreurXsd> erreursXsd,
+            List<ErreurXsd> avertissementsXsd,
+            ResultatMetier metier,
+            ResultatIa ia
     ) {}
 }

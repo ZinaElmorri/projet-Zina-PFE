@@ -3,6 +3,7 @@ package com.zina.sepa.masse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zina.sepa.ai.AiAnomalyService;
 import com.zina.sepa.ai.dto.AnalyseResult;
+import com.zina.sepa.ai.dto.ResultatDto;
 import com.zina.sepa.domain.entity.Transaction;
 import com.zina.sepa.domain.entity.XsdSchema;
 import com.zina.sepa.domain.enums.AuditAction;
@@ -24,7 +25,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -38,6 +42,9 @@ public class MassPaymentService {
     private static final Set<TransactionStatus> STATUTS_AUTORISES =
             Set.of(TransactionStatus.APPROUVEE);
     private static final String SOURCE_IA = "IA";
+    static final String STATUT_BROUILLON = "BROUILLON";
+    static final String STATUT_NON_CONFORME = "NON_CONFORME";
+    private static final Pattern MESSAGE_SALARIE = Pattern.compile("^\\[emp ([^\\]]*)]\\s*(.*)$", Pattern.DOTALL);
 
     private final MassePaiementRepository paiementRepository;
     private final XsdSchemaRepository xsdSchemaRepository;
@@ -187,11 +194,85 @@ public class MassPaymentService {
                 .dateExecution(req.dateExecution())
                 .valideXsd(r.reponse().valideXsd())
                 .erreursXsd(toJson(r.reponse().erreurs()))
+                .statutFichier(STATUT_BROUILLON)
                 .generePar(utilisateur())
                 .build();
         FichierSepaGenere sauve = fichierRepository.save(fichier);
         auditService.log(AuditAction.XML_GENERE, detailAudit("Enregistrement", req, r), "SUCCES", http);
         return sauve;
+    }
+
+    /**
+     * Parcours complet : contrôles métier, analyse IA, génération XML et validation XSD, puis
+     * enregistrement du résultat. Contrairement à {@link #enregistrer}, un XML non conforme est
+     * conservé pour que ses erreurs soient consultables ; seul son téléchargement reste interdit.
+     */
+    public FichierSepaGenere controler(ApercuRequest req, HttpServletRequest http) {
+        String societe = req.clientId() == null ? "" : req.clientId().trim();
+        if (societe.isEmpty()) {
+            throw new IllegalArgumentException("Aucune société sélectionnée. Un fichier de virements ne concerne qu'une seule société débitrice : choisissez-en une.");
+        }
+        SocieteService.Debiteur debiteur = societeService.debiteurPour(societe)
+                .orElseThrow(() -> new IllegalArgumentException("Les coordonnées bancaires de la société « " + societe
+                        + " » sont absentes ou la société est inactive. Complétez-les dans « Sociétés débitrices » avant de lancer le contrôle."));
+
+        List<Transaction> selection = selectionner(req);
+        if (selection.isEmpty()) {
+            throw new IllegalArgumentException("Aucun paiement sélectionné. Cochez au moins un paiement approuvé avant de lancer le contrôle.");
+        }
+        // L'IA ne bloque jamais : indisponible, elle est simplement signalée dans le résultat.
+        AnalyseResult ia = aiAnomalyService.analyser(selection);
+        Resultat r = construire(req);
+
+        ResultatIa resultatIa = resultatIa(ia, r.transactions());
+        ResultatMetier metier = resultatMetier(r);
+        List<ErreurXsd> erreursXsd = r.reponse().erreurs();
+        boolean conforme = r.reponse().valideXsd();
+        XsdSchema schema = xsd(req.xsdSchemaId());
+        String nomFichier = ("SEPA_" + societe + "_" + (req.periode() == null ? "" : req.periode())
+                + "_" + r.msgId() + ".xml").replaceAll("[^A-Za-z0-9._-]", "_");
+
+        FichierSepaGenere fichier = FichierSepaGenere.builder()
+                .msgId(r.msgId())
+                .nomFichier(nomFichier)
+                .contenuXml(r.reponse().xml())
+                .xsdSchemaId(schema.getId())
+                .xsdNom(schema.getNom())
+                .versionMessage(r.reponse().versionMessage())
+                .clientId(societe)
+                .periode(req.periode())
+                .matricules(r.transactions().stream().map(Transaction::getEmployeId).collect(Collectors.joining(",")))
+                .transactionIds(r.transactions().stream().map(t -> String.valueOf(t.getId())).collect(Collectors.joining(",")))
+                .nbTransactions(r.reponse().nbTransactions())
+                .ctrlSum(r.reponse().ctrlSum())
+                .nomDebiteur(debiteur.nom())
+                .ibanDebiteur(debiteur.iban())
+                .dateExecution(req.dateExecution())
+                .valideXsd(conforme)
+                .erreursXsd(toJson(erreursXsd))
+                .avertissementsXsd(toJson(r.avertissementsXsd()))
+                .resultatControleMetier(toJsonObjet(metier))
+                .resultatIa(toJsonObjet(resultatIa))
+                .nbErreurs(erreursXsd.size() + metier.erreurs().size())
+                .nbAvertissements(r.avertissementsXsd().size() + metier.avertissements().size())
+                .nbSuspectsIa(resultatIa.disponible() ? resultatIa.nbSuspects() : null)
+                .statutFichier(conforme ? STATUT_BROUILLON : STATUT_NON_CONFORME)
+                .generePar(utilisateur())
+                .build();
+        FichierSepaGenere sauve = fichierRepository.save(fichier);
+        auditService.log(AuditAction.XML_GENERE, detailAudit("Contrôle et génération", req, r), "SUCCES", http);
+        return sauve;
+    }
+
+    /** Tout ce qu'il faut pour les sous-pages du résultat ; les fichiers antérieurs au parcours ont des sections vides. */
+    public ResultatFichier resultat(Long id) {
+        FichierSepaGenere f = fichierRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Le fichier SEPA n° " + id + " n'est plus disponible. Actualisez l'historique et sélectionnez un fichier existant."));
+        ResultatMetier metier = lireObjet(f.getResultatControleMetier(), ResultatMetier.class,
+                new ResultatMetier(List.of(), List.of(), List.of(), List.of()));
+        ResultatIa ia = lireObjet(f.getResultatIa(), ResultatIa.class, new ResultatIa(false, null, 0, 0, List.of()));
+        return new ResultatFichier(resume(f), f.getContenuXml(), f.getNomDebiteur(), masquer(f.getIbanDebiteur()),
+                f.getDateExecution(), fromJson(f.getErreursXsd()), fromJson(f.getAvertissementsXsd()), metier, ia);
     }
 
     // --- Historique ---
@@ -225,7 +306,8 @@ public class MassPaymentService {
 
     // ------------------------------------------------------------------
 
-    private record Resultat(ApercuResponse reponse, List<Transaction> transactions, String msgId) {}
+    private record Resultat(ApercuResponse reponse, List<Transaction> transactions, String msgId,
+                            List<ErreurXsd> avertissementsXsd, List<String> avertissementsMetier) {}
 
     private Resultat construire(ApercuRequest req) {
         XsdSchema schema = xsd(req.xsdSchemaId());
@@ -266,7 +348,50 @@ public class MassPaymentService {
             avertissementsXml(genere, avertissements),
             positionnerMetier(genere, controleMetier.erreurs(), false),
                 genere.nbTransactions(), genere.ctrlSum(), meta.version(), genere.msgId());
-        return new Resultat(reponse, transactions, genere.msgId());
+        return new Resultat(reponse, transactions, genere.msgId(), List.copyOf(genere.avertissements()),
+                List.copyOf(controleMetier.avertissements()));
+    }
+
+    private ResultatMetier resultatMetier(Resultat r) {
+        Map<String, String> noms = r.transactions().stream()
+                .filter(t -> t.getEmployeId() != null)
+                .collect(Collectors.toMap(Transaction::getEmployeId,
+                        t -> t.getNomBeneficiaire() == null ? "" : t.getNomBeneficiaire(), (a, b) -> a));
+        return new ResultatMetier(
+                lignesControle(r.reponse().erreursControleMetier(), noms),
+                lignesControle(r.avertissementsMetier(), noms),
+                r.reponse().erreursControleMetierXml(),
+                r.reponse().avertissements());
+    }
+
+    /** Les messages métier existants commencent par « [emp matricule] » : on en tire le salarié concerné. */
+    private List<LigneControle> lignesControle(List<String> messages, Map<String, String> noms) {
+        return messages.stream().map(message -> {
+            Matcher m = MESSAGE_SALARIE.matcher(message);
+            if (!m.matches()) {
+                return new LigneControle(null, null, message);
+            }
+            return new LigneControle(m.group(1), noms.get(m.group(1)), m.group(2));
+        }).collect(Collectors.toList());
+    }
+
+    private ResultatIa resultatIa(AnalyseResult ia, List<Transaction> transactions) {
+        if (!ia.disponible()) {
+            return new ResultatIa(false, null, 0, 0, List.of());
+        }
+        Map<Long, ResultatDto> parFiche = ia.resultats().stream()
+                .filter(d -> d.ficheId() != null)
+                .collect(Collectors.toMap(ResultatDto::ficheId, d -> d, (a, b) -> a));
+        List<LigneIa> lignes = transactions.stream().map(t -> {
+            ResultatDto d = parFiche.get(t.getId());
+            boolean suspect = d != null && d.isAnomaly();
+            return new LigneIa(t.getId(), t.getEmployeId(), t.getNomBeneficiaire(), t.getMontant(),
+                    d == null ? null : d.score(), suspect,
+                    suspect && d.raisons() != null ? d.raisons() : List.of(),
+                    suspect ? t.getRecommandation() : null);
+        }).collect(Collectors.toList());
+        int suspects = (int) lignes.stream().filter(LigneIa::suspect).count();
+        return new ResultatIa(true, ia.modelVersion(), lignes.size(), suspects, lignes);
     }
 
     private List<ErreurXsd> avertissementsXml(MassPaymentXmlGenerator.Genere genere, List<String> avertissements) {
@@ -369,10 +494,13 @@ public class MassPaymentService {
 
     private FichierResume resume(FichierSepaGenere f) {
         int nbErreurs = fromJson(f.getErreursXsd()).size();
+        String statut = f.getStatutFichier() != null ? f.getStatutFichier()
+                : (f.isValideXsd() ? STATUT_BROUILLON : STATUT_NON_CONFORME);
         return new FichierResume(f.getId(), f.getNomFichier(), f.getClientId(), f.getPeriode(),
                 f.getMatricules(), f.getNbTransactions(), f.getCtrlSum(), f.getXsdNom(), f.getVersionMessage(),
                 f.isValideXsd(), nbErreurs, f.getGenerePar(),
-                f.getGenereLe() == null ? null : f.getGenereLe().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+                f.getGenereLe() == null ? null : f.getGenereLe().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                statut, f.getNbErreurs(), f.getNbAvertissements(), f.getNbSuspectsIa());
     }
 
     private XsdSchema xsd(Long id) {
@@ -396,10 +524,26 @@ public class MassPaymentService {
     }
 
     private String toJson(List<ErreurXsd> erreurs) {
+        String json = toJsonObjet(erreurs);
+        return json == null ? "[]" : json;
+    }
+
+    private String toJsonObjet(Object valeur) {
         try {
-            return objectMapper.writeValueAsString(erreurs);
+            return objectMapper.writeValueAsString(valeur);
         } catch (Exception e) {
-            return "[]";
+            return null;
+        }
+    }
+
+    private <T> T lireObjet(String json, Class<T> type, T parDefaut) {
+        if (json == null || json.isBlank()) {
+            return parDefaut;
+        }
+        try {
+            return objectMapper.readValue(json, type);
+        } catch (Exception e) {
+            return parDefaut;
         }
     }
 

@@ -14,7 +14,14 @@ const Login = lazy(() => import('./pages/Login.jsx'))
 const Profil = lazy(() => import('./pages/Profil.jsx'))
 const Register = lazy(() => import('./pages/Register.jsx'))
 const Transactions = lazy(() => import('./pages/Transactions.jsx'))
-const VirementsMasse = lazy(() => import('./pages/VirementsMasse.jsx'))
+const VirementsHistorique = lazy(() => import('./pages/virements/Historique.jsx'))
+const NouveauVirement = lazy(() => import('./pages/virements/NouveauVirement.jsx'))
+const ResultatControle = lazy(() => import('./pages/virements/ResultatControle.jsx'))
+const ResultatSynthese = lazy(() => import('./pages/virements/resultat/Synthese.jsx'))
+const ResultatXml = lazy(() => import('./pages/virements/resultat/Xml.jsx'))
+const ResultatValidationXsd = lazy(() => import('./pages/virements/resultat/ValidationXsd.jsx'))
+const ResultatControleIa = lazy(() => import('./pages/virements/resultat/ControleIa.jsx'))
+const ResultatControlesMetier = lazy(() => import('./pages/virements/resultat/ControlesMetier.jsx'))
 const Societes = lazy(() => import('./pages/Societes.jsx'))
 const Users = lazy(() => import('./pages/Users.jsx'))
 const Xsd = lazy(() => import('./pages/Xsd.jsx'))
@@ -42,7 +49,18 @@ export default function App() {
           <Route path="/kpi" element={<KpiDashboard />} />
           <Route path="/transactions" element={<Transactions />} />
           <Route path="/anomalies" element={<Anomalies />} />
-          <Route path="/virements-masse" element={<VirementsMasse />} />
+          <Route path="/virements-masse">
+            <Route index element={<NouveauVirement />} />
+            <Route path="historique" element={<VirementsHistorique />} />
+            <Route path="resultat/:id" element={<ResultatControle />}>
+              <Route index element={<Navigate to="synthese" replace />} />
+              <Route path="synthese" element={<ResultatSynthese />} />
+              <Route path="xml" element={<ResultatXml />} />
+              <Route path="validation-xsd" element={<ResultatValidationXsd />} />
+              <Route path="controle-ia" element={<ResultatControleIa />} />
+              <Route path="controles-metier" element={<ResultatControlesMetier />} />
+            </Route>
+          </Route>
           <Route path="/societes" element={<Societes />} />
           <Route path="/xsd" element={<Xsd />} />
           <Route path="/audit" element={<Audit />} />

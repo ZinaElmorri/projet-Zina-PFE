@@ -10,7 +10,8 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Gestion des sociétés débitrices. L'IBAN complet ne quitte jamais le backend : les réponses ne renvoient que l'IBAN masqué.
+ * Gestion des sociétés débitrices. La liste ne renvoie que l'IBAN masqué ; l'IBAN complet n'est
+ * fourni qu'aux rôles qui préparent des virements, via {@link #coordonnees}.
  */
 @Service
 public class SocieteService {
@@ -21,6 +22,10 @@ public class SocieteService {
 
     /** Données du débiteur utilisées pour générer le pain.001 (IBAN complet). */
     public record Debiteur(String nom, String iban, String bic) {}
+
+    /** Coordonnées affichées en préparation ; {@code manquants} liste ce qui bloque la génération. */
+    public record Coordonnees(String code, String nom, String iban, String ibanMasque, String bic,
+                              boolean complet, List<String> manquants) {}
 
     private final SocieteRepository repository;
     private final BusinessControlService controles;
@@ -64,6 +69,32 @@ public class SocieteService {
         return repository.findByCode(code.trim())
                 .filter(Societe::isActif)
                 .map(s -> new Debiteur(s.getNom(), s.getIban(), s.getBic()));
+    }
+
+    /** Une société absente ou inactive n'est pas une erreur : elle est renvoyée comme incomplète pour que la page l'explique. */
+    @Transactional(readOnly = true)
+    public Coordonnees coordonnees(String code) {
+        String codeNettoye = code == null ? "" : code.trim();
+        Societe societe = repository.findByCode(codeNettoye).orElse(null);
+        List<String> manquants = new java.util.ArrayList<>();
+        if (societe == null) {
+            manquants.add("société inconnue (à créer dans « Sociétés débitrices »)");
+            return new Coordonnees(codeNettoye, null, null, null, null, false, manquants);
+        }
+        if (!societe.isActif()) {
+            manquants.add("société inactive");
+        }
+        if (societe.getNom() == null || societe.getNom().isBlank()) {
+            manquants.add("raison sociale");
+        }
+        if (societe.getIban() == null || societe.getIban().isBlank()) {
+            manquants.add("IBAN");
+        }
+        if (societe.getBic() == null || societe.getBic().isBlank()) {
+            manquants.add("BIC");
+        }
+        return new Coordonnees(societe.getCode(), societe.getNom(), societe.getIban(), masquer(societe.getIban()),
+                societe.getBic(), manquants.isEmpty(), manquants);
     }
 
     @Transactional(readOnly = true)

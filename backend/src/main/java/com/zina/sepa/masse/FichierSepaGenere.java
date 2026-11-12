@@ -81,6 +81,30 @@ public class FichierSepaGenere {
 
     private LocalDateTime genereLe;
 
+    // Résultat du parcours « contrôle puis génération » : colonnes nullables, vides pour les anciens fichiers.
+
+    /** Contrôles métier (erreurs, avertissements, repères dans le XML) sérialisés en JSON. */
+    @Column(columnDefinition = "TEXT")
+    private String resultatControleMetier;
+
+    /** Analyse IA par transaction (score, suspect, raisons, recommandation) sérialisée en JSON. */
+    @Column(columnDefinition = "TEXT")
+    private String resultatIa;
+
+    /** Avertissements XSD non bloquants sérialisés en JSON. */
+    @Column(columnDefinition = "TEXT")
+    private String avertissementsXsd;
+
+    private Integer nbErreurs;
+
+    private Integer nbAvertissements;
+
+    /** Null quand l'analyse IA n'a pas eu lieu ou était indisponible. */
+    private Integer nbSuspectsIa;
+
+    @Column(length = 20)
+    private String statutFichier;
+
     @PrePersist
     void onCreate() {
         if (this.genereLe == null) {

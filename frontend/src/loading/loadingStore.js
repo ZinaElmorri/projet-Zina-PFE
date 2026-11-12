@@ -16,6 +16,13 @@ export const loadingStore = {
     if (nombre === 0) libelle = ''
     notifier()
   },
+  // Change le texte pendant qu'un traitement long est en cours (étapes successives).
+  definirLibelle(nouveauLibelle) {
+    if (nombre > 0) {
+      libelle = nouveauLibelle
+      notifier()
+    }
+  },
   abonner(cb) {
     abonnes.add(cb)
     return () => abonnes.delete(cb)

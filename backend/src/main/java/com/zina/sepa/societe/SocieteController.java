@@ -1,5 +1,6 @@
 package com.zina.sepa.societe;
 
+import com.zina.sepa.societe.SocieteService.Coordonnees;
 import com.zina.sepa.societe.SocieteService.SocieteDto;
 import com.zina.sepa.societe.SocieteService.SocieteRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,6 +22,12 @@ public class SocieteController {
     @PreAuthorize("hasAnyRole('ADMINISTRATEUR','GESTIONNAIRE_RH','VALIDATEUR')")
     public List<SocieteDto> lister() {
         return service.lister();
+    }
+
+    @GetMapping("/{code}/coordonnees")
+    @PreAuthorize("hasAnyRole('ADMINISTRATEUR','GESTIONNAIRE_RH')")
+    public Coordonnees coordonnees(@PathVariable String code) {
+        return service.coordonnees(code);
     }
 
     @PostMapping
