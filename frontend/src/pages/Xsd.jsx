@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
+import { App } from 'antd'
 import api from '../api/client'
 
 export default function Xsd() {
+  const { modal } = App.useApp()
   const [schemas, setSchemas] = useState([])
   const [file, setFile] = useState(null)
   const [editId, setEditId] = useState(null)
@@ -59,20 +61,27 @@ export default function Xsd() {
     }
   }
 
-  const supprimer = async (id, nom) => {
-    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer le schéma "${nom}" ?`)) return
-    setErreur('')
-    setSuppressionId(id)
-    try {
-      await api.delete(`/xsd/${id}`)
-      setSchemas((prev) => prev.filter((s) => s.id !== id))
-      await load()
-      setSucces('Schéma supprimé')
-    } catch (e) {
-      setErreur('Suppression impossible : ' + (e.response?.data?.message || e.message))
-    } finally {
-      setSuppressionId(null)
-    }
+  const supprimer = (id, nom) => {
+    modal.confirm({
+      title: `Êtes-vous sûr de vouloir supprimer le schéma "${nom}" ?`,
+      okText: 'Supprimer',
+      cancelText: 'Annuler',
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        setErreur('')
+        setSuppressionId(id)
+        try {
+          await api.delete(`/xsd/${id}`)
+          setSchemas((prev) => prev.filter((s) => s.id !== id))
+          await load()
+          setSucces('Schéma supprimé')
+        } catch (e) {
+          setErreur('Suppression impossible : ' + (e.response?.data?.message || e.message))
+        } finally {
+          setSuppressionId(null)
+        }
+      },
+    })
   }
 
   return (

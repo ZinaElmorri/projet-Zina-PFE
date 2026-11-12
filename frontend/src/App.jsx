@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { Spin } from 'antd'
 import Layout from './components/Layout.jsx'
+import GlobalLoader from './components/GlobalLoader.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import { useAuth } from './context/AuthContext.jsx'
 
@@ -25,6 +26,7 @@ export default function App() {
 
   return (
     <Suspense fallback={chargement}>
+      <GlobalLoader />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />

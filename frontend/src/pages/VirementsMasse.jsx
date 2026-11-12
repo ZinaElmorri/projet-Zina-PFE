@@ -147,7 +147,7 @@ export default function VirementsMasse() {
     if (periode) params.periode = periode
     if (matriculesSel.length) params.matricules = matriculesSel.join(',')
     try {
-      const { data } = await api.post('/masse/analyse-ia', null, { params })
+      const { data } = await api.post('/masse/analyse-ia', null, { params, libelleChargement: 'Analyse IA en cours…' })
       setPaiements(data.paiements.paiements)
       setTotal(data.paiements.total)
       setControleIa(data)
@@ -216,7 +216,7 @@ export default function VirementsMasse() {
     setChargement(true)
     setMessage('')
     try {
-      const { data } = await api.post('/masse/apercu', requete)
+      const { data } = await api.post('/masse/apercu', requete, { libelleChargement: 'Contrôles métier et validation XSD…' })
       if (revisionRequete !== revision.current) return
       setApercu(data)
       setRequeteApercu(requete)
@@ -237,7 +237,7 @@ export default function VirementsMasse() {
     setChargement(true)
     setMessage('')
     try {
-      const { data } = await api.post('/masse/fichiers', requeteApercu)
+      const { data } = await api.post('/masse/fichiers', requeteApercu, { libelleChargement: 'Génération du fichier XML…' })
       setRequeteApercu(null)
       const messages = [`Fichier enregistré : ${data.nomFichier}`]
       try {

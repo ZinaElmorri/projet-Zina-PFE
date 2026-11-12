@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { App } from 'antd'
 import api from '../api/client'
 import { ROLES } from './Register.jsx'
 
@@ -14,6 +15,7 @@ export default function Users() {
   const [users, setUsers] = useState([])
   const [form, setForm] = useState(empty)
   const [error, setError] = useState('')
+  const { modal } = App.useApp()
 
   const load = () => api.get('/users').then(({ data }) => setUsers(data))
 
@@ -36,12 +38,24 @@ export default function Users() {
     action(async () => { await api.post('/users', form); setForm(empty) })
   }
 
-  const deactivate = (id) => action(() => api.delete(`/users/${id}`))
+  const deactivate = (u) => {
+    modal.confirm({
+      title: `Désactiver le compte « ${u.username} » ?`,
+      okText: 'Désactiver',
+      cancelText: 'Annuler',
+      okButtonProps: { danger: true },
+      onOk: () => action(() => api.delete(`/users/${u.id}`)),
+    })
+  }
   const approuver = (id) => action(() => api.post(`/users/${id}/approuver`))
   const rejeter = (u) => {
-    if (window.confirm(`Rejeter et supprimer la demande de « ${u.username} » ?`)) {
-      action(() => api.post(`/users/${u.id}/rejeter`))
-    }
+    modal.confirm({
+      title: `Rejeter et supprimer la demande de « ${u.username} » ?`,
+      okText: 'Rejeter',
+      cancelText: 'Annuler',
+      okButtonProps: { danger: true },
+      onOk: () => action(() => api.post(`/users/${u.id}/rejeter`)),
+    })
   }
 
   const enAttente = users.filter((u) => !u.approuve).length
@@ -85,7 +99,7 @@ export default function Users() {
                       <button className="secondary" onClick={() => rejeter(u)}>Rejeter</button>
                     </>
                   )}
-                  {u.approuve && u.actif && <button onClick={() => deactivate(u.id)}>Désactiver</button>}
+                  {u.approuve && u.actif && <button onClick={() => deactivate(u)}>Désactiver</button>}
                   {u.approuve && !u.actif && <button onClick={() => approuver(u.id)}>Activer</button>}
                 </td>
               </tr>

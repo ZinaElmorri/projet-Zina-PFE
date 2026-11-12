@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import api from '../api/client'
+import ActionButton from '../components/ActionButton.jsx'
 
 const empty = { employeId: '', nomBeneficiaire: '', iban: '', bic: '', montant: '', libelle: '' }
 
@@ -43,10 +44,11 @@ export default function Transactions() {
       setApprobationEnCours(null)
     }
   }
-  const supprimer = async (id) => { await api.delete(`/transactions/${id}`); load() }
+  const supprimer = async (id) => { await api.delete(`/transactions/${id}`); await load() }
 
   const controler = async () => {
-    const { data } = await api.post('/transactions/controler')
+    setMessage('')
+    const { data } = await api.post('/transactions/controler', null, { libelleChargement: 'Contrôles métier…' })
     setMessage(data.valide
       ? 'Contrôles métier : OK'
       : `Erreurs : ${data.erreurs.join(', ')}`)
@@ -55,7 +57,7 @@ export default function Transactions() {
   // Détection IA des montants suspects (Isolation Forest).
   const analyserMontantsIA = async () => {
     setMessage('')
-    const { data } = await api.post('/ai/detect')
+    const { data } = await api.post('/ai/detect', null, { libelleChargement: 'Analyse IA en cours…' })
     if (!data.disponible) {
       setIaResult({ disponible: false })
       return
@@ -97,8 +99,8 @@ export default function Transactions() {
       </form>
 
       <div className="actions">
-        <button onClick={controler}>Contrôles métier</button>
-        <button onClick={analyserMontantsIA}>Analyser (IA)</button>
+        <ActionButton onClick={controler}>Contrôles métier</ActionButton>
+        <ActionButton onClick={analyserMontantsIA}>Analyser (IA)</ActionButton>
       </div>
       {message && <div className="info">{message}</div>}
 
@@ -155,7 +157,13 @@ export default function Transactions() {
               </td>
               <td>
                 <button onClick={() => approuver(t.id)} disabled={approbationEnCours !== null || t.statut === 'APPROUVEE'}>Approuver</button>
-                <button onClick={() => supprimer(t.id)}>Supprimer</button>
+                <ActionButton
+                  onClick={() => supprimer(t.id)}
+                  succes={`Transaction n° ${t.id} supprimée.`}
+                  confirmation={{ titre: `Supprimer la transaction n° ${t.id} ?`, danger: true, libelle: 'Supprimer' }}
+                >
+                  Supprimer
+                </ActionButton>
               </td>
             </tr>
           ))}
