@@ -16,6 +16,7 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -29,6 +30,7 @@ import java.util.regex.Pattern;
 @Component
 public class XsdErrorCollector {
 
+    private static final Object LOCALE_LOCK = new Object();
     private static final Pattern ELEMENT = Pattern.compile("element '([^']+)'");
     private static final Pattern MAXLEN = Pattern.compile("maxLength '([0-9]+)'");
     private static final Pattern MINLEN = Pattern.compile("minLength '([0-9]+)'");
@@ -62,7 +64,7 @@ public class XsdErrorCollector {
                     diagnostics.add(e);
                 }
             });
-            validator.validate(new StreamSource(new StringReader(xml)));
+            validerEnAnglais(validator, xml);
         } catch (SAXParseException e) {
             diagnostics.add(e);
         } catch (Exception e) {
@@ -98,6 +100,23 @@ public class XsdErrorCollector {
 
     private String message(SAXParseException diagnostic) {
         return diagnostic.getMessage() == null ? "" : diagnostic.getMessage();
+    }
+
+    /**
+     * Les messages Xerces sont localisés selon la langue de la JVM, or leur analyse (nom de balise,
+     * valeur, limites) repose sur le texte anglais. Le JDK ignore la propriété de locale de Xerces :
+     * on fixe donc brièvement la locale par défaut, le temps de la validation.
+     */
+    private void validerEnAnglais(Validator validator, String xml) throws Exception {
+        synchronized (LOCALE_LOCK) {
+            Locale ancienne = Locale.getDefault();
+            Locale.setDefault(Locale.ENGLISH);
+            try {
+                validator.validate(new StreamSource(new StringReader(xml)));
+            } finally {
+                Locale.setDefault(ancienne);
+            }
+        }
     }
 
     private String expliquerIban(String brut, String compte) {
