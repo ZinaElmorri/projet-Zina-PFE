@@ -13,6 +13,7 @@ import com.zina.sepa.repository.XsdSchemaRepository;
 import com.zina.sepa.service.AuditService;
 import com.zina.sepa.service.BusinessControlService;
 import com.zina.sepa.service.ValidationService;
+import com.zina.sepa.societe.SocieteService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,6 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -49,6 +51,7 @@ class MassPaymentServiceTest {
     @Mock XsdErrorCollector errorCollector;
     @Mock FichierSepaGenereRepository fichierRepository;
     @Mock AiAnomalyService aiAnomalyService;
+    @Mock SocieteService societeService;
 
     BusinessControlService businessControlService = new BusinessControlService();
     ObjectMapper objectMapper = new ObjectMapper();
@@ -56,7 +59,7 @@ class MassPaymentServiceTest {
     private MassPaymentService service() {
         return new MassPaymentService(paiementRepository, xsdSchemaRepository, businessControlService,
                 validationService, auditService, xsdReader, generator, errorCollector,
-                fichierRepository, objectMapper, aiAnomalyService);
+                fichierRepository, objectMapper, aiAnomalyService, societeService);
     }
 
     private Transaction tx() {
@@ -151,6 +154,22 @@ class MassPaymentServiceTest {
         assertThat(apercu.erreursControleMetierXml()).hasSize(1);
         assertThat(apercu.erreursControleMetierXml().get(0).ligne()).isEqualTo(7);
         assertThat(apercu.erreursControleMetierXml().get(0).element()).isEqualTo("IBAN");
+    }
+
+    @Test
+    void debiteur_de_la_societe_remplace_les_champs_saisis_dans_le_xml() {
+        preparerSchema();
+        when(paiementRepository.findAllById(List.of(1L))).thenReturn(List.of(tx()));
+        when(societeService.debiteurPour("CLI1"))
+                .thenReturn(Optional.of(new SocieteService.Debiteur("Zina Industries SARL", "FR7630006000011234567890189", "AGRIFRPP")));
+        when(generator.generer(any(), any(), any(), eq("Zina Industries SARL"), eq("FR7630006000011234567890189"),
+                eq("AGRIFRPP"), any(), any(), any()))
+                .thenReturn(new MassPaymentXmlGenerator.Genere("<Document/>", "MSG1", 1, new BigDecimal("2000")));
+        when(validationService.validerSyntaxe("<Document/>")).thenReturn(new ValidationResult(true, List.of(), List.of()));
+
+        var apercu = service().apercu(requete(), null);
+
+        assertThat(apercu.valideXsd()).isTrue();
     }
 
             private ApercuRequest requete() {

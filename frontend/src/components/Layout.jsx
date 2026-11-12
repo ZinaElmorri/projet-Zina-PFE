@@ -4,6 +4,7 @@ import { Breadcrumb, Dropdown, Layout as AntLayout, Menu, Skeleton, Space, Tag, 
 import {
   AlertOutlined,
   AuditOutlined,
+  BankOutlined,
   BarChartOutlined,
   DashboardOutlined,
   DownOutlined,
@@ -33,6 +34,7 @@ const FIL_ARIANE = {
   '/kpi': ['Pilotage', 'Indicateurs KPI'],
   '/transactions': ['Paie et virements', 'Transactions'],
   '/virements-masse': ['Paie et virements', 'Virements de masse'],
+  '/societes': ['Paie et virements', 'Sociétés débitrices'],
   [HISTORIQUE]: ['Paie et virements', 'Historique SEPA'],
   '/anomalies': ['Contrôle', 'Anomalies'],
   '/xsd': ['Contrôle', 'Schémas XSD'],
@@ -46,6 +48,7 @@ const PAGES_MIGREES = new Set([])
 
 function menuItems(role) {
   const estAdmin = role === 'ADMINISTRATEUR'
+  const peutGererSocietes = estAdmin || role === 'GESTIONNAIRE_RH'
   return [
     {
       type: 'group', label: 'Pilotage', children: [
@@ -58,6 +61,7 @@ function menuItems(role) {
         { key: '/transactions', icon: <SwapOutlined />, label: 'Transactions' },
         { key: '/virements-masse', icon: <SendOutlined />, label: 'Virements de masse' },
         { key: HISTORIQUE, icon: <HistoryOutlined />, label: 'Historique SEPA' },
+        ...(peutGererSocietes ? [{ key: '/societes', icon: <BankOutlined />, label: 'Sociétés débitrices' }] : []),
       ],
     },
     {

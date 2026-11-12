@@ -15,6 +15,7 @@ const Profil = lazy(() => import('./pages/Profil.jsx'))
 const Register = lazy(() => import('./pages/Register.jsx'))
 const Transactions = lazy(() => import('./pages/Transactions.jsx'))
 const VirementsMasse = lazy(() => import('./pages/VirementsMasse.jsx'))
+const Societes = lazy(() => import('./pages/Societes.jsx'))
 const Users = lazy(() => import('./pages/Users.jsx'))
 const Xsd = lazy(() => import('./pages/Xsd.jsx'))
 
@@ -42,6 +43,7 @@ export default function App() {
           <Route path="/transactions" element={<Transactions />} />
           <Route path="/anomalies" element={<Anomalies />} />
           <Route path="/virements-masse" element={<VirementsMasse />} />
+          <Route path="/societes" element={<Societes />} />
           <Route path="/xsd" element={<Xsd />} />
           <Route path="/audit" element={<Audit />} />
           <Route path="/users" element={<Users />} />

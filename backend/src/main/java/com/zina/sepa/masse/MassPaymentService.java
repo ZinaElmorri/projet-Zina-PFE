@@ -12,6 +12,7 @@ import com.zina.sepa.repository.XsdSchemaRepository;
 import com.zina.sepa.service.AuditService;
 import com.zina.sepa.service.BusinessControlService;
 import com.zina.sepa.service.ValidationService;
+import com.zina.sepa.societe.SocieteService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -49,6 +50,7 @@ public class MassPaymentService {
     private final FichierSepaGenereRepository fichierRepository;
     private final ObjectMapper objectMapper;
     private final AiAnomalyService aiAnomalyService;
+    private final SocieteService societeService;
 
     public MassPaymentService(MassePaiementRepository paiementRepository,
                               XsdSchemaRepository xsdSchemaRepository,
@@ -60,7 +62,8 @@ public class MassPaymentService {
                               XsdErrorCollector errorCollector,
                               FichierSepaGenereRepository fichierRepository,
                               ObjectMapper objectMapper,
-                              AiAnomalyService aiAnomalyService) {
+                              AiAnomalyService aiAnomalyService,
+                              SocieteService societeService) {
         this.paiementRepository = paiementRepository;
         this.xsdSchemaRepository = xsdSchemaRepository;
         this.businessControlService = businessControlService;
@@ -72,12 +75,15 @@ public class MassPaymentService {
         this.fichierRepository = fichierRepository;
         this.objectMapper = objectMapper;
         this.aiAnomalyService = aiAnomalyService;
+        this.societeService = societeService;
     }
 
     // --- Filtres & paiements ---
 
     public FiltresResponse filtres(String clientId, String periode) {
-        List<String> societes = paiementRepository.societes();
+        List<String> societes = java.util.stream.Stream.concat(
+                        societeService.codesActifs().stream(), paiementRepository.societes().stream())
+                .distinct().sorted().collect(Collectors.toList());
 
         List<String> periodes = paiementRepository.periodes(vide(clientId)).stream()
                 .map(r -> String.format("%04d-%02d", ((Number) r[0]).intValue(), ((Number) r[1]).intValue()))
@@ -162,6 +168,7 @@ public class MassPaymentService {
         String nomFichier = ("SEPA_" + societe + "_" + (req.periode() == null ? "" : req.periode())
                 + "_" + r.msgId() + ".xml").replaceAll("[^A-Za-z0-9._-]", "_");
 
+        SocieteService.Debiteur debiteurFichier = resoudreDebiteur(req);
         FichierSepaGenere fichier = FichierSepaGenere.builder()
                 .msgId(r.msgId())
                 .nomFichier(nomFichier)
@@ -175,8 +182,8 @@ public class MassPaymentService {
                 .transactionIds(r.transactions().stream().map(t -> String.valueOf(t.getId())).collect(Collectors.joining(",")))
                 .nbTransactions(r.reponse().nbTransactions())
                 .ctrlSum(r.reponse().ctrlSum())
-                .nomDebiteur(req.nomDebiteur())
-                .ibanDebiteur(req.ibanDebiteur())
+                .nomDebiteur(debiteurFichier.nom())
+                .ibanDebiteur(debiteurFichier.iban())
                 .dateExecution(req.dateExecution())
                 .valideXsd(r.reponse().valideXsd())
                 .erreursXsd(toJson(r.reponse().erreurs()))
@@ -241,8 +248,9 @@ public class MassPaymentService {
                         ? "montant inhabituel" : t.getRaisonsAnomalie())
                         + ". Vérifiez la fiche de paie avant d'envoyer le fichier."));
 
+        SocieteService.Debiteur debiteur = resoudreDebiteur(req);
         MassPaymentXmlGenerator.Genere genere = generator.generer(meta.namespace(), meta.version(),
-                transactions, req.nomDebiteur(), req.ibanDebiteur(), req.bicDebiteur(),
+                transactions, debiteur.nom(), debiteur.iban(), debiteur.bic(),
             req.dateExecution(), req.periode(), xsdReader.analyser(schema.getContenu()));
 
         List<ErreurXsd> erreurs = new ArrayList<>();
@@ -307,6 +315,12 @@ public class MassPaymentService {
                 + "Paiements non approuvés : " + references + ". Faites approuver ces paiements, puis relancez la recherche et la génération.");
         }
         return transactions;
+    }
+
+    /** Débiteur de la société sélectionnée ; à défaut, les champs saisis dans la requête. */
+    private SocieteService.Debiteur resoudreDebiteur(ApercuRequest req) {
+        return societeService.debiteurPour(req.clientId())
+                .orElseGet(() -> new SocieteService.Debiteur(req.nomDebiteur(), req.ibanDebiteur(), req.bicDebiteur()));
     }
 
     private List<Transaction> filtrer(String clientId, String periode, List<String> matricules, List<String> statuts) {

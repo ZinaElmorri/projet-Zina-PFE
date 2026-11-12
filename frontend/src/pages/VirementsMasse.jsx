@@ -36,6 +36,7 @@ export default function VirementsMasse() {
   const [analyseOuverte, setAnalyseOuverte] = useState(false)
 
   const [debiteur, setDebiteur] = useState({ nom: '', iban: '', bic: '' })
+  const [referentielSocietes, setReferentielSocietes] = useState([])
   const [dateExecution, setDateExecution] = useState(dateExecutionDefaut())
 
   const [societes, setSocietes] = useState([])
@@ -66,6 +67,7 @@ export default function VirementsMasse() {
 
   useEffect(() => {
     api.get('/masse/xsd').then(({ data }) => setXsdList(data))
+    api.get('/societes').then(({ data }) => setReferentielSocietes(data)).catch(() => setReferentielSocietes([]))
     chargerFiltres('', '')
     chargerHistorique()
     return () => { revision.current++ }
@@ -191,15 +193,18 @@ export default function VirementsMasse() {
     setSelection(s)
   }
 
+  // Société sélectionnée connue du référentiel : son débiteur est repris côté serveur.
+  const societeChoisie = clientId ? referentielSocietes.find((s) => s.code === clientId && s.actif) : null
+
   const corpsRequete = () => ({
     xsdSchemaId: Number(xsdId),
     clientId: clientId || null,
     periode: periode || null,
     matricules: matriculesSel,
     transactionIds: [...selection].sort((premier, second) => premier - second),
-    nomDebiteur: debiteur.nom,
-    ibanDebiteur: debiteur.iban,
-    bicDebiteur: debiteur.bic,
+    nomDebiteur: societeChoisie ? null : debiteur.nom,
+    ibanDebiteur: societeChoisie ? null : debiteur.iban,
+    bicDebiteur: societeChoisie ? null : debiteur.bic,
     dateExecution,
     statuts: ['APPROUVEE'],
     exclureErreurs: false,
@@ -361,9 +366,19 @@ export default function VirementsMasse() {
               ))}
             </select>
           </label>
-          <label>Société émettrice <input value={debiteur.nom} onChange={(e) => modifierParametres(() => setDebiteur({ ...debiteur, nom: e.target.value }))} /></label>
-          <label>IBAN débiteur <input value={debiteur.iban} onChange={(e) => modifierParametres(() => setDebiteur({ ...debiteur, iban: e.target.value }))} /></label>
-          <label>BIC débiteur <input value={debiteur.bic} onChange={(e) => modifierParametres(() => setDebiteur({ ...debiteur, bic: e.target.value }))} /></label>
+          {societeChoisie ? (
+            <div className="inline-form">
+              <span>Société émettrice : <strong>{societeChoisie.nom}</strong></span>
+              <span>IBAN : {societeChoisie.ibanMasque}</span>
+              <span>BIC : {societeChoisie.bic}</span>
+            </div>
+          ) : (
+            <>
+              <label>Société émettrice <input value={debiteur.nom} onChange={(e) => modifierParametres(() => setDebiteur({ ...debiteur, nom: e.target.value }))} /></label>
+              <label>IBAN débiteur <input value={debiteur.iban} onChange={(e) => modifierParametres(() => setDebiteur({ ...debiteur, iban: e.target.value }))} /></label>
+              <label>BIC débiteur <input value={debiteur.bic} onChange={(e) => modifierParametres(() => setDebiteur({ ...debiteur, bic: e.target.value }))} /></label>
+            </>
+          )}
           <label>Date d’exécution <input type="date" value={dateExecution} onChange={(e) => modifierParametres(() => setDateExecution(e.target.value))} /></label>
         </div>
         {xsdId && (
