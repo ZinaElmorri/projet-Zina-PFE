@@ -1,95 +1,152 @@
 import { useEffect, useState } from 'react'
+import { Alert, Button, Card, Col, DatePicker, Empty, Input, Progress, Row, Skeleton, Space, Table, Tag, Tooltip, Typography } from 'antd'
+import {
+  AlertOutlined,
+  BankOutlined,
+  EuroOutlined,
+  FileDoneOutlined,
+  FileTextOutlined,
+  PercentageOutlined,
+  ReloadOutlined,
+} from '@ant-design/icons'
+import dayjs from 'dayjs'
 import api from '../api/client'
+import PageHeader from '../components/PageHeader.jsx'
 
 const nf = new Intl.NumberFormat('fr-FR')
 const euro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' })
 
+const COULEURS = { primaire: '#1F3A5F', bleu: '#2D5283', vert: '#2E7D32', orange: '#D97706', rouge: '#C62828', or: '#B8893B', gris: '#8C99AB' }
+const SOURCES = { REGLE: COULEURS.bleu, XSD: COULEURS.orange, IA: COULEURS.vert }
+
 // Les données du jour sont dans le mois en cours : c'est la période affichée à l'ouverture.
-const moisEnCours = () => {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+const moisEnCours = () => dayjs().format('YYYY-MM')
+
+const couleurTaux = (t) => (t < 1 ? COULEURS.vert : t <= 5 ? COULEURS.orange : COULEURS.rouge)
+const fmtPct = (t) => `${nf.format(Number(t))} %`
+
+/** Carte indicateur : icône, valeur, libellé, détail facultatif. */
+function Indicateur({ icone, couleur, valeur, libelle, detail }) {
+  return (
+    <Card className="kpi-carte" styles={{ body: { padding: 18 } }} style={{ borderTop: `3px solid ${couleur}`, height: '100%' }}>
+      <div className="kpi-carte__tete">
+        <span className="kpi-carte__icone" style={{ background: `${couleur}1A`, color: couleur }}>{icone}</span>
+        <Typography.Text type="secondary">{libelle}</Typography.Text>
+      </div>
+      <div className="kpi-carte__valeur" style={{ color: couleur }}>{valeur}</div>
+      {detail && <Typography.Text type="secondary" style={{ fontSize: 12 }}>{detail}</Typography.Text>}
+    </Card>
+  )
 }
 
-const couleurTaux = (t) => (t < 1 ? '#1e9e54' : t <= 5 ? '#ff8c00' : '#c0392b')
-const fmtPct = (t) => `${nf.format(Number(t))} %`.replace('.', ',')
+const Vide = ({ texte = 'Aucune donnée pour cette période' }) => (
+  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={texte} style={{ margin: '16px 0' }} />
+)
 
-// Barres horizontales simples.
-function Bars({ data, couleur = '#464feb' }) {
+// Barres horizontales avec valeur.
+function Barres({ data, couleur }) {
+  if (data.length === 0) return <Vide />
   const max = Math.max(1, ...data.map((d) => d.value))
-  if (data.length === 0) return <p className="muted">Donnée indisponible</p>
   return (
-    <div className="chart-bars">
+    <div className="kpi-barres">
       {data.map((d) => (
-        <div className="bar-row" key={d.label}>
-          <span className="bar-label" title={d.label}>{d.label}</span>
-          <span className="bar-track"><span className="bar-fill" style={{ width: `${(d.value / max) * 100}%`, background: couleur }} /></span>
-          <span className="bar-value">{nf.format(d.value)}</span>
+        <div className="kpi-barres__ligne" key={d.label}>
+          <Tooltip title={d.label}><span className="kpi-barres__label">{d.label.replaceAll('_', ' ')}</span></Tooltip>
+          <span className="kpi-barres__valeur">{nf.format(d.value)}</span>
+          <Progress percent={(d.value / max) * 100} showInfo={false} strokeColor={couleur} size={['100%', 10]} />
         </div>
       ))}
     </div>
   )
 }
 
-// Anneau (doughnut) en SVG.
-function Doughnut({ data }) {
+// Anneau SVG avec le total au centre.
+function Anneau({ data }) {
   const total = data.reduce((s, d) => s + d.value, 0)
-  if (total === 0) return <p className="muted">Donnée indisponible</p>
-  const couleurs = { REGLE: '#464feb', XSD: '#ff8c00', IA: '#1e9e54' }
-  const r = 60, c = 2 * Math.PI * r
-  let offset = 0
+  if (total === 0) return <Vide />
+  const r = 54, c = 2 * Math.PI * r
+  let decalage = 0
   return (
-    <div className="doughnut">
-      <svg width="160" height="160" viewBox="0 0 160 160">
-        <g transform="translate(80,80) rotate(-90)">
+    <div className="kpi-anneau">
+      <svg width="170" height="170" viewBox="0 0 170 170" role="img" aria-label="Anomalies par source">
+        <g transform="translate(85,85) rotate(-90)">
           {data.map((d) => {
-            const frac = d.value / total
-            const dash = `${frac * c} ${c}`
-            const seg = (
-              <circle key={d.label} r={r} fill="none" strokeWidth="24"
-                stroke={couleurs[d.label] || '#888'} strokeDasharray={dash} strokeDashoffset={-offset * c} />
+            const part = d.value / total
+            const segment = (
+              <circle key={d.label} r={r} fill="none" strokeWidth="22" stroke={SOURCES[d.label] || COULEURS.gris}
+                strokeDasharray={`${part * c} ${c}`} strokeDashoffset={-decalage * c}>
+                <title>{`${d.label} : ${nf.format(d.value)}`}</title>
+              </circle>
             )
-            offset += frac
-            return seg
+            decalage += part
+            return segment
           })}
         </g>
+        <text x="85" y="82" textAnchor="middle" fontSize="26" fontWeight="700" fill={COULEURS.primaire}>{nf.format(total)}</text>
+        <text x="85" y="102" textAnchor="middle" fontSize="11" fill="#667085">anomalies</text>
       </svg>
-      <ul className="legend">
+      <ul className="kpi-legende">
         {data.map((d) => (
-          <li key={d.label}><span className="dot" style={{ background: couleurs[d.label] || '#888' }} />{d.label} : {nf.format(d.value)}</li>
+          <li key={d.label}>
+            <span className="kpi-legende__point" style={{ background: SOURCES[d.label] || COULEURS.gris }} />
+            <span>{d.label}</span>
+            <strong>{nf.format(d.value)}</strong>
+            <span className="kpi-legende__part">{Math.round((d.value / total) * 100)} %</span>
+          </li>
         ))}
       </ul>
     </div>
   )
 }
 
-// Courbe 12 mois : fiches (barres) + taux d'erreur (ligne).
-function LineChart({ points }) {
-  if (!points || points.length === 0) return <p className="muted">Donnée indisponible</p>
-  const w = 620, h = 180, pad = 28
+// Évolution sur 12 mois : fiches (barres) et taux d'erreur (courbe).
+function Evolution({ points }) {
+  if (!points || points.length === 0 || points.every((p) => p.fichesGenerees === 0 && Number(p.tauxErreur) === 0)) {
+    return <Vide texte="Aucune fiche générée sur les 12 derniers mois" />
+  }
+  const w = 640, h = 220, gauche = 34, bas = 26, haut = 12, droite = 12
   const maxF = Math.max(1, ...points.map((p) => p.fichesGenerees))
   const maxT = Math.max(1, ...points.map((p) => Number(p.tauxErreur)))
-  const stepX = (w - pad * 2) / Math.max(1, points.length - 1)
-  const x = (i) => pad + i * stepX
-  const yF = (v) => h - pad - (v / maxF) * (h - pad * 2)
-  const yT = (v) => h - pad - (v / maxT) * (h - pad * 2)
-  const ligne = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${x(i)} ${yT(Number(p.tauxErreur))}`).join(' ')
-  const bw = Math.max(4, stepX * 0.4)
+  const pas = (w - gauche - droite) / points.length
+  const x = (i) => gauche + pas * i + pas / 2
+  const yF = (v) => h - bas - (v / maxF) * (h - bas - haut)
+  const yT = (v) => h - bas - (v / maxT) * (h - bas - haut)
+  const largeur = Math.min(26, pas * 0.5)
+  const courbe = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${x(i)} ${yT(Number(p.tauxErreur))}`).join(' ')
   return (
-    <svg width="100%" viewBox={`0 0 ${w} ${h}`} className="linechart">
-      {points.map((p, i) => (
-        <rect key={p.periode} x={x(i) - bw / 2} y={yF(p.fichesGenerees)} width={bw}
-          height={h - pad - yF(p.fichesGenerees)} fill="#c7cbe0" />
-      ))}
-      <path d={ligne} fill="none" stroke="#c0392b" strokeWidth="2" />
-      {points.map((p, i) => <circle key={`c${p.periode}`} cx={x(i)} cy={yT(Number(p.tauxErreur))} r="3" fill="#c0392b" />)}
-      {points.map((p, i) => (
-        <text key={`t${p.periode}`} x={x(i)} y={h - 8} fontSize="9" textAnchor="middle" fill="#666">
-          {p.periode.slice(5)}
-        </text>
-      ))}
-    </svg>
+    <>
+      <svg width="100%" viewBox={`0 0 ${w} ${h}`} role="img" aria-label="Évolution sur 12 mois">
+        {[0, 0.5, 1].map((f) => (
+          <line key={f} x1={gauche} x2={w - droite} y1={h - bas - f * (h - bas - haut)} y2={h - bas - f * (h - bas - haut)} stroke="#E5E9F0" />
+        ))}
+        {[0, 0.5, 1].map((f) => (
+          <text key={`g${f}`} x={gauche - 6} y={h - bas - f * (h - bas - haut) + 4} textAnchor="end" fontSize="10" fill="#8C99AB">{Math.round(maxF * f)}</text>
+        ))}
+        {points.map((p, i) => (
+          <rect key={p.periode} x={x(i) - largeur / 2} y={yF(p.fichesGenerees)} width={largeur} rx="3"
+            height={Math.max(0, h - bas - yF(p.fichesGenerees))} fill={COULEURS.bleu} opacity="0.85">
+            <title>{`${p.periode} : ${nf.format(p.fichesGenerees)} fiche(s), taux d'erreur ${fmtPct(p.tauxErreur)}`}</title>
+          </rect>
+        ))}
+        <path d={courbe} fill="none" stroke={COULEURS.rouge} strokeWidth="2" strokeLinejoin="round" />
+        {points.map((p, i) => <circle key={`c${p.periode}`} cx={x(i)} cy={yT(Number(p.tauxErreur))} r="3.5" fill="#fff" stroke={COULEURS.rouge} strokeWidth="2" />)}
+        {points.map((p, i) => (
+          <text key={`t${p.periode}`} x={x(i)} y={h - 8} fontSize="10" textAnchor="middle" fill="#667085">
+            {dayjs(p.periode + '-01').format('MMM').replace('.', '')}
+          </text>
+        ))}
+      </svg>
+      <Space size="large" className="kpi-legende-ligne">
+        <span><span className="kpi-legende__point" style={{ background: COULEURS.bleu }} />Fiches générées</span>
+        <span><span className="kpi-legende__point" style={{ background: COULEURS.rouge }} />Taux d'erreur</span>
+      </Space>
+    </>
   )
 }
+
+const Panneau = ({ titre, children }) => (
+  <Card title={titre} style={{ height: '100%' }} styles={{ header: { minHeight: 48 } }}>{children}</Card>
+)
 
 export default function KpiDashboard() {
   const [periode, setPeriode] = useState(moisEnCours())
@@ -111,70 +168,98 @@ export default function KpiDashboard() {
 
   useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const val = (v) => (v === null || v === undefined ? '—' : v)
+  const lots = kpi && kpi.lotsValidesXsd != null ? `${kpi.lotsValidesXsd} / ${kpi.lotsGeneres}` : '—'
+  const statuts = kpi?.anomaliesParStatut
 
   return (
     <div>
-      <h2>kPI des flux  SEPA</h2>
+      <PageHeader
+        title="Indicateurs des flux SEPA"
+        subtitle={kpi ? `Période : ${dayjs(kpi.periode + '-01').format('MMMM YYYY')}` : 'Chargement des indicateurs…'}
+      />
 
-      <div className="inline-form">
-        <label>Période <input type="month" value={periode} onChange={(e) => setPeriode(e.target.value)} /></label>
-        <label>Client <input placeholder="Tous" value={clientId} onChange={(e) => setClientId(e.target.value)} /></label>
-        <button onClick={load}>Appliquer</button>
-      </div>
+      <Card style={{ margin: '16px 0' }} styles={{ body: { padding: 16 } }}>
+        <Space wrap size="middle" align="end">
+          <label>
+            <div className="kpi-champ">Période</div>
+            <DatePicker
+              picker="month"
+              allowClear={false}
+              format="MMMM YYYY"
+              value={dayjs(periode + '-01')}
+              onChange={(d) => d && setPeriode(d.format('YYYY-MM'))}
+              style={{ width: 190 }}
+            />
+          </label>
+          <label>
+            <div className="kpi-champ">Client</div>
+            <Input placeholder="Tous les clients" allowClear value={clientId} onChange={(e) => setClientId(e.target.value)} onPressEnter={load} style={{ width: 220 }} />
+          </label>
+          <Button type="primary" icon={<ReloadOutlined />} onClick={load} loading={loading}>Appliquer</Button>
+        </Space>
+      </Card>
 
-      {error && <div className="error">{error}</div>}
-      {loading && <div className="info">Chargement… <span className="spinner" /></div>}
+      {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} />}
+      {loading && !kpi && <Skeleton active paragraph={{ rows: 8 }} />}
 
-      {kpi && !loading && (
-        <>
-          <div className="cards">
-            <div className="card"><span className="card-value">{val(nf.format(kpi.fichesGenerees))}</span><span className="card-label">Fiches de paie générées</span></div>
-            <div className="card"><span className="card-value">{val(nf.format(kpi.clientsConcernes))}</span><span className="card-label">Clients concernés</span></div>
-            <div className="card">
-              <span className="card-value" style={{ color: couleurTaux(Number(kpi.tauxErreur)) }}>{fmtPct(kpi.tauxErreur)}</span>
-              <span className="card-label">Taux d'erreur ({nf.format(kpi.nbErreurs)} / {nf.format(kpi.fichesGenerees)})</span>
-            </div>
-            <div className="card"><span className="card-value">{val(euro.format(kpi.montantTotalVire || 0))}</span><span className="card-label">Montant total viré</span></div>
-            <div className="card"><span className="card-value">{kpi.lotsValidesXsd == null ? '—' : `${kpi.lotsValidesXsd} / ${kpi.lotsGeneres}`}</span><span className="card-label">Lots valides XSD</span></div>
-            <div className="card">
-              <span className="card-value">{nf.format(kpi.anomaliesParStatut.ouvertes)} / {nf.format(kpi.anomaliesParStatut.corrigees)} / {nf.format(kpi.anomaliesParStatut.ignorees)}</span>
-              <span className="card-label">Anomalies ouvertes / corrigées / ignorées</span>
-            </div>
-          </div>
+      {kpi && (
+        <div className={loading ? 'kpi-recharge' : undefined}>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={12} lg={8} xxl={4}>
+              <Indicateur icone={<FileTextOutlined />} couleur={COULEURS.bleu} valeur={nf.format(kpi.fichesGenerees)} libelle="Fiches de paie générées" />
+            </Col>
+            <Col xs={24} sm={12} lg={8} xxl={4}>
+              <Indicateur icone={<BankOutlined />} couleur={COULEURS.primaire} valeur={nf.format(kpi.clientsConcernes)} libelle="Clients concernés" />
+            </Col>
+            <Col xs={24} sm={12} lg={8} xxl={4}>
+              <Indicateur icone={<PercentageOutlined />} couleur={couleurTaux(Number(kpi.tauxErreur))} valeur={fmtPct(kpi.tauxErreur)}
+                libelle="Taux d'erreur" detail={`${nf.format(kpi.nbErreurs)} erreur(s) sur ${nf.format(kpi.fichesGenerees)} fiche(s)`} />
+            </Col>
+            <Col xs={24} sm={12} lg={8} xxl={4}>
+              <Indicateur icone={<EuroOutlined />} couleur={COULEURS.or} valeur={euro.format(kpi.montantTotalVire || 0)} libelle="Montant total viré" />
+            </Col>
+            <Col xs={24} sm={12} lg={8} xxl={4}>
+              <Indicateur icone={<FileDoneOutlined />} couleur={COULEURS.vert} valeur={lots} libelle="Lots valides XSD"
+                detail={kpi.lotsValidesXsd == null ? 'Donnée non disponible' : undefined} />
+            </Col>
+            <Col xs={24} sm={12} lg={8} xxl={4}>
+              <Indicateur icone={<AlertOutlined />} couleur={COULEURS.orange} libelle="Anomalies"
+                valeur={<span>{nf.format(statuts.ouvertes)}<span className="kpi-sep"> / </span>{nf.format(statuts.corrigees)}<span className="kpi-sep"> / </span>{nf.format(statuts.ignorees)}</span>}
+                detail="ouvertes / corrigées / ignorées" />
+            </Col>
+          </Row>
 
-          <div className="kpi-grid">
-            <section className="kpi-panel">
-              <h3>Évolution 12 mois (fiches + taux d'erreur)</h3>
-              <LineChart points={kpi.evolutionMensuelle} />
-            </section>
-            <section className="kpi-panel">
-              <h3>Anomalies par source</h3>
-              <Doughnut data={kpi.anomaliesParSource} />
-            </section>
-            <section className="kpi-panel">
-              <h3>Anomalies par type</h3>
-              <Bars data={kpi.anomaliesParType} />
-            </section>
-            <section className="kpi-panel">
-              <h3>Clients par département</h3>
-              <Bars data={kpi.clientsParDepartement} couleur="#1e9e54" />
-            </section>
-            <section className="kpi-panel">
-              <h3>Top 5 clients à anomalies</h3>
-              {kpi.topClientsAnomalies.length === 0 ? <p className="muted">Aucune donnée</p> : (
-                <table>
-                  <thead><tr><th>Client</th><th>Anomalies</th></tr></thead>
-                  <tbody>
-                    {kpi.topClientsAnomalies.map((c) => (
-                      <tr key={c.clientId}><td>{c.clientId}</td><td>{nf.format(c.nbAnomalies)}</td></tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </section>
-          </div>
-        </>
+          <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+            <Col xs={24} xl={12}>
+              <Panneau titre="Évolution sur 12 mois"><Evolution points={kpi.evolutionMensuelle} /></Panneau>
+            </Col>
+            <Col xs={24} md={12} xl={6}>
+              <Panneau titre="Anomalies par source"><Anneau data={kpi.anomaliesParSource} /></Panneau>
+            </Col>
+            <Col xs={24} md={12} xl={6}>
+              <Panneau titre="Anomalies par type"><Barres data={kpi.anomaliesParType} couleur={COULEURS.bleu} /></Panneau>
+            </Col>
+            <Col xs={24} md={12}>
+              <Panneau titre="Clients par département"><Barres data={kpi.clientsParDepartement} couleur={COULEURS.vert} /></Panneau>
+            </Col>
+            <Col xs={24} md={12}>
+              <Panneau titre="Top 5 clients à anomalies">
+                {kpi.topClientsAnomalies.length === 0 ? <Vide texte="Aucune anomalie par client" /> : (
+                  <Table
+                    size="small"
+                    pagination={false}
+                    rowKey="clientId"
+                    dataSource={kpi.topClientsAnomalies}
+                    columns={[
+                      { title: 'Client', dataIndex: 'clientId' },
+                      { title: 'Anomalies', dataIndex: 'nbAnomalies', align: 'right', render: (n) => <Tag color="orange">{nf.format(n)}</Tag> },
+                    ]}
+                  />
+                )}
+              </Panneau>
+            </Col>
+          </Row>
+        </div>
       )}
     </div>
   )
