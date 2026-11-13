@@ -5,6 +5,13 @@ import { useAuth } from '../context/AuthContext.jsx'
 
 const apiError = (err, fallback) => err?.response?.data?.erreur || fallback
 
+// Logo au-dessus du formulaire ; si l'image ne se charge pas, le nom en texte la remplace.
+function LogoConnexion() {
+  const [echec, setEchec] = useState(false)
+  if (echec) return <div className="login-logo-fallback">SEPAPaie</div>
+  return <img src="/logo_sepapaie.png" alt="SEPAPaie" className="login-logo" onError={() => setEchec(true)} />
+}
+
 export default function Login() {
   const { login, faceLogin, verifyOtp, resendOtp } = useAuth()
   const navigate = useNavigate()
@@ -95,7 +102,7 @@ export default function Login() {
     return (
       <div className="login-page">
         <form className="login-card" onSubmit={handleVerify}>
-          <h1>Plateforme SEPA</h1>
+          <LogoConnexion />
           <p className="subtitle">Vérification de l'email</p>
           {info && <div className="info">{info}</div>}
           {error && <div className="error">{error}</div>}
@@ -128,7 +135,7 @@ export default function Login() {
   return (
     <div className="login-page">
       <form className="login-card" onSubmit={handleSubmit}>
-        <h1>Plateforme SEPA</h1>
+        <LogoConnexion />
         <p className="subtitle">{faceMode ? 'Connexion par reconnaissance faciale' : 'Connexion'}</p>
         {error && <div className="error">{error}</div>}
         <label>

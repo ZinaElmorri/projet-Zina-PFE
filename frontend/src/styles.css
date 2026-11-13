@@ -23,33 +23,19 @@ a { text-decoration: none; color: var(--primary); }
 .app-sider { position: sticky; top: 0; height: 100vh; overflow: auto; }
 .app-sider .ant-layout-sider-children { display: flex; flex-direction: column; }
 .app-brand {
-  height: 56px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  justify-content: flex-start;
+  padding: 14px 16px;
+  margin-bottom: 4px;
   color: #fff;
   white-space: nowrap;
   overflow: hidden;
 }
-.ant-layout-sider-collapsed .app-brand { justify-content: center; padding: 0; }
-.app-brand__mark {
-  flex: none;
-  width: 32px;
-  height: 32px;
-  border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 13px;
-  letter-spacing: 0.5px;
-}
-.app-brand__text { display: flex; flex-direction: column; line-height: 1.25; }
-.app-brand__name { font-weight: 600; font-size: 15px; }
-.app-brand__sub { font-size: 12px; color: rgba(255, 255, 255, 0.55); }
+.ant-layout-sider-collapsed .app-brand { justify-content: center; padding: 14px 0; }
+.app-brand__logo { display: block; height: 44px; width: auto; max-width: 100%; object-fit: contain; }
+.app-brand__icon { display: block; height: 32px; width: 32px; object-fit: contain; }
+.app-brand__fallback { font-weight: 700; font-size: 16px; letter-spacing: 0.3px; color: #fff; }
 .app-sider .ant-menu { padding: 8px 0; }
 .app-header {
   display: flex;
@@ -211,6 +197,8 @@ button.secondary { background: #6b7280; }
   gap: 12px;
 }
 .login-card h1 { margin: 0; text-align: center; }
+.login-logo { display: block; width: 280px; max-width: 100%; height: auto; margin: 0 auto 4px; object-fit: contain; }
+.login-logo-fallback { text-align: center; font-size: 28px; font-weight: 700; color: var(--primary, #1F3A5F); margin-bottom: 4px; }
 .login-card .subtitle { text-align: center; color: #888; margin: 0 0 12px; }
 .login-card label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
 .login-card input { padding: 10px; border: 1px solid var(--border); border-radius: 6px; }

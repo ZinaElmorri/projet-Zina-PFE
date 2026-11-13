@@ -1,5 +1,5 @@
 import { Suspense, useState } from 'react'
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Breadcrumb, Dropdown, Layout as AntLayout, Menu, Skeleton, Space, Tag, Typography } from 'antd'
 import {
   AlertOutlined,
@@ -30,6 +30,26 @@ import {
 } from '../constants/roles.js'
 
 const { Sider, Header, Content } = AntLayout
+
+// Logo de la barre latérale ; si une image ne se charge pas, le nom en texte la remplace.
+function LogoBarre({ replie }) {
+  const [srcEnEchec, setSrcEnEchec] = useState(null)
+  const src = replie ? '/icone_sepapaie_512.png' : '/logo_sepapaie_blanc.png'
+  return (
+    <Link to="/" className="app-brand" aria-label="SEPAPaie — tableau de bord">
+      {srcEnEchec === src ? (
+        <span className="app-brand__fallback">SEPAPaie</span>
+      ) : (
+        <img
+          src={src}
+          alt="SEPAPaie"
+          className={replie ? 'app-brand__icon' : 'app-brand__logo'}
+          onError={() => setSrcEnEchec(src)}
+        />
+      )}
+    </Link>
+  )
+}
 
 const HISTORIQUE = '/virements-masse/historique'
 const RESULTAT = '/virements-masse/resultat'
@@ -131,15 +151,7 @@ export default function Layout() {
         width={240}
         className="app-sider"
       >
-        <div className="app-brand">
-          <span className="app-brand__mark">SP</span>
-          {!collapsed && (
-            <span className="app-brand__text">
-              <span className="app-brand__name">SEPA Paie</span>
-              <span className="app-brand__sub">Back-office virements</span>
-            </span>
-          )}
-        </div>
+        <LogoBarre replie={collapsed} />
         <Menu
           theme="dark"
           mode="inline"
