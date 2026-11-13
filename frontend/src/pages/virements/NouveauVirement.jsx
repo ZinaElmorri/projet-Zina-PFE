@@ -253,6 +253,7 @@ export default function NouveauVirement() {
           showSearch
           allowClear
           placeholder="Choisir une société"
+          notFoundContent="Aucune société ne vous est affectée : demandez à votre Manager de vous en affecter une."
           style={{ width: 360, maxWidth: '100%' }}
           value={clientId}
           options={optionsSocietes}
