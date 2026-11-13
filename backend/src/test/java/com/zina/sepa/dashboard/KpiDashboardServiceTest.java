@@ -115,6 +115,36 @@ class KpiDashboardServiceTest {
     }
 
     @Test
+    void lots_xsd_et_total_transactions_de_la_periode_sont_renseignes() {
+        mocksVides();
+        com.zina.sepa.masse.FichierSepaGenereRepository fichiers = org.mockito.Mockito.mock(com.zina.sepa.masse.FichierSepaGenereRepository.class);
+        when(fichiers.countLots(any(), any(), any())).thenReturn(4L);
+        when(fichiers.countLotsValides(any(), any(), any())).thenReturn(3L);
+        when(transactionRepository.countTotal(eq(TransactionStatus.SUPPRIMEE), any(), any(), any())).thenReturn(9L);
+        when(transactionRepository.countFiches(any(), any(), any(), any())).thenReturn(5L);
+        when(anomalieRepository.countErreursBloquantes(any(), any(), any(), any(), any(), any())).thenReturn(0L);
+
+        KpiResponse kpi = new KpiDashboardService(transactionRepository, anomalieRepository, fichiers)
+                .kpi(new DashboardFilter("2026-11", null, null, null));
+
+        assertThat(kpi.lotsGeneres()).isEqualTo(4L);
+        assertThat(kpi.lotsValidesXsd()).isEqualTo(3L);
+        assertThat(kpi.transactionsTotal()).isEqualTo(9L);
+    }
+
+    @Test
+    void sans_historique_de_fichiers_les_lots_restent_indisponibles() {
+        mocksVides();
+        when(transactionRepository.countFiches(any(), any(), any(), any())).thenReturn(0L);
+        when(anomalieRepository.countErreursBloquantes(any(), any(), any(), any(), any(), any())).thenReturn(0L);
+
+        KpiResponse kpi = service().kpi(new DashboardFilter("2026-11", null, null, null));
+
+        assertThat(kpi.lotsGeneres()).isNull();
+        assertThat(kpi.lotsValidesXsd()).isNull();
+    }
+
+    @Test
     void filtre_par_client_est_transmis_aux_requetes() {
         mocksVides();
         ArgumentCaptor<String> clientCaptor = ArgumentCaptor.forClass(String.class);

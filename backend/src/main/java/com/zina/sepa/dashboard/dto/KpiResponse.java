@@ -19,7 +19,9 @@ public record KpiResponse(
         List<LabelValue> clientsParDepartement,
         List<LabelValue> clientsParExpert,
         List<EvolutionPoint> evolutionMensuelle,
-        List<TopClient> topClientsAnomalies
+        List<TopClient> topClientsAnomalies,
+        /** Transactions de la période hors supprimées (dénominateur du taux d'approbation). */
+        long transactionsTotal
 ) {
     public record LabelValue(String label, long value) {}
 

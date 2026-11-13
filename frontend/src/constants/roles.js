@@ -31,3 +31,10 @@ export const peutSoumettre = peutPreparer
 export const peutValider = est('MANAGER')
 export const peutAffecter = est('MANAGER')
 export const peutTraiterAnomalies = est('ADMIN', 'MANAGER', 'EXPERT_RH')
+// Pilotage : l'administrateur n'a ni tableau de bord opérationnel ni indicateurs.
+export const peutVoirDashboard = est('EXPERT_RH', 'MANAGER')
+export const peutVoirKpi = est('EXPERT_RH', 'MANAGER')
+/** Les montants globaux ne sont affichés qu'au Manager ; l'Expert RH a une version limitée. */
+export const peutVoirKpiComplet = est('MANAGER')
+/** Page d'accueil des rôles sans tableau de bord. */
+export const PAGE_ACCUEIL_ADMIN = '/users'

@@ -1,39 +1,153 @@
 import { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Alert, Card, Col, Row, Skeleton, Tag, Typography } from 'antd'
+import {
+  AlertOutlined,
+  CheckSquareOutlined,
+  ClockCircleOutlined,
+  CloseCircleOutlined,
+  EditOutlined,
+  FileExcelOutlined,
+  RightOutlined,
+} from '@ant-design/icons'
+import dayjs from 'dayjs'
 import api from '../api/client'
+import PageHeader from '../components/PageHeader.jsx'
+import { peutValider, peutVoirKpi } from '../constants/roles.js'
+import { useAuth } from '../context/AuthContext.jsx'
+
+const nf = new Intl.NumberFormat('fr-FR')
+const COULEURS = { vert: '#2E7D32', orange: '#D97706', rouge: '#C62828', bleu: '#2D5283', gris: '#8C99AB' }
+
+/** Carte « à faire » : cliquable vers la page concernée ; vert quand il n'y a rien à traiter. */
+function CarteAction({ icone, libelle, valeur, aide, urgence, vers }) {
+  const navigate = useNavigate()
+  const indisponible = valeur == null
+  const couleur = indisponible ? COULEURS.gris : valeur === 0 ? COULEURS.vert : COULEURS[urgence]
+  return (
+    <Card
+      hoverable
+      onClick={() => navigate(vers)}
+      style={{ height: '100%', borderTop: `3px solid ${couleur}`, cursor: 'pointer' }}
+      styles={{ body: { padding: 18 } }}
+    >
+      <div className="kpi-carte__tete">
+        <span className="kpi-carte__icone" style={{ background: `${couleur}1A`, color: couleur }}>{icone}</span>
+        <Typography.Text type="secondary">{libelle}</Typography.Text>
+      </div>
+      <div className="kpi-carte__valeur" style={{ color: couleur }}>{indisponible ? '—' : nf.format(valeur)}</div>
+      <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+        {indisponible ? 'Donnée non disponible' : valeur === 0 ? 'Rien à traiter' : aide}
+        {!indisponible && valeur > 0 && <RightOutlined style={{ marginLeft: 6, fontSize: 10 }} />}
+      </Typography.Text>
+    </Card>
+  )
+}
+
+const compter = (resultat, filtre) => (resultat.status === 'fulfilled' ? resultat.value.data.filter(filtre).length : null)
 
 export default function Dashboard() {
-  const [stats, setStats] = useState(null)
-  const [error, setError] = useState('')
+  const { user } = useAuth()
+  const [donnees, setDonnees] = useState(null)
 
   useEffect(() => {
-    api.get('/dashboard/stats')
-      .then(({ data }) => setStats(data))
-      .catch(() => setError('Impossible de charger les statistiques'))
+    // Chaque source est indépendante : l'échec de l'une n'empêche pas l'affichage des autres.
+    Promise.allSettled([
+      api.get('/masse/fichiers', { silent: true }),
+      api.get('/anomalies', { params: { statut: 'OUVERTE' }, silent: true }),
+      api.get('/transactions', { silent: true }),
+      api.get('/dashboard/kpi', { params: { periode: dayjs().format('YYYY-MM') }, silent: true }),
+    ]).then(([fichiers, anomalies, transactions, kpi]) => setDonnees({ fichiers, anomalies, transactions, kpi }))
   }, [])
 
-  if (error) return <p className="error">{error}</p>
-  if (!stats) return <p>Chargement…</p>
+  const manager = peutValider(user?.role)
+  const moisCourant = dayjs().format('MMMM YYYY')
 
-  const cards = [
-    { label: 'Transactions', value: stats.totalTransactions },
-    { label: 'Approuvées', value: stats.transactionsApprouvees },
-    { label: 'Anomalies détectées', value: stats.anomaliesDetectees },
-    { label: 'Fichiers générés', value: stats.fichiersGeneres },
-    { label: 'Erreurs XSD', value: stats.erreursXsd },
-    { label: 'Schémas XSD', value: stats.schemasXsd },
+  if (!donnees) {
+    return (
+      <div>
+        <PageHeader title="Tableau de bord" subtitle="Chargement…" />
+        <Skeleton active paragraph={{ rows: 6 }} style={{ marginTop: 24 }} />
+      </div>
+    )
+  }
+
+  const { fichiers, anomalies, transactions, kpi } = donnees
+  const aTraiter = [
+    ...(manager
+      ? [{
+        cle: 'valider', icone: <CheckSquareOutlined />, libelle: 'Fichiers à valider', urgence: 'orange',
+        valeur: compter(fichiers, (f) => f.statutFichier === 'SOUMIS'), aide: 'Fichiers soumis par les Experts RH', vers: '/virements-masse/a-valider',
+      }]
+      : [
+        {
+          cle: 'rejetes', icone: <FileExcelOutlined />, libelle: 'Fichiers rejetés à corriger', urgence: 'rouge',
+          valeur: compter(fichiers, (f) => f.statutFichier === 'REJETE'), aide: 'Voir le motif et relancer un contrôle', vers: '/virements-masse/historique',
+        },
+        {
+          cle: 'brouillons', icone: <EditOutlined />, libelle: 'Brouillons à soumettre', urgence: 'orange',
+          valeur: compter(fichiers, (f) => f.statutFichier === 'BROUILLON' && f.valideXsd), aide: 'Fichiers conformes pas encore soumis', vers: '/virements-masse/historique',
+        },
+      ]),
+    {
+      cle: 'anomalies', icone: <AlertOutlined />, libelle: 'Anomalies ouvertes', urgence: 'rouge',
+      valeur: anomalies.status === 'fulfilled' ? anomalies.value.data.length : null, aide: 'À corriger ou ignorer', vers: '/anomalies',
+    },
+    {
+      cle: 'attente', icone: <ClockCircleOutlined />, libelle: 'Transactions en attente', urgence: 'orange',
+      valeur: compter(transactions, (t) => t.statut === 'BROUILLON' || t.statut === 'VALIDEE'),
+      aide: manager ? 'À approuver' : 'Pas encore approuvées', vers: '/transactions',
+    },
+    {
+      cle: 'rejetees', icone: <CloseCircleOutlined />, libelle: 'Transactions rejetées', urgence: 'rouge',
+      valeur: compter(transactions, (t) => t.statut === 'REJETEE'), aide: 'À revoir', vers: '/transactions',
+    },
   ]
+  const indisponibles = [fichiers, anomalies, transactions].some((r) => r.status === 'rejected')
+  const k = kpi.status === 'fulfilled' ? kpi.value.data : null
 
   return (
     <div>
-      <h2>Tableau de bord</h2>
-      <div className="cards">
-        {cards.map((c) => (
-          <div className="card" key={c.label}>
-            <span className="card-value">{c.value}</span>
-            <span className="card-label">{c.label}</span>
-          </div>
+      <PageHeader
+        title="Tableau de bord"
+        subtitle={`Ce qui demande une action — situation au ${dayjs().format('DD/MM/YYYY')}`}
+      />
+
+      <Alert
+        type="info"
+        showIcon
+        style={{ margin: '16px 0', background: '#EEF3FA', borderColor: '#D6E0EF' }}
+        message={`Les éléments à traiter sont comptés à date. Les chiffres du mois portent sur ${moisCourant}.`}
+        action={peutVoirKpi(user?.role) && <Link to="/kpi">Voir les indicateurs</Link>}
+      />
+      {indisponibles && (
+        <Alert type="warning" showIcon style={{ marginBottom: 16 }} message="Certaines données n'ont pas pu être chargées : les cartes concernées affichent « — »." />
+      )}
+
+      <Typography.Title level={5} style={{ margin: '8px 0 12px' }}>À traiter maintenant</Typography.Title>
+      <Row gutter={[16, 16]}>
+        {aTraiter.map(({ cle, ...carte }) => (
+          <Col xs={24} sm={12} lg={8} key={cle}><CarteAction {...carte} /></Col>
         ))}
-      </div>
+      </Row>
+
+      <Typography.Title level={5} style={{ margin: '28px 0 12px' }}>
+        Ce mois-ci <Tag style={{ marginLeft: 8 }}>{moisCourant}</Tag>
+      </Typography.Title>
+      <Row gutter={[16, 16]}>
+        {[
+          { libelle: 'Fiches approuvées', valeur: k ? nf.format(k.fichesGenerees) : '—' },
+          { libelle: 'Fichiers SEPA générés', valeur: k && k.lotsGeneres != null ? nf.format(k.lotsGeneres) : '—' },
+          { libelle: "Taux d'erreur", valeur: k ? `${nf.format(Number(k.tauxErreur))} %` : '—' },
+        ].map((s) => (
+          <Col xs={24} sm={8} key={s.libelle}>
+            <Card styles={{ body: { padding: 16 } }}>
+              <Typography.Text type="secondary">{s.libelle}</Typography.Text>
+              <div style={{ fontSize: 24, fontWeight: 700, color: '#1F3A5F' }}>{s.valeur}</div>
+            </Card>
+          </Col>
+        ))}
+      </Row>
     </div>
   )
 }

@@ -6,10 +6,12 @@ import com.zina.sepa.dashboard.dto.KpiResponse.LabelValue;
 import com.zina.sepa.dashboard.dto.KpiResponse.StatutCount;
 import com.zina.sepa.dashboard.dto.KpiResponse.TopClient;
 import com.zina.sepa.domain.enums.TransactionStatus;
+import com.zina.sepa.masse.FichierSepaGenereRepository;
 import com.zina.sepa.recommendation.AnomalieStatut;
 import com.zina.sepa.recommendation.AnomalieType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -41,8 +43,9 @@ import java.util.function.Supplier;
  * × 100. Numérateur et dénominateur portent toujours sur la même période, les mêmes filtres
  * (clientId) et la même population de transactions (APPROUVEE) : le taux est donc toujours
  * compris entre 0 et 100 %, arrondi à 2 décimales, et vaut 0 s'il n'y a aucune fiche.
- * Aucun enregistrement de lot/fichier n'étant persisté, {@code lotsGeneres}/{@code lotsValidesXsd}
- * sont indisponibles (null).</p>
+ * {@code lotsGeneres}/{@code lotsValidesXsd} comptent les fichiers de l'historique SEPA générés sur
+ * la période (null si l'historique n'est pas disponible). {@code transactionsTotal} est le nombre de
+ * transactions de la période hors supprimées.</p>
  */
 @Service
 public class KpiDashboardService {
@@ -63,10 +66,21 @@ public class KpiDashboardService {
     private final DashboardTransactionRepository transactionRepository;
     private final DashboardAnomalieRepository anomalieRepository;
 
+    private final FichierSepaGenereRepository fichierRepository;
+
+    /** Sans historique de fichiers : les lots restent indisponibles (null). */
     public KpiDashboardService(DashboardTransactionRepository transactionRepository,
                                DashboardAnomalieRepository anomalieRepository) {
+        this(transactionRepository, anomalieRepository, null);
+    }
+
+    @Autowired
+    public KpiDashboardService(DashboardTransactionRepository transactionRepository,
+                               DashboardAnomalieRepository anomalieRepository,
+                               FichierSepaGenereRepository fichierRepository) {
         this.transactionRepository = transactionRepository;
         this.anomalieRepository = anomalieRepository;
+        this.fichierRepository = fichierRepository;
     }
 
     public KpiResponse kpi(DashboardFilter filtre) {
@@ -92,15 +106,27 @@ public class KpiDashboardService {
                 nbErreurs,
                 taux(nbErreurs, fiches),
                 montant,
-                null, // lotsGeneres : indisponible (aucune persistance de lot)
-                null, // lotsValidesXsd : indisponible
+                lots(debut, fin, clientId, false),
+                lots(debut, fin, clientId, true),
                 safe(() -> parType(periode, clientId), List.of()),
                 safe(() -> parSource(periode, clientId), List.of()),
                 safe(() -> parStatut(periode, clientId), new StatutCount(0, 0, 0)),
                 List.of(), // clientsParDepartement : notion inexistante
                 List.of(), // clientsParExpert : notion inexistante
                 safe(() -> evolution(mois, clientId), List.of()),
-                safe(() -> topClients(periode, clientId), List.of()));
+                safe(() -> topClients(periode, clientId), List.of()),
+                safe(() -> transactionRepository.countTotal(
+                        TransactionStatus.SUPPRIMEE, debut, fin, clientId), 0L));
+    }
+
+    /** Lots (fichiers SEPA générés) de la période ; null si l'historique n'est pas disponible. */
+    private Long lots(LocalDateTime debut, LocalDateTime fin, String clientId, boolean valides) {
+        if (fichierRepository == null) {
+            return null;
+        }
+        return safe(() -> valides
+                ? fichierRepository.countLotsValides(debut, fin, clientId)
+                : fichierRepository.countLots(debut, fin, clientId), null);
     }
 
     // ------------------------------------------------------------------

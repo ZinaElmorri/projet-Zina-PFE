@@ -6,12 +6,15 @@ import GlobalLoader from './components/GlobalLoader.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import { useAuth } from './context/AuthContext.jsx'
 import {
+  PAGE_ACCUEIL_ADMIN,
   peutAffecter,
   peutConsulterAudit,
   peutGererSocietes,
   peutGererUtilisateurs,
   peutPreparer,
   peutValider,
+  peutVoirDashboard,
+  peutVoirKpi,
 } from './constants/roles.js'
 
 const Affectations = lazy(() => import('./pages/Affectations.jsx'))
@@ -55,8 +58,8 @@ export default function App() {
             </ProtectedRoute>
           }
         >
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/kpi" element={<KpiDashboard />} />
+          <Route path="/" element={<ProtectedRoute autorise={peutVoirDashboard} redirection={PAGE_ACCUEIL_ADMIN}><Dashboard /></ProtectedRoute>} />
+          <Route path="/kpi" element={<ProtectedRoute autorise={peutVoirKpi}><KpiDashboard /></ProtectedRoute>} />
           <Route path="/transactions" element={<Transactions />} />
           <Route path="/anomalies" element={<Anomalies />} />
           <Route path="/virements-masse">

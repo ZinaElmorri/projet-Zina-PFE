@@ -27,6 +27,8 @@ import {
   peutGererUtilisateurs,
   peutPreparer,
   peutValider,
+  peutVoirDashboard,
+  peutVoirKpi,
 } from '../constants/roles.js'
 
 const { Sider, Header, Content } = AntLayout
@@ -80,8 +82,8 @@ function menuItems(role) {
   const groupes = [
     {
       type: 'group', label: 'Pilotage', children: [
-        { key: '/', icon: <DashboardOutlined />, label: 'Tableau de bord' },
-        { key: '/kpi', icon: <BarChartOutlined />, label: 'Indicateurs KPI' },
+        ...(peutVoirDashboard(role) ? [{ key: '/', icon: <DashboardOutlined />, label: 'Tableau de bord' }] : []),
+        ...(peutVoirKpi(role) ? [{ key: '/kpi', icon: <BarChartOutlined />, label: 'Indicateurs KPI' }] : []),
       ],
     },
     {
