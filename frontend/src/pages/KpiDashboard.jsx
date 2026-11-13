@@ -4,9 +4,9 @@ import api from '../api/client'
 const nf = new Intl.NumberFormat('fr-FR')
 const euro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' })
 
-const moisDernier = () => {
+// Les données du jour sont dans le mois en cours : c'est la période affichée à l'ouverture.
+const moisEnCours = () => {
   const d = new Date()
-  d.setMonth(d.getMonth() - 1)
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
 }
 
@@ -92,7 +92,7 @@ function LineChart({ points }) {
 }
 
 export default function KpiDashboard() {
-  const [periode, setPeriode] = useState(moisDernier())
+  const [periode, setPeriode] = useState(moisEnCours())
   const [clientId, setClientId] = useState('')
   const [kpi, setKpi] = useState(null)
   const [loading, setLoading] = useState(false)

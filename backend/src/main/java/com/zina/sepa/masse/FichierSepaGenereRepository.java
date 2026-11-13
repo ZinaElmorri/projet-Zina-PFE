@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface FichierSepaGenereRepository extends JpaRepository<FichierSepaGenere, Long> {
     List<FichierSepaGenere> findAllByOrderByGenereLeDesc();
+
+    long countByValideXsd(boolean valideXsd);
 }
