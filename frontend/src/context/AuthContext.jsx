@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import api from '../api/client'
+import { normaliserRole } from '../constants/roles.js'
 
 const AuthContext = createContext(null)
 
@@ -10,8 +11,9 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const token = localStorage.getItem('token')
     const username = localStorage.getItem('username')
-    const role = localStorage.getItem('role')
+    const role = normaliserRole(localStorage.getItem('role'))
     if (token && username) {
+      localStorage.setItem('role', role)
       setUser({ username, role })
     }
     setLoading(false)

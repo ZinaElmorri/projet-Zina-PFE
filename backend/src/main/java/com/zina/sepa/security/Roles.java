@@ -23,6 +23,8 @@ public final class Roles {
     public static final String AFFECTATION = "hasRole('MANAGER')";
     /** Lecture des données métier. */
     public static final String CONSULTATION = "hasAnyRole('EXPERT_RH','MANAGER','ADMIN')";
+    /** Import, modification et suppression des schémas XSD. */
+    public static final String XSD = "hasAnyRole('ADMIN','MANAGER')";
 
     private Roles() {
     }

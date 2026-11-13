@@ -32,7 +32,7 @@ public class XsdController {
     }
 
     @PostMapping("/import")
-    @PreAuthorize(Roles.ADMIN)
+    @PreAuthorize(Roles.XSD)
     public ResponseEntity<XsdSchema> importer(@RequestParam("file") MultipartFile file,
                                               HttpServletRequest request) throws IOException {
         String username = request.getUserPrincipal() != null
@@ -49,7 +49,7 @@ public class XsdController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize(Roles.ADMIN)
+    @PreAuthorize(Roles.XSD)
     public ResponseEntity<XsdSchema> mettreAJour(@PathVariable Long id,
                                                  @RequestParam("file") MultipartFile file,
                                                  HttpServletRequest request) throws IOException {
@@ -60,7 +60,7 @@ public class XsdController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize(Roles.ADMIN)
+    @PreAuthorize(Roles.XSD)
     public ResponseEntity<Void> supprimer(@PathVariable Long id,
                                           HttpServletRequest request) {
         XsdSchema schema = xsdService.findById(id)
@@ -71,3 +71,4 @@ public class XsdController {
         return ResponseEntity.ok().build();
     }
 }
+

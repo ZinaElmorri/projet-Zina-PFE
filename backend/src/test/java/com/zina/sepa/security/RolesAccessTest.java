@@ -101,12 +101,16 @@ class RolesAccessTest {
             connecte(role);
             assertThat(autorise(() -> users.list())).as("utilisateurs " + role).isFalse();
             assertThat(autorise(() -> societes.creer(null))).as("sociétés " + role).isFalse();
-            assertThat(autorise(() -> xsd.supprimer(1L, null))).as("xsd " + role).isFalse();
+        }
+        connecte("EXPERT_RH");
+        assertThat(autorise(() -> xsd.supprimer(1L, null))).as("xsd expert").isFalse();
+        for (String role : List.of("ADMIN", "MANAGER")) {
+            connecte(role);
+            assertThat(autorise(() -> xsd.supprimer(1L, null))).as("xsd " + role).isTrue();
         }
         connecte("ADMIN");
         assertThat(autorise(() -> users.list())).isTrue();
         assertThat(autorise(() -> societes.creer(null))).isTrue();
-        assertThat(autorise(() -> xsd.supprimer(1L, null))).isTrue();
     }
 
     @Test
