@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import com.zina.sepa.security.Roles;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -41,7 +42,7 @@ public class TransactionController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMINISTRATEUR','GESTIONNAIRE_RH')")
+    @PreAuthorize(Roles.PREPARATION)
     public ResponseEntity<Transaction> create(@Valid @RequestBody TransactionRequest req,
                                               HttpServletRequest request) {
         Transaction t = Transaction.builder()
@@ -61,7 +62,7 @@ public class TransactionController {
     }
 
     @PutMapping("/{id}/approuver")
-    @PreAuthorize("hasAnyRole('ADMINISTRATEUR','VALIDATEUR')")
+    @PreAuthorize(Roles.VALIDATION)
     public ResponseEntity<Transaction> approuver(@PathVariable Long id, HttpServletRequest request) {
         Transaction t = repository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Transaction introuvable"));
@@ -78,7 +79,7 @@ public class TransactionController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMINISTRATEUR','GESTIONNAIRE_RH')")
+    @PreAuthorize(Roles.PREPARATION)
     public ResponseEntity<Void> supprimer(@PathVariable Long id, HttpServletRequest request) {
         repository.deleteById(id);
         auditService.log(AuditAction.TRANSACTION_SUPPRIMEE,
@@ -99,7 +100,7 @@ public class TransactionController {
 
     /** Génère le fichier SEPA pain.001 pour les transactions approuvées. */
     @PostMapping(value = "/generer", produces = MediaType.APPLICATION_XML_VALUE)
-    @PreAuthorize("hasAnyRole('ADMINISTRATEUR','GESTIONNAIRE_RH')")
+    @PreAuthorize(Roles.PREPARATION)
     public ResponseEntity<String> generer(@RequestParam String nomDebiteur,
                                           @RequestParam String ibanDebiteur,
                                           HttpServletRequest request) {

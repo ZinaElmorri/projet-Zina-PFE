@@ -1,6 +1,7 @@
 package com.zina.sepa.service;
 
 import com.zina.sepa.domain.entity.User;
+import com.zina.sepa.domain.enums.Role;
 import com.zina.sepa.dto.CreateUserRequest;
 import com.zina.sepa.dto.RegisterRequest;
 import com.zina.sepa.face.FaceService;
@@ -26,6 +27,7 @@ public class UserService {
 
     /** Inscription publique : compte inactif jusqu'à approbation par un administrateur. */
     public User register(RegisterRequest req) {
+        verifierRoleAttribuable(req.role());
         if (userRepository.existsByUsername(req.username())) {
             throw new IllegalArgumentException("Nom d'utilisateur déjà utilisé");
         }
@@ -67,7 +69,14 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
     }
 
+    private static void verifierRoleAttribuable(Role role) {
+        if (role == null || !role.estAttribuable()) {
+            throw new IllegalArgumentException("Ce rôle n'est plus attribuable. Choisissez Administrateur, Manager ou Expert RH.");
+        }
+    }
+
     public User create(CreateUserRequest req) {
+        verifierRoleAttribuable(req.role());
         if (userRepository.existsByUsername(req.username())) {
             throw new IllegalArgumentException("Nom d'utilisateur déjà utilisé");
         }

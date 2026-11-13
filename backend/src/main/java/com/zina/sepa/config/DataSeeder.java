@@ -10,6 +10,7 @@ import com.zina.sepa.repository.TransactionRepository;
 import com.zina.sepa.repository.UserRepository;
 import com.zina.sepa.repository.XsdSchemaRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +23,7 @@ import java.util.List;
  * Mot de passe par défaut = &lt;username&gt;123 (à changer en production).
  */
 @Component
+@Order(10)
 public class DataSeeder implements CommandLineRunner {
 
     private final UserRepository userRepository;
@@ -47,10 +49,12 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void seedUsers() {
-        saveUserIfAbsent("admin", "Administrateur", "admin@sepa.local", Role.ADMINISTRATEUR);
-        saveUserIfAbsent("rh", "Gestionnaire RH", "rh@sepa.local", Role.GESTIONNAIRE_RH);
-        saveUserIfAbsent("validateur", "Validateur", "validateur@sepa.local", Role.VALIDATEUR);
-        saveUserIfAbsent("auditeur", "Auditeur", "auditeur@sepa.local", Role.AUDITEUR);
+        // Les comptes historiques (rh, validateur, auditeur) sont migrés par RoleMigrationRunner ;
+        // on ne crée ici que les comptes des nouveaux rôles, s'ils sont absents.
+        saveUserIfAbsent("admin", "Administrateur", "admin@sepa.local", Role.ADMIN);
+        saveUserIfAbsent("manager1", "Manager 1", "manager1@sepa.local", Role.MANAGER);
+        saveUserIfAbsent("expert1", "Expert RH 1", "expert1@sepa.local", Role.EXPERT_RH);
+        saveUserIfAbsent("expert2", "Expert RH 2", "expert2@sepa.local", Role.EXPERT_RH);
     }
 
     private void saveUserIfAbsent(String username, String nomComplet, String email, Role role) {

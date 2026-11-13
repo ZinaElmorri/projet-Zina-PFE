@@ -19,6 +19,9 @@ export default function ResultatControle() {
   const [resultat, setResultat] = useState(null)
   const [erreur, setErreur] = useState('')
 
+  const charger = () => api.get(`/masse/fichiers/${id}/resultat`, { silent: true })
+    .then(({ data }) => { setResultat(data); setErreur('') })
+
   useEffect(() => {
     let actif = true
     setResultat(null)
@@ -65,9 +68,9 @@ export default function ResultatControle() {
           <Link key="historique" to={`${BASE}/historique`}><Button>Historique des fichiers</Button></Link>,
         ]}
       />
-      <ParcoursEtapes etape={resultat.resume.valideXsd ? 2 : 1} />
+      <ParcoursEtapes etape={resultat.resume.statutFichier === 'VALIDE' ? 3 : resultat.resume.valideXsd ? 2 : 1} />
       <Tabs activeKey={actif} items={onglets} onChange={(cle) => navigate(urlResultat(id, cle))} />
-      <Outlet context={{ resultat, id }} />
+      <Outlet context={{ resultat, id, recharger: () => charger().catch((e) => setErreur(messageEchec(e))) }} />
     </div>
   )
 }

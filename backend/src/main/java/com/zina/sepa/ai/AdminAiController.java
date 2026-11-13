@@ -3,6 +3,7 @@ package com.zina.sepa.ai;
 import com.zina.sepa.ai.dto.TrainResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import com.zina.sepa.security.Roles;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,7 +19,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/admin/ai")
-@PreAuthorize("hasAnyRole('ADMINISTRATEUR','GESTIONNAIRE_RH','VALIDATEUR')")
+@PreAuthorize(Roles.CONSULTATION)
 public class AdminAiController {
 
     private final AiSupervisionService supervision;
@@ -39,7 +40,7 @@ public class AdminAiController {
 
     /** Réentraîne le modèle sur les données synthétiques ou réelles (source=synthetique|reel). */
     @PostMapping("/train")
-    @PreAuthorize("hasRole('ADMINISTRATEUR')")
+    @PreAuthorize(Roles.ADMIN)
     public ResponseEntity<?> train(@RequestParam(defaultValue = AiSupervisionService.SOURCE_SYNTHETIQUE) String source) {
         try {
             TrainResponse response = supervision.reentrainer(source);

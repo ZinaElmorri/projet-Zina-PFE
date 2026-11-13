@@ -1,11 +1,25 @@
 package com.zina.sepa.domain.enums;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 /**
- * Rôles applicatifs et leurs droits associés.
+ * Rôles applicatifs. Les anciens rôles sont conservés uniquement pour que les lignes existantes en base
+ * se chargent jusqu'à leur migration (voir RoleMigrationRunner) ; ils ne sont plus attribuables.
  */
 public enum Role {
-    ADMINISTRATEUR,
-    GESTIONNAIRE_RH,
-    VALIDATEUR,
-    AUDITEUR
+    ADMIN,
+    MANAGER,
+    EXPERT_RH,
+
+    @Deprecated ADMINISTRATEUR,
+    @Deprecated GESTIONNAIRE_RH,
+    @Deprecated VALIDATEUR,
+    @Deprecated AUDITEUR;
+
+    private static final Set<Role> ATTRIBUABLES = EnumSet.of(ADMIN, MANAGER, EXPERT_RH);
+
+    public boolean estAttribuable() {
+        return ATTRIBUABLES.contains(this);
+    }
 }

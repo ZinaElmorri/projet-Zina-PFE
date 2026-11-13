@@ -2,15 +2,9 @@ import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../api/client'
 import WebcamCapture from '../components/WebcamCapture.jsx'
+import { ROLES_ATTRIBUABLES, ROLE_PAR_DEFAUT } from '../constants/roles.js'
 
-export const ROLES = [
-  { value: 'ADMINISTRATEUR', label: 'Administrateur' },
-  { value: 'GESTIONNAIRE_RH', label: 'Gestionnaire RH' },
-  { value: 'VALIDATEUR', label: 'Validateur' },
-  { value: 'AUDITEUR', label: 'Auditeur' },
-]
-
-const empty = { username: '', nomComplet: '', email: '', role: 'GESTIONNAIRE_RH', password: '', confirmation: '' }
+const empty = { username: '', nomComplet: '', email: '', role: ROLE_PAR_DEFAUT, password: '', confirmation: '' }
 
 export default function Register() {
   const webcamRef = useRef(null)
@@ -92,7 +86,7 @@ export default function Register() {
         <label>
           Type d'utilisateur
           <select name="role" value={form.role} onChange={handleChange} required>
-            {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+            {ROLES_ATTRIBUABLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
           </select>
         </label>
         <label>

@@ -2,6 +2,7 @@ package com.zina.sepa.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -10,6 +11,14 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    // Message explicite pour le front (droits insuffisants ou société non affectée).
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, String>> handleAccessDenied(AccessDeniedException ex) {
+        String message = ex.getMessage() == null || "Access Denied".equals(ex.getMessage())
+                ? "votre rôle ne permet pas cette opération." : ex.getMessage();
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("erreur", "Accès refusé : " + message));
+    }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> handleBadRequest(IllegalArgumentException ex) {

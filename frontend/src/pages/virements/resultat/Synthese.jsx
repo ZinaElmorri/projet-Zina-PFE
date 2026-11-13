@@ -1,8 +1,12 @@
-import { Button, Card, Col, Descriptions, Row, Space, Tag, Typography } from 'antd'
+import { useState } from 'react'
+import { Alert, App, Button, Card, Col, Descriptions, Input, Modal, Row, Space, Tag, Typography } from 'antd'
 import { useNavigate, useOutletContext } from 'react-router-dom'
+import api from '../../../api/client'
 import ActionButton from '../../../components/ActionButton.jsx'
-import { formatDateCourte, formatMontant } from '../../../utils/format.js'
-import { BASE, STATUTS_FICHIER, telechargerFichier, urlResultat } from '../parcours.js'
+import { peutPreparer, peutSoumettre, peutValider } from '../../../constants/roles.js'
+import { useAuth } from '../../../context/AuthContext.jsx'
+import { formatDate, formatDateCourte, formatMontant } from '../../../utils/format.js'
+import { BASE, messageEchec, STATUTS_FICHIER, telechargerFichier, urlResultat } from '../parcours.js'
 
 function CarteControle({ titre, couleur, valeur, detail, onClick }) {
   return (
@@ -17,15 +21,55 @@ function CarteControle({ titre, couleur, valeur, detail, onClick }) {
 const pluriel = (n, singulier, plurielMot) => `${n} ${n > 1 ? plurielMot : singulier}`
 
 export default function Synthese() {
-  const { resultat, id } = useOutletContext()
+  const { resultat, id, recharger } = useOutletContext()
+  const { user } = useAuth()
+  const { message } = App.useApp()
   const navigate = useNavigate()
+  const [motifOuvert, setMotifOuvert] = useState(false)
+  const [motif, setMotif] = useState('')
+  const [rejetEnCours, setRejetEnCours] = useState(false)
   const { resume, metier, ia } = resultat
   const nbErreursXsd = resultat.erreursXsd.length
   const nbAvertissementsXsd = resultat.avertissementsXsd.length
   const nbErreursMetier = metier.erreurs.length
-  const statut = STATUTS_FICHIER[resume.statutFichier] || { label: resume.statutFichier, color: 'default' }
+  const statutCode = resume.statutFichier
+  const statut = STATUTS_FICHIER[statutCode] || { label: statutCode, color: 'default' }
+  const estValide = statutCode === 'VALIDE'
+  const peutSoumettreFichier = peutSoumettre(user?.role) && statutCode === 'BROUILLON' && resume.valideXsd
+  const peutDecider = peutValider(user?.role) && statutCode === 'SOUMIS'
+  // Quatre yeux : celui qui a généré ou soumis le fichier ne peut pas décider.
+  const quatreYeux = !!user?.username && (user.username === resume.generePar || user.username === resume.soumisPar)
 
   const vers = (sousPage) => () => navigate(urlResultat(id, sousPage))
+
+  const action = (chemin, corps) => async () => {
+    try {
+      await api.post(`/masse/fichiers/${resume.id}/${chemin}`, corps)
+    } catch (e) {
+      throw new Error(messageEchec(e))
+    }
+    await recharger()
+  }
+  const soumettre = action('soumettre')
+  const valider = action('valider')
+
+  const rejeter = async () => {
+    if (!motif.trim()) {
+      message.warning('Le motif est obligatoire pour rejeter un fichier.')
+      return
+    }
+    setRejetEnCours(true)
+    try {
+      await api.post(`/masse/fichiers/${resume.id}/rejeter`, { motif: motif.trim() })
+      message.success('Fichier rejeté')
+      setMotifOuvert(false)
+      await recharger()
+    } catch (e) {
+      message.error(`Erreur : ${messageEchec(e)}`)
+    } finally {
+      setRejetEnCours(false)
+    }
+  }
 
   return (
     <div>
@@ -63,7 +107,9 @@ export default function Synthese() {
             titre="Statut du fichier"
             couleur="#1677ff"
             valeur={<Tag color={statut.color} style={{ fontSize: 14, padding: '2px 10px' }}>{statut.label}</Tag>}
-            detail={resume.valideXsd ? 'Le XML peut être téléchargé.' : 'Corrigez les erreurs puis régénérez le fichier.'}
+            detail={estValide ? 'Validé : le XML peut être envoyé à la banque.'
+              : resume.valideXsd ? 'Téléchargement de contrôle possible (non validé).'
+                : 'Corrigez les erreurs puis régénérez le fichier.'}
           />
         </Col>
       </Row>
@@ -81,21 +127,79 @@ export default function Synthese() {
         </Descriptions>
       </Card>
 
+      {statutCode === 'SOUMIS' && (
+        <Alert type="warning" showIcon style={{ marginBottom: 16 }}
+          message={`En attente de validation par un Manager (soumis par ${resume.soumisPar || '—'}).`} />
+      )}
+      {statutCode === 'VALIDE' && (
+        <Alert type="success" showIcon style={{ marginBottom: 16 }}
+          message={`Fichier validé par ${resume.decisionPar || '—'}${resume.decisionLe ? ` le ${formatDate(resume.decisionLe)}` : ''} : il peut être envoyé à la banque.`} />
+      )}
+      {statutCode === 'REJETE' && (
+        <Alert type="error" showIcon style={{ marginBottom: 16 }}
+          message={`Fichier rejeté par ${resume.decisionPar || '—'}${resume.decisionLe ? ` le ${formatDate(resume.decisionLe)}` : ''}`}
+          description={<span><strong>Motif :</strong> {resume.motifRejet}. Corrigez puis relancez un nouveau contrôle depuis la préparation.</span>} />
+      )}
+
       <Space wrap>
         <ActionButton
           onClick={() => telechargerFichier(resume.id)}
           disabled={!resume.valideXsd}
-          succes="Fichier téléchargé"
+          succes={estValide ? 'Fichier téléchargé' : 'Fichier de contrôle téléchargé (non validé)'}
         >
-          Télécharger le XML
+          {estValide ? 'Télécharger pour la banque' : 'Télécharger (contrôle — non validé)'}
         </ActionButton>
-        <Button onClick={() => navigate(BASE, { state: { restaurer: true } })}>Retour à la préparation</Button>
+        {peutSoumettreFichier && (
+          <ActionButton
+            onClick={soumettre}
+            succes="Fichier soumis à validation"
+            confirmation={{ titre: 'Soumettre ce fichier à validation ?', contenu: 'Un Manager pourra le valider ou le rejeter. Vous ne pourrez plus le modifier.', libelle: 'Soumettre' }}
+          >
+            Soumettre à validation
+          </ActionButton>
+        )}
+        {peutDecider && (
+          <>
+            <ActionButton
+              onClick={valider}
+              disabled={quatreYeux}
+              succes="Fichier validé"
+              confirmation={{ titre: 'Valider ce fichier ?', contenu: 'Il pourra ensuite être téléchargé pour envoi à la banque.', libelle: 'Valider' }}
+            >
+              Valider
+            </ActionButton>
+            <Button danger disabled={quatreYeux} onClick={() => { setMotif(''); setMotifOuvert(true) }}>Rejeter</Button>
+          </>
+        )}
+        {peutPreparer(user?.role) && (
+          <Button onClick={() => navigate(BASE, { state: { restaurer: true } })}>Retour à la préparation</Button>
+        )}
       </Space>
+      {peutDecider && quatreYeux && (
+        <div style={{ marginTop: 8 }}>
+          <Typography.Text type="secondary">Principe des quatre yeux : vous ne pouvez pas valider un fichier que vous avez généré ou soumis.</Typography.Text>
+        </div>
+      )}
       {!resume.valideXsd && (
         <div style={{ marginTop: 8 }}>
           <Typography.Text type="secondary">Le téléchargement est bloqué tant que le XML n’est pas conforme au schéma XSD.</Typography.Text>
         </div>
       )}
+
+      <Modal
+        title="Rejeter ce fichier"
+        open={motifOuvert}
+        onCancel={() => setMotifOuvert(false)}
+        onOk={rejeter}
+        okText="Rejeter"
+        okButtonProps={{ danger: true }}
+        cancelText="Annuler"
+        confirmLoading={rejetEnCours}
+        destroyOnClose
+      >
+        <Typography.Paragraph>Le motif est obligatoire : il sera communiqué à l’Expert RH.</Typography.Paragraph>
+        <Input.TextArea rows={4} value={motif} onChange={(e) => setMotif(e.target.value)} placeholder="Ex. : IBAN du salarié EMP002 à vérifier" maxLength={500} showCount />
+      </Modal>
     </div>
   )
 }

@@ -6,6 +6,7 @@ import com.zina.sepa.repository.TransactionRepository;
 import com.zina.sepa.service.AuditService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
+import com.zina.sepa.security.Roles;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,7 +32,7 @@ public class AiDetectionController {
     }
 
     @PostMapping("/detect")
-    @PreAuthorize("hasAnyRole('ADMINISTRATEUR','GESTIONNAIRE_RH','VALIDATEUR')")
+    @PreAuthorize(Roles.CONSULTATION)
     public AnalyseResult detect(HttpServletRequest request) {
         AnalyseResult resultat = aiAnomalyService.analyser(transactionRepository.findAll());
         long suspects = resultat.resultats() == null ? 0

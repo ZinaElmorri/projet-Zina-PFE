@@ -135,7 +135,11 @@ public final class MasseDto {
             String statutFichier,
             Integer nbErreursTotal,
             Integer nbAvertissements,
-            Integer nbSuspectsIa
+            Integer nbSuspectsIa,
+            String soumisPar,
+            String decisionPar,
+            String decisionLe,
+            String motifRejet
     ) {}
 
     public record FichierDetail(

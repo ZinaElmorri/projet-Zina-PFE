@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
 import api from '../api/client'
 import ActionButton from '../components/ActionButton.jsx'
+import { peutPreparer, peutValider } from '../constants/roles.js'
+import { useAuth } from '../context/AuthContext.jsx'
 
 const empty = { employeId: '', nomBeneficiaire: '', iban: '', bic: '', montant: '', libelle: '' }
 
 export default function Transactions() {
+  const { user } = useAuth()
   const [transactions, setTransactions] = useState([])
   const [form, setForm] = useState(empty)
   const [message, setMessage] = useState('')
@@ -88,15 +91,17 @@ export default function Transactions() {
     <div>
       <h2>Transactions</h2>
 
-      <form className="inline-form" onSubmit={handleCreate}>
-        <input name="employeId" placeholder="ID employé" value={form.employeId} onChange={handleChange} required />
-        <input name="nomBeneficiaire" placeholder="Bénéficiaire" value={form.nomBeneficiaire} onChange={handleChange} required />
-        <input name="iban" placeholder="IBAN" value={form.iban} onChange={handleChange} required />
-        <input name="bic" placeholder="BIC" value={form.bic} onChange={handleChange} />
-        <input name="montant" type="number" step="0.01" placeholder="Montant" value={form.montant} onChange={handleChange} required />
-        <input name="libelle" placeholder="Libellé" value={form.libelle} onChange={handleChange} />
-        <button type="submit">Ajouter</button>
-      </form>
+      {peutPreparer(user?.role) && (
+        <form className="inline-form" onSubmit={handleCreate}>
+          <input name="employeId" placeholder="ID employé" value={form.employeId} onChange={handleChange} required />
+          <input name="nomBeneficiaire" placeholder="Bénéficiaire" value={form.nomBeneficiaire} onChange={handleChange} required />
+          <input name="iban" placeholder="IBAN" value={form.iban} onChange={handleChange} required />
+          <input name="bic" placeholder="BIC" value={form.bic} onChange={handleChange} />
+          <input name="montant" type="number" step="0.01" placeholder="Montant" value={form.montant} onChange={handleChange} required />
+          <input name="libelle" placeholder="Libellé" value={form.libelle} onChange={handleChange} />
+          <button type="submit">Ajouter</button>
+        </form>
+      )}
 
       <div className="actions">
         <ActionButton onClick={controler}>Contrôles métier</ActionButton>
@@ -156,14 +161,18 @@ export default function Transactions() {
                 ) : (t.sourceAnomalie || '—')}
               </td>
               <td>
-                <button onClick={() => approuver(t.id)} disabled={approbationEnCours !== null || t.statut === 'APPROUVEE'}>Approuver</button>
-                <ActionButton
-                  onClick={() => supprimer(t.id)}
-                  succes={`Transaction n° ${t.id} supprimée.`}
-                  confirmation={{ titre: `Supprimer la transaction n° ${t.id} ?`, danger: true, libelle: 'Supprimer' }}
-                >
-                  Supprimer
-                </ActionButton>
+                {peutValider(user?.role) && (
+                  <button onClick={() => approuver(t.id)} disabled={approbationEnCours !== null || t.statut === 'APPROUVEE'}>Approuver</button>
+                )}
+                {peutPreparer(user?.role) && (
+                  <ActionButton
+                    onClick={() => supprimer(t.id)}
+                    succes={`Transaction n° ${t.id} supprimée.`}
+                    confirmation={{ titre: `Supprimer la transaction n° ${t.id} ?`, danger: true, libelle: 'Supprimer' }}
+                  >
+                    Supprimer
+                  </ActionButton>
+                )}
               </td>
             </tr>
           ))}

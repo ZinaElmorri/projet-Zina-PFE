@@ -33,7 +33,7 @@ class UserServiceTest {
     }
 
     private RegisterRequest request() {
-        return new RegisterRequest("zina", "motdepasse1", "Zina M", "zina@sepa.local", Role.VALIDATEUR, "img");
+        return new RegisterRequest("zina", "motdepasse1", "Zina M", "zina@sepa.local", Role.MANAGER, "img");
     }
 
     @Test
@@ -45,7 +45,7 @@ class UserServiceTest {
 
         assertThat(u.isActif()).isFalse();
         assertThat(u.isApprouve()).isFalse();
-        assertThat(u.getRole()).isEqualTo(Role.VALIDATEUR);
+        assertThat(u.getRole()).isEqualTo(Role.MANAGER);
         assertThat(u.getFaceEncoding()).isEqualTo("[0.6,0.8]");
         assertThat(u.getPassword()).isNotEqualTo("motdepasse1");
     }
@@ -55,6 +55,16 @@ class UserServiceTest {
         when(userRepository.existsByEmailIgnoreCase("zina@sepa.local")).thenReturn(true);
 
         assertThatThrownBy(() -> service().register(request())).hasMessageContaining("email");
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    void ancien_role_non_attribuable_a_la_creation_ni_a_l_inscription() {
+        assertThatThrownBy(() -> service().create(new com.zina.sepa.dto.CreateUserRequest(
+                "x", "mdp", "X", "x@sepa.local", Role.AUDITEUR))).hasMessageContaining("plus attribuable");
+        assertThatThrownBy(() -> service().register(new RegisterRequest("zina", "motdepasse1", "Zina M",
+                "zina@sepa.local", Role.GESTIONNAIRE_RH, "img"))).hasMessageContaining("plus attribuable");
         verify(userRepository, never()).save(any());
     }
 

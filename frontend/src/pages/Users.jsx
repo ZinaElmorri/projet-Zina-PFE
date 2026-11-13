@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { App } from 'antd'
 import api from '../api/client'
-import { ROLES } from './Register.jsx'
+import { ROLES_ATTRIBUABLES, ROLE_PAR_DEFAUT, libelleRole } from '../constants/roles.js'
 
-const empty = { username: '', password: '', nomComplet: '', email: '', role: 'GESTIONNAIRE_RH' }
-const roleLabel = (value) => ROLES.find((r) => r.value === value)?.label || value
+const empty = { username: '', password: '', nomComplet: '', email: '', role: ROLE_PAR_DEFAUT }
+const roleLabel = libelleRole
 
 const statut = (u) => {
   if (!u.approuve) return { label: 'En attente d\'approbation', cls: 'badge-attente' }
@@ -72,7 +72,7 @@ export default function Users() {
         <input name="nomComplet" placeholder="Nom complet" value={form.nomComplet} onChange={handleChange} required />
         <input name="email" type="email" placeholder="Email" value={form.email} onChange={handleChange} />
         <select name="role" value={form.role} onChange={handleChange}>
-          {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+          {ROLES_ATTRIBUABLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
         </select>
         <button type="submit">Créer</button>
       </form>

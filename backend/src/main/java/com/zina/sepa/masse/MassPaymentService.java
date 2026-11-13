@@ -44,6 +44,9 @@ public class MassPaymentService {
     private static final String SOURCE_IA = "IA";
     static final String STATUT_BROUILLON = "BROUILLON";
     static final String STATUT_NON_CONFORME = "NON_CONFORME";
+    static final String STATUT_SOUMIS = "SOUMIS";
+    static final String STATUT_VALIDE = "VALIDE";
+    static final String STATUT_REJETE = "REJETE";
     private static final Pattern MESSAGE_SALARIE = Pattern.compile("^\\[emp ([^\\]]*)]\\s*(.*)$", Pattern.DOTALL);
 
     private final MassePaiementRepository paiementRepository;
@@ -58,6 +61,7 @@ public class MassPaymentService {
     private final ObjectMapper objectMapper;
     private final AiAnomalyService aiAnomalyService;
     private final SocieteService societeService;
+    private final AccesSocietes acces;
 
     public MassPaymentService(MassePaiementRepository paiementRepository,
                               XsdSchemaRepository xsdSchemaRepository,
@@ -70,7 +74,8 @@ public class MassPaymentService {
                               FichierSepaGenereRepository fichierRepository,
                               ObjectMapper objectMapper,
                               AiAnomalyService aiAnomalyService,
-                              SocieteService societeService) {
+                              SocieteService societeService,
+                              AccesSocietes acces) {
         this.paiementRepository = paiementRepository;
         this.xsdSchemaRepository = xsdSchemaRepository;
         this.businessControlService = businessControlService;
@@ -83,14 +88,18 @@ public class MassPaymentService {
         this.objectMapper = objectMapper;
         this.aiAnomalyService = aiAnomalyService;
         this.societeService = societeService;
+        this.acces = acces;
     }
 
     // --- Filtres & paiements ---
 
     public FiltresResponse filtres(String clientId, String periode) {
-        List<String> societes = java.util.stream.Stream.concat(
+        if (vide(clientId) != null) {
+            acces.verifier(clientId);
+        }
+        List<String> societes = acces.filtrer(java.util.stream.Stream.concat(
                         societeService.codesActifs().stream(), paiementRepository.societes().stream())
-                .distinct().sorted().collect(Collectors.toList());
+                .distinct().sorted().collect(Collectors.toList()));
 
         List<String> periodes = paiementRepository.periodes(vide(clientId)).stream()
                 .map(r -> String.format("%04d-%02d", ((Number) r[0]).intValue(), ((Number) r[1]).intValue()))
@@ -110,11 +119,13 @@ public class MassPaymentService {
     }
 
     public PaiementsResponse paiements(String clientId, String periode, List<String> matricules, List<String> statuts) {
+        acces.verifier(clientId);
         return reponsePaiements(filtrer(clientId, periode, matricules, statuts));
     }
 
     /** Lance la détection IA sur la sélection ; les suspects restent signalés sans bloquer la génération. */
     public AnalyseIaMasse analyserIa(String clientId, String periode, List<String> matricules, List<String> statuts) {
+        acces.verifier(clientId);
         List<Transaction> transactions = filtrer(clientId, periode, matricules, statuts);
         AnalyseResult resultat = aiAnomalyService.analyser(transactions);
         PaiementsResponse paiements = reponsePaiements(transactions);
@@ -160,12 +171,14 @@ public class MassPaymentService {
     // --- Aperçu / génération ---
 
     public ApercuResponse apercu(ApercuRequest req, HttpServletRequest http) {
+        acces.verifier(req.clientId());
         Resultat r = construire(req);
         auditService.log(AuditAction.XML_GENERE, detailAudit("Aperçu", req, r), "SUCCES", http);
         return r.reponse();
     }
 
     public FichierSepaGenere enregistrer(ApercuRequest req, HttpServletRequest http) {
+        acces.verifier(req.clientId());
         Resultat r = construire(req);
         if (!r.reponse().valideXsd()) {
             throw new IllegalStateException("Le XML n'est pas conforme au XSD : enregistrement interdit. Corrigez les erreurs rouges de l'aperçu, puis générez à nouveau le XML avant de l'enregistrer.");
@@ -212,6 +225,7 @@ public class MassPaymentService {
         if (societe.isEmpty()) {
             throw new IllegalArgumentException("Aucune société sélectionnée. Un fichier de virements ne concerne qu'une seule société débitrice : choisissez-en une.");
         }
+        acces.verifier(societe);
         SocieteService.Debiteur debiteur = societeService.debiteurPour(societe)
                 .orElseThrow(() -> new IllegalArgumentException("Les coordonnées bancaires de la société « " + societe
                         + " » sont absentes ou la société est inactive. Complétez-les dans « Sociétés débitrices » avant de lancer le contrôle."));
@@ -268,6 +282,7 @@ public class MassPaymentService {
     public ResultatFichier resultat(Long id) {
         FichierSepaGenere f = fichierRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Le fichier SEPA n° " + id + " n'est plus disponible. Actualisez l'historique et sélectionnez un fichier existant."));
+        acces.verifier(f.getClientId());
         ResultatMetier metier = lireObjet(f.getResultatControleMetier(), ResultatMetier.class,
                 new ResultatMetier(List.of(), List.of(), List.of(), List.of()));
         ResultatIa ia = lireObjet(f.getResultatIa(), ResultatIa.class, new ResultatIa(false, null, 0, 0, List.of()));
@@ -278,10 +293,17 @@ public class MassPaymentService {
     // --- Historique ---
 
     public List<FichierResume> historique(String clientId, String periode, Boolean valideXsd) {
+        return historique(clientId, periode, valideXsd, null);
+    }
+
+    /** Un Expert RH ne voit que les fichiers de ses sociétés ; {@code statut} filtre sur le statut du fichier. */
+    public List<FichierResume> historique(String clientId, String periode, Boolean valideXsd, String statut) {
         return fichierRepository.findAllByOrderByGenereLeDesc().stream()
+                .filter(f -> acces.autorise(f.getClientId()))
                 .filter(f -> clientId == null || clientId.isBlank() || clientId.equals(f.getClientId()))
                 .filter(f -> periode == null || periode.isBlank() || periode.equals(f.getPeriode()))
                 .filter(f -> valideXsd == null || valideXsd.equals(f.isValideXsd()))
+                .filter(f -> statut == null || statut.isBlank() || statut.equalsIgnoreCase(statutDe(f)))
                 .map(this::resume)
                 .collect(Collectors.toList());
     }
@@ -289,6 +311,7 @@ public class MassPaymentService {
     public FichierDetail detail(Long id) {
         FichierSepaGenere f = fichierRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Le fichier SEPA n° " + id + " n'est plus disponible. Actualisez l'historique et sélectionnez un fichier existant."));
+        acces.verifier(f.getClientId());
         return new FichierDetail(resume(f), f.getContenuXml(), fromJson(f.getErreursXsd()),
                 f.getNomDebiteur(), f.getIbanDebiteur(), f.getDateExecution());
     }
@@ -296,12 +319,25 @@ public class MassPaymentService {
     public FichierSepaGenere pourTelecharger(Long id, HttpServletRequest http) {
         FichierSepaGenere f = fichierRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Le fichier SEPA n° " + id + " n'est plus disponible. Actualisez l'historique et sélectionnez un fichier existant."));
+        acces.verifier(f.getClientId());
         if (!f.isValideXsd()) {
             throw new IllegalStateException("Le XML n'est pas conforme au XSD : téléchargement interdit. Consultez les erreurs avec « Revoir », corrigez les données puis générez un nouveau fichier conforme.");
         }
         auditService.log(AuditAction.XML_GENERE,
-                "Téléchargement fichier #" + id + " (" + f.getNomFichier() + ")", "SUCCES", http);
+                "Téléchargement fichier #" + id + " (" + f.getNomFichier() + ")"
+                        + (STATUT_VALIDE.equals(statutDe(f)) ? "" : " — non validé"), "SUCCES", http);
         return f;
+    }
+
+    /** Le fichier destiné à la banque (statut VALIDE) garde son nom ; tout autre téléchargement est marqué « non validé ». */
+    public String nomTelechargement(FichierSepaGenere f) {
+        return STATUT_VALIDE.equals(statutDe(f)) ? f.getNomFichier() : "NON_VALIDE_" + f.getNomFichier();
+    }
+
+    /** Statut effectif d'un fichier ; les fichiers antérieurs au parcours n'ont pas de statut enregistré. */
+    static String statutDe(FichierSepaGenere f) {
+        return f.getStatutFichier() != null ? f.getStatutFichier()
+                : (f.isValideXsd() ? STATUT_BROUILLON : STATUT_NON_CONFORME);
     }
 
     // ------------------------------------------------------------------
@@ -492,15 +528,16 @@ public class MassPaymentService {
         return null;
     }
 
-    private FichierResume resume(FichierSepaGenere f) {
+    FichierResume resume(FichierSepaGenere f) {
         int nbErreurs = fromJson(f.getErreursXsd()).size();
-        String statut = f.getStatutFichier() != null ? f.getStatutFichier()
-                : (f.isValideXsd() ? STATUT_BROUILLON : STATUT_NON_CONFORME);
         return new FichierResume(f.getId(), f.getNomFichier(), f.getClientId(), f.getPeriode(),
                 f.getMatricules(), f.getNbTransactions(), f.getCtrlSum(), f.getXsdNom(), f.getVersionMessage(),
                 f.isValideXsd(), nbErreurs, f.getGenerePar(),
                 f.getGenereLe() == null ? null : f.getGenereLe().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-                statut, f.getNbErreurs(), f.getNbAvertissements(), f.getNbSuspectsIa());
+                statutDe(f), f.getNbErreurs(), f.getNbAvertissements(), f.getNbSuspectsIa(),
+                f.getSoumisPar(), f.getDecisionPar(),
+                f.getDecisionLe() == null ? null : f.getDecisionLe().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                f.getMotifRejet());
     }
 
     private XsdSchema xsd(Long id) {

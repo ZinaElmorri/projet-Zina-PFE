@@ -5,7 +5,17 @@ import Layout from './components/Layout.jsx'
 import GlobalLoader from './components/GlobalLoader.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import { useAuth } from './context/AuthContext.jsx'
+import {
+  peutAffecter,
+  peutConsulterAudit,
+  peutGererSocietes,
+  peutGererUtilisateurs,
+  peutPreparer,
+  peutValider,
+} from './constants/roles.js'
 
+const Affectations = lazy(() => import('./pages/Affectations.jsx'))
+const FichiersAValider = lazy(() => import('./pages/virements/FichiersAValider.jsx'))
 const Audit = lazy(() => import('./pages/Audit.jsx'))
 const Anomalies = lazy(() => import('./pages/Anomalies.jsx'))
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'))
@@ -50,8 +60,9 @@ export default function App() {
           <Route path="/transactions" element={<Transactions />} />
           <Route path="/anomalies" element={<Anomalies />} />
           <Route path="/virements-masse">
-            <Route index element={<NouveauVirement />} />
+            <Route index element={<ProtectedRoute autorise={peutPreparer}><NouveauVirement /></ProtectedRoute>} />
             <Route path="historique" element={<VirementsHistorique />} />
+            <Route path="a-valider" element={<ProtectedRoute autorise={peutValider}><FichiersAValider /></ProtectedRoute>} />
             <Route path="resultat/:id" element={<ResultatControle />}>
               <Route index element={<Navigate to="synthese" replace />} />
               <Route path="synthese" element={<ResultatSynthese />} />
@@ -61,10 +72,11 @@ export default function App() {
               <Route path="controles-metier" element={<ResultatControlesMetier />} />
             </Route>
           </Route>
-          <Route path="/societes" element={<Societes />} />
+          <Route path="/affectations" element={<ProtectedRoute autorise={peutAffecter}><Affectations /></ProtectedRoute>} />
+          <Route path="/societes" element={<ProtectedRoute autorise={peutGererSocietes}><Societes /></ProtectedRoute>} />
           <Route path="/xsd" element={<Xsd />} />
-          <Route path="/audit" element={<Audit />} />
-          <Route path="/users" element={<Users />} />
+          <Route path="/audit" element={<ProtectedRoute autorise={peutConsulterAudit}><Audit /></ProtectedRoute>} />
+          <Route path="/users" element={<ProtectedRoute autorise={peutGererUtilisateurs}><Users /></ProtectedRoute>} />
           <Route path="/profil" element={<Profil />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

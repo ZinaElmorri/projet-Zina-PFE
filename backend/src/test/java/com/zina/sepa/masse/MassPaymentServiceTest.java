@@ -52,6 +52,7 @@ class MassPaymentServiceTest {
     @Mock FichierSepaGenereRepository fichierRepository;
     @Mock AiAnomalyService aiAnomalyService;
     @Mock SocieteService societeService;
+    @Mock AccesSocietes acces;
 
     BusinessControlService businessControlService = new BusinessControlService();
     ObjectMapper objectMapper = new ObjectMapper();
@@ -59,7 +60,7 @@ class MassPaymentServiceTest {
     private MassPaymentService service() {
         return new MassPaymentService(paiementRepository, xsdSchemaRepository, businessControlService,
                 validationService, auditService, xsdReader, generator, errorCollector,
-                fichierRepository, objectMapper, aiAnomalyService, societeService);
+                fichierRepository, objectMapper, aiAnomalyService, societeService, acces);
     }
 
     private Transaction tx() {
@@ -402,6 +403,17 @@ class MassPaymentServiceTest {
                 .hasMessageContaining("téléchargement interdit");
         assertThat(service().detail(8L).xml()).isEqualTo("<Document>invalid</Document>");
         verifyNoInteractions(auditService);
+    }
+
+    @Test
+    void fichier_non_valide_est_telecharge_avec_la_mention_non_valide() {
+        FichierSepaGenere brouillon = FichierSepaGenere.builder().nomFichier("SEPA_A.xml").valideXsd(true)
+                .statutFichier("BROUILLON").build();
+        FichierSepaGenere valide = FichierSepaGenere.builder().nomFichier("SEPA_A.xml").valideXsd(true)
+                .statutFichier("VALIDE").build();
+
+        assertThat(service().nomTelechargement(brouillon)).isEqualTo("NON_VALIDE_SEPA_A.xml");
+        assertThat(service().nomTelechargement(valide)).isEqualTo("SEPA_A.xml");
     }
 
     private SocieteService.Debiteur debiteurConnu() {

@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom'
 import { Pagination, Spin } from 'antd'
 import api from '../api/client'
 import { useAuth } from '../context/AuthContext.jsx'
+import { peutTraiterAnomalies } from '../constants/roles.js'
 
 const TAILLE_PAGE = 50
-const ROLES_TRAITEMENT = ['ADMINISTRATEUR', 'GESTIONNAIRE_RH', 'VALIDATEUR']
 
 const STATUTS = [
   { key: '', label: 'Toutes' },
@@ -22,7 +22,7 @@ const pastille = (statut) => {
 
 export default function Anomalies() {
   const { user } = useAuth()
-  const peutTraiter = ROLES_TRAITEMENT.includes(user?.role)
+  const peutTraiter = peutTraiterAnomalies(user?.role)
   const [anomalies, setAnomalies] = useState([])
   const [filtre, setFiltre] = useState('')
   const [expanded, setExpanded] = useState({})

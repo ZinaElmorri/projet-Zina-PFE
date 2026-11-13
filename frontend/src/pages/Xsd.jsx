@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { App } from 'antd'
 import api from '../api/client'
+import { peutGererXsd } from '../constants/roles.js'
+import { useAuth } from '../context/AuthContext.jsx'
 
 export default function Xsd() {
+  const { user } = useAuth()
   const { modal } = App.useApp()
   const [schemas, setSchemas] = useState([])
   const [file, setFile] = useState(null)
@@ -91,14 +94,16 @@ export default function Xsd() {
       {erreur && <div className="error">{erreur}</div>}
       {succes && <div className="info">{succes}</div>}
 
-      <form className="inline-form" onSubmit={importer}>
-        <input ref={fileRef} type="file" accept=".xsd,.xml" onChange={(e) => setFile(e.target.files[0])} />
-        <button type="submit">Importer</button>
-      </form>
+      {peutGererXsd(user?.role) && (
+        <form className="inline-form" onSubmit={importer}>
+          <input ref={fileRef} type="file" accept=".xsd,.xml" onChange={(e) => setFile(e.target.files[0])} />
+          <button type="submit">Importer</button>
+        </form>
+      )}
 
       <table>
         <thead>
-          <tr><th>ID</th><th>Nom</th><th>Importé par</th><th>Actions</th></tr>
+          <tr><th>ID</th><th>Nom</th><th>Importé par</th>{peutGererXsd(user?.role) && <th>Actions</th>}</tr>
         </thead>
         <tbody>
           {schemas.map((s) => (
@@ -106,6 +111,7 @@ export default function Xsd() {
               <td>{s.id}</td>
               <td>{s.nom}</td>
               <td>{s.importePar}</td>
+              {peutGererXsd(user?.role) && (
               <td>
                 {editId === s.id ? (
                   <>
@@ -129,6 +135,7 @@ export default function Xsd() {
                   </>
                 )}
               </td>
+              )}
             </tr>
           ))}
         </tbody>

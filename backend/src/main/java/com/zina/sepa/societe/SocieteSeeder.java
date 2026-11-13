@@ -3,6 +3,7 @@ package com.zina.sepa.societe;
 import com.zina.sepa.domain.entity.Societe;
 import com.zina.sepa.repository.SocieteRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.List;
  * Crée les sociétés de démonstration si la table est vide. Les IBAN respectent le contrôle modulo 97.
  */
 @Component
+@Order(20)
 public class SocieteSeeder implements CommandLineRunner {
 
     private final SocieteRepository repository;

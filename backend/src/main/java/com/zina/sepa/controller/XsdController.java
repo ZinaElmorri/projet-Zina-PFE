@@ -7,6 +7,7 @@ import com.zina.sepa.service.XsdService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import com.zina.sepa.security.Roles;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,7 +32,7 @@ public class XsdController {
     }
 
     @PostMapping("/import")
-    @PreAuthorize("hasAnyRole('ADMINISTRATEUR','GESTIONNAIRE_RH')")
+    @PreAuthorize(Roles.ADMIN)
     public ResponseEntity<XsdSchema> importer(@RequestParam("file") MultipartFile file,
                                               HttpServletRequest request) throws IOException {
         String username = request.getUserPrincipal() != null
@@ -48,7 +49,7 @@ public class XsdController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMINISTRATEUR','GESTIONNAIRE_RH')")
+    @PreAuthorize(Roles.ADMIN)
     public ResponseEntity<XsdSchema> mettreAJour(@PathVariable Long id,
                                                  @RequestParam("file") MultipartFile file,
                                                  HttpServletRequest request) throws IOException {
@@ -59,7 +60,7 @@ public class XsdController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMINISTRATEUR','GESTIONNAIRE_RH')")
+    @PreAuthorize(Roles.ADMIN)
     public ResponseEntity<Void> supprimer(@PathVariable Long id,
                                           HttpServletRequest request) {
         XsdSchema schema = xsdService.findById(id)

@@ -6,6 +6,7 @@ import {
   AuditOutlined,
   BankOutlined,
   BarChartOutlined,
+  CheckSquareOutlined,
   DashboardOutlined,
   DownOutlined,
   FileSearchOutlined,
@@ -15,20 +16,24 @@ import {
   SwapOutlined,
   TeamOutlined,
   UserOutlined,
+  UsergroupAddOutlined,
 } from '@ant-design/icons'
 import { useAuth } from '../context/AuthContext.jsx'
+import {
+  ROLES,
+  peutAffecter,
+  peutConsulterAudit,
+  peutGererSocietes,
+  peutGererUtilisateurs,
+  peutPreparer,
+  peutValider,
+} from '../constants/roles.js'
 
 const { Sider, Header, Content } = AntLayout
 
-export const ROLES = {
-  ADMINISTRATEUR: { label: 'Administrateur', color: 'geekblue' },
-  GESTIONNAIRE_RH: { label: 'Gestionnaire RH', color: 'cyan' },
-  VALIDATEUR: { label: 'Validateur', color: 'green' },
-  AUDITEUR: { label: 'Auditeur', color: 'purple' },
-}
-
 const HISTORIQUE = '/virements-masse/historique'
 const RESULTAT = '/virements-masse/resultat'
+const A_VALIDER = '/virements-masse/a-valider'
 
 const FIL_ARIANE = {
   '/': ['Pilotage', 'Tableau de bord'],
@@ -36,8 +41,10 @@ const FIL_ARIANE = {
   '/transactions': ['Paie et virements', 'Transactions'],
   '/virements-masse': ['Paie et virements', 'Virements de masse', 'Nouveau virement'],
   [HISTORIQUE]: ['Paie et virements', 'Virements de masse', 'Historique des fichiers'],
+  [A_VALIDER]: ['Paie et virements', 'Virements de masse', 'Fichiers à valider'],
   [RESULTAT]: ['Paie et virements', 'Virements de masse', 'Résultat du contrôle'],
-  '/societes': ['Paie et virements', 'Sociétés débitrices'],
+  '/affectations': ['Paie et virements', 'Affectation des sociétés'],
+  '/societes': ['Administration', 'Sociétés débitrices'],
   '/anomalies': ['Contrôle', 'Anomalies'],
   '/xsd': ['Contrôle', 'Schémas XSD'],
   '/users': ['Administration', 'Utilisateurs'],
@@ -48,10 +55,9 @@ const FIL_ARIANE = {
 // Pages déjà migrées vers antd : elles gèrent elles-mêmes leurs blocs blancs.
 const PAGES_MIGREES = new Set([])
 
+// Visibilité des entrées : règles centralisées dans constants/roles.js.
 function menuItems(role) {
-  const estAdmin = role === 'ADMINISTRATEUR'
-  const peutGererSocietes = estAdmin || role === 'GESTIONNAIRE_RH'
-  return [
+  const groupes = [
     {
       type: 'group', label: 'Pilotage', children: [
         { key: '/', icon: <DashboardOutlined />, label: 'Tableau de bord' },
@@ -61,9 +67,10 @@ function menuItems(role) {
     {
       type: 'group', label: 'Paie et virements', children: [
         { key: '/transactions', icon: <SwapOutlined />, label: 'Transactions' },
-        { key: '/virements-masse', icon: <SendOutlined />, label: 'Virements de masse' },
+        ...(peutPreparer(role) ? [{ key: '/virements-masse', icon: <SendOutlined />, label: 'Virements de masse' }] : []),
+        ...(peutValider(role) ? [{ key: A_VALIDER, icon: <CheckSquareOutlined />, label: 'Fichiers à valider' }] : []),
         { key: HISTORIQUE, icon: <HistoryOutlined />, label: 'Historique SEPA' },
-        ...(peutGererSocietes ? [{ key: '/societes', icon: <BankOutlined />, label: 'Sociétés débitrices' }] : []),
+        ...(peutAffecter(role) ? [{ key: '/affectations', icon: <UsergroupAddOutlined />, label: 'Affectation des sociétés' }] : []),
       ],
     },
     {
@@ -74,11 +81,13 @@ function menuItems(role) {
     },
     {
       type: 'group', label: 'Administration', children: [
-        ...(estAdmin ? [{ key: '/users', icon: <TeamOutlined />, label: 'Utilisateurs' }] : []),
-        { key: '/audit', icon: <AuditOutlined />, label: "Journal d'audit" },
+        ...(peutGererUtilisateurs(role) ? [{ key: '/users', icon: <TeamOutlined />, label: 'Utilisateurs' }] : []),
+        ...(peutGererSocietes(role) ? [{ key: '/societes', icon: <BankOutlined />, label: 'Sociétés débitrices' }] : []),
+        ...(peutConsulterAudit(role) ? [{ key: '/audit', icon: <AuditOutlined />, label: "Journal d'audit" }] : []),
       ],
     },
   ]
+  return groupes.filter((groupe) => groupe.children.length > 0)
 }
 
 export default function Layout() {

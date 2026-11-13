@@ -1,5 +1,6 @@
 package com.zina.sepa.societe;
 
+import com.zina.sepa.security.Roles;
 import com.zina.sepa.societe.SocieteService.Coordonnees;
 import com.zina.sepa.societe.SocieteService.SocieteDto;
 import com.zina.sepa.societe.SocieteService.SocieteRequest;
@@ -19,25 +20,25 @@ public class SocieteController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMINISTRATEUR','GESTIONNAIRE_RH','VALIDATEUR')")
+    @PreAuthorize(Roles.CONSULTATION)
     public List<SocieteDto> lister() {
         return service.lister();
     }
 
     @GetMapping("/{code}/coordonnees")
-    @PreAuthorize("hasAnyRole('ADMINISTRATEUR','GESTIONNAIRE_RH')")
+    @PreAuthorize(Roles.PREPARATION)
     public Coordonnees coordonnees(@PathVariable String code) {
         return service.coordonnees(code);
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMINISTRATEUR','GESTIONNAIRE_RH')")
+    @PreAuthorize(Roles.ADMIN)
     public SocieteDto creer(@RequestBody SocieteRequest req) {
         return service.creer(req);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMINISTRATEUR','GESTIONNAIRE_RH')")
+    @PreAuthorize(Roles.ADMIN)
     public SocieteDto modifier(@PathVariable Long id, @RequestBody SocieteRequest req) {
         return service.modifier(id, req);
     }

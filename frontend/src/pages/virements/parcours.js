@@ -6,6 +6,9 @@ export const urlResultat = (id, sousPage = 'synthese') => `${BASE}/resultat/${id
 export const STATUTS_FICHIER = {
   BROUILLON: { label: 'Brouillon', color: 'blue' },
   NON_CONFORME: { label: 'Non conforme', color: 'red' },
+  SOUMIS: { label: 'Soumis à validation', color: 'orange' },
+  VALIDE: { label: 'Validé', color: 'green' },
+  REJETE: { label: 'Rejeté', color: 'volcano' },
 }
 
 export const messageEchec = (erreur) => {

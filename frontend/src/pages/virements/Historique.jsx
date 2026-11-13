@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Alert, Button, Input, Space, Table, Tag } from 'antd'
+import { Alert, Button, Input, Select, Space, Table, Tag } from 'antd'
 import api from '../../api/client'
 import ActionButton from '../../components/ActionButton.jsx'
 import PageHeader from '../../components/PageHeader.jsx'
@@ -13,6 +13,7 @@ export default function Historique() {
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState('')
   const [recherche, setRecherche] = useState('')
+  const [statut, setStatut] = useState(null)
 
   useEffect(() => {
     api.get('/masse/fichiers', { silent: true })
@@ -23,10 +24,10 @@ export default function Historique() {
 
   const lignes = useMemo(() => {
     const terme = recherche.trim().toLowerCase()
-    return terme
-      ? fichiers.filter((f) => `${f.nomFichier} ${f.clientId || ''} ${f.periode || ''} ${f.generePar || ''}`.toLowerCase().includes(terme))
-      : fichiers
-  }, [fichiers, recherche])
+    return fichiers
+      .filter((f) => !statut || f.statutFichier === statut)
+      .filter((f) => !terme || `${f.nomFichier} ${f.clientId || ''} ${f.periode || ''} ${f.generePar || ''}`.toLowerCase().includes(terme))
+  }, [fichiers, recherche, statut])
 
   const colonnes = [
     { title: 'Date', dataIndex: 'genereLe', render: formatDate, sorter: (a, b) => String(a.genereLe).localeCompare(String(b.genereLe)), defaultSortOrder: 'descend' },
@@ -76,12 +77,22 @@ export default function Historique() {
         actions={[<Link key="nouveau" to={BASE}><Button type="primary">Nouveau virement</Button></Link>]}
       />
       {erreur && <Alert type="error" showIcon message={erreur} style={{ margin: '16px 0' }} />}
-      <Input.Search
-        allowClear
-        placeholder="Rechercher un fichier, une société, une période…"
-        style={{ width: 360, maxWidth: '100%', margin: '16px 0' }}
-        onChange={(e) => setRecherche(e.target.value)}
-      />
+      <Space wrap style={{ margin: '16px 0' }}>
+        <Input.Search
+          allowClear
+          placeholder="Rechercher un fichier, une société, une période…"
+          style={{ width: 360, maxWidth: '100%' }}
+          onChange={(e) => setRecherche(e.target.value)}
+        />
+        <Select
+          allowClear
+          placeholder="Tous les statuts"
+          style={{ width: 200 }}
+          value={statut}
+          onChange={setStatut}
+          options={Object.entries(STATUTS_FICHIER).map(([value, { label }]) => ({ value, label }))}
+        />
+      </Space>
       <Table
         rowKey="id"
         columns={colonnes}

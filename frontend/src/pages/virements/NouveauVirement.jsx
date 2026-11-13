@@ -9,14 +9,13 @@ import XsdAnalyse from '../../components/XsdAnalyse.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { loadingStore } from '../../loading/loadingStore.js'
 import { formatMontant, masquerIban } from '../../utils/format.js'
+import { peutGererSocietes } from '../../constants/roles.js'
 import { dateExecutionDefaut, lirePreparation, messageEchec, sauverPreparation, urlResultat } from './parcours.js'
 import '../virements-masse.css'
 
 // Le traitement est un seul appel serveur : les étapes affichées suivent l'ordre réel des contrôles.
 const ETAPES_CHARGEMENT = ['Contrôles métier…', 'Analyse IA…', 'Génération du XML…', 'Validation XSD…']
 const PAS_ETAPE_MS = 1500
-
-const ROLES_SOCIETES = ['ADMINISTRATEUR', 'GESTIONNAIRE_RH']
 
 const formaterIban = (iban) => iban.replace(/\s+/g, '').replace(/(.{4})/g, '$1 ').trim()
 
@@ -238,7 +237,7 @@ export default function NouveauVirement() {
   ]
 
   const societeIncomplete = coordonnees && !coordonnees.complet
-  const peutModifierSocietes = ROLES_SOCIETES.includes(user?.role)
+  const peutModifierSocietes = peutGererSocietes(user?.role)
 
   return (
     <div>
@@ -270,7 +269,7 @@ export default function NouveauVirement() {
                 showIcon
                 style={{ marginBottom: 12 }}
                 message="Coordonnées bancaires incomplètes : la génération est bloquée."
-                description={`À compléter : ${coordonnees.manquants.join(', ')}.`}
+                description={`À compléter : ${coordonnees.manquants.join(', ')}. Contactez un administrateur pour les renseigner dans « Sociétés débitrices ».`}
               />
             )}
             {coordonnees.nom && (

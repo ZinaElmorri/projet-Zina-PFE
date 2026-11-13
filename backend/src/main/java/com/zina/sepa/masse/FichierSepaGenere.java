@@ -105,6 +105,21 @@ public class FichierSepaGenere {
     @Column(length = 20)
     private String statutFichier;
 
+    // Circuit de validation (BROUILLON → SOUMIS → VALIDE ou REJETE) ; colonnes nullables.
+
+    @Column(length = 60)
+    private String soumisPar;
+
+    private LocalDateTime soumisLe;
+
+    @Column(length = 60)
+    private String decisionPar;
+
+    private LocalDateTime decisionLe;
+
+    @Column(columnDefinition = "TEXT")
+    private String motifRejet;
+
     @PrePersist
     void onCreate() {
         if (this.genereLe == null) {
