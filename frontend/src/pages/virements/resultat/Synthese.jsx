@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Alert, App, Button, Card, Col, Descriptions, Input, Modal, Row, Space, Tag, Typography } from 'antd'
+import { Alert, App, Button, Card, Col, Descriptions, Empty, Input, Modal, Row, Space, Table, Tag, Typography } from 'antd'
 import { useNavigate, useOutletContext } from 'react-router-dom'
 import api from '../../../api/client'
 import ActionButton from '../../../components/ActionButton.jsx'
+import XmlViewer from '../../../components/XmlViewer.jsx'
 import { peutPreparer, peutSoumettre, peutValider } from '../../../constants/roles.js'
 import { useAuth } from '../../../context/AuthContext.jsx'
 import { formatDate, formatDateCourte, formatMontant } from '../../../utils/format.js'
@@ -28,6 +29,21 @@ export default function Synthese() {
   const [motifOuvert, setMotifOuvert] = useState(false)
   const [motif, setMotif] = useState('')
   const [rejetEnCours, setRejetEnCours] = useState(false)
+  const [ligneActive, setLigneActive] = useState(null)
+
+  // Rouge : erreurs XSD et erreurs métier positionnées ; orange : avertissements (XSD omis et métier).
+  const erreursXml = [...resultat.erreursXsd, ...resultat.metier.erreursXml]
+  const avertissementsXml = [...resultat.avertissementsXsd, ...resultat.metier.avertissementsXml]
+    .filter((a, i, tous) => tous.findIndex((b) => b.ligne === a.ligne && b.message === a.message) === i)
+  const diagnostics = [
+    ...erreursXml.map((e) => ({ ...e, gravite: 'erreur' })),
+    ...avertissementsXml.map((a) => ({ ...a, gravite: 'avertissement' })),
+  ].map((d, i) => ({ ...d, cle: i }))
+
+  const copierXml = async () => {
+    await navigator.clipboard.writeText(resultat.xml)
+    message.success('XML copié dans le presse-papiers')
+  }
   const { resume, metier, ia } = resultat
   const nbErreursXsd = resultat.erreursXsd.length
   const nbAvertissementsXsd = resultat.avertissementsXsd.length
@@ -185,6 +201,42 @@ export default function Synthese() {
           <Typography.Text type="secondary">Le téléchargement est bloqué tant que le XML n’est pas conforme au schéma XSD.</Typography.Text>
         </div>
       )}
+
+      <Card
+        title="Aperçu du XML généré"
+        style={{ marginTop: 24 }}
+        extra={<Button size="small" onClick={copierXml} disabled={!resultat.xml}>Copier le XML</Button>}
+      >
+        {!resultat.xml ? <Empty description="Aucun XML enregistré pour ce fichier." /> : (
+          <>
+            <Space wrap size="middle" style={{ marginBottom: 12 }}>
+              <Tag color="red">{erreursXml.length} erreur(s) — lignes rouges</Tag>
+              <Tag color="orange">{avertissementsXml.length} avertissement(s) — lignes orange</Tag>
+              {diagnostics.length > 0 && <Typography.Text type="secondary">Cliquez sur un message pour aller à la ligne.</Typography.Text>}
+            </Space>
+            {diagnostics.length === 0 && (
+              <Alert type="success" showIcon style={{ marginBottom: 12 }} message="Aucune erreur ni avertissement : le XML est conforme." />
+            )}
+            {diagnostics.length > 0 && (
+              <Table
+                size="small"
+                rowKey="cle"
+                style={{ marginBottom: 12 }}
+                pagination={{ pageSize: 5, hideOnSinglePage: true, size: 'small' }}
+                dataSource={diagnostics}
+                columns={[
+                  { title: 'Gravité', dataIndex: 'gravite', width: 130, render: (g) => (g === 'erreur' ? <Tag color="red">Erreur</Tag> : <Tag color="orange">Avertissement</Tag>) },
+                  { title: 'Ligne', dataIndex: 'ligne', width: 80, render: (n) => n || '—' },
+                  { title: 'Balise', dataIndex: 'element', width: 140, render: (e) => e || '—' },
+                  { title: 'Message', dataIndex: 'message' },
+                ]}
+                onRow={(d) => ({ onClick: () => d.ligne > 0 && setLigneActive(d.ligne), style: { cursor: d.ligne > 0 ? 'pointer' : 'default' } })}
+              />
+            )}
+            <XmlViewer xml={resultat.xml} erreurs={erreursXml} avertissements={avertissementsXml} ligneActive={ligneActive} />
+          </>
+        )}
+      </Card>
 
       <Modal
         title="Rejeter ce fichier"
