@@ -20,8 +20,10 @@ a { text-decoration: none; color: var(--primary); }
 /* Coquille antd (Layout) */
 .app-shell { min-height: 100vh; }
 .app-loading { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-.app-sider { position: sticky; top: 0; height: 100vh; overflow: auto; }
-.app-sider .ant-layout-sider-children { display: flex; flex-direction: column; }
+.app-sider { position: sticky; top: 0; height: 100vh; overflow: hidden; }
+.app-sider .ant-layout-sider-children { display: flex; flex-direction: column; height: 100%; }
+/* Le logo reste fixe ; seul le menu défile si la fenêtre est trop basse (antd réserve déjà 48 px pour le bouton de repli). */
+.app-sider .ant-menu { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 4px 0; }
 .app-brand {
   display: flex;
   align-items: center;
@@ -36,7 +38,6 @@ a { text-decoration: none; color: var(--primary); }
 .app-brand__logo { display: block; height: 44px; width: auto; max-width: 100%; object-fit: contain; }
 .app-brand__icon { display: block; height: 32px; width: 32px; object-fit: contain; }
 .app-brand__fallback { font-weight: 700; font-size: 16px; letter-spacing: 0.3px; color: #fff; }
-.app-sider .ant-menu { padding: 8px 0; }
 .app-header {
   display: flex;
   align-items: center;
