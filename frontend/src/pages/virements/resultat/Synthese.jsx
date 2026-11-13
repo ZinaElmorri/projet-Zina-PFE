@@ -157,51 +157,6 @@ export default function Synthese() {
           description={<span><strong>Motif :</strong> {resume.motifRejet}. Corrigez puis relancez un nouveau contrôle depuis la préparation.</span>} />
       )}
 
-      <Space wrap>
-        <ActionButton
-          onClick={() => telechargerFichier(resume.id)}
-          disabled={!resume.valideXsd}
-          succes={estValide ? 'Fichier téléchargé' : 'Fichier de contrôle téléchargé (non validé)'}
-        >
-          {estValide ? 'Télécharger pour la banque' : 'Télécharger (contrôle — non validé)'}
-        </ActionButton>
-        {peutSoumettreFichier && (
-          <ActionButton
-            onClick={soumettre}
-            succes="Fichier soumis à validation"
-            confirmation={{ titre: 'Soumettre ce fichier à validation ?', contenu: 'Un Manager pourra le valider ou le rejeter. Vous ne pourrez plus le modifier.', libelle: 'Soumettre' }}
-          >
-            Soumettre à validation
-          </ActionButton>
-        )}
-        {peutDecider && (
-          <>
-            <ActionButton
-              onClick={valider}
-              disabled={quatreYeux}
-              succes="Fichier validé"
-              confirmation={{ titre: 'Valider ce fichier ?', contenu: 'Il pourra ensuite être téléchargé pour envoi à la banque.', libelle: 'Valider' }}
-            >
-              Valider
-            </ActionButton>
-            <Button danger disabled={quatreYeux} onClick={() => { setMotif(''); setMotifOuvert(true) }}>Rejeter</Button>
-          </>
-        )}
-        {peutPreparer(user?.role) && (
-          <Button onClick={() => navigate(BASE, { state: { restaurer: true } })}>Retour à la préparation</Button>
-        )}
-      </Space>
-      {peutDecider && quatreYeux && (
-        <div style={{ marginTop: 8 }}>
-          <Typography.Text type="secondary">Principe des quatre yeux : vous ne pouvez pas valider un fichier que vous avez généré ou soumis.</Typography.Text>
-        </div>
-      )}
-      {!resume.valideXsd && (
-        <div style={{ marginTop: 8 }}>
-          <Typography.Text type="secondary">Le téléchargement est bloqué tant que le XML n’est pas conforme au schéma XSD.</Typography.Text>
-        </div>
-      )}
-
       <Card
         title="Aperçu du XML généré"
         style={{ marginTop: 24 }}
@@ -237,6 +192,53 @@ export default function Synthese() {
           </>
         )}
       </Card>
+
+      <div style={{ marginTop: 24 }}>
+        <Space wrap>
+          <ActionButton
+            onClick={() => telechargerFichier(resume.id)}
+            disabled={!resume.valideXsd}
+            succes={estValide ? 'Fichier téléchargé' : 'Fichier de contrôle téléchargé (non validé)'}
+          >
+            {estValide ? 'Télécharger pour la banque' : 'Télécharger (contrôle — non validé)'}
+          </ActionButton>
+          {peutSoumettreFichier && (
+            <ActionButton
+              onClick={soumettre}
+              succes="Fichier soumis à validation"
+              confirmation={{ titre: 'Soumettre ce fichier à validation ?', contenu: 'Un Manager pourra le valider ou le rejeter. Vous ne pourrez plus le modifier.', libelle: 'Soumettre' }}
+            >
+              Soumettre à validation
+            </ActionButton>
+          )}
+          {peutDecider && (
+            <>
+              <ActionButton
+                onClick={valider}
+                disabled={quatreYeux}
+                succes="Fichier validé"
+                confirmation={{ titre: 'Valider ce fichier ?', contenu: 'Il pourra ensuite être téléchargé pour envoi à la banque.', libelle: 'Valider' }}
+              >
+                Valider
+              </ActionButton>
+              <Button danger disabled={quatreYeux} onClick={() => { setMotif(''); setMotifOuvert(true) }}>Rejeter</Button>
+            </>
+          )}
+          {peutPreparer(user?.role) && (
+            <Button onClick={() => navigate(BASE, { state: { restaurer: true } })}>Retour à la préparation</Button>
+          )}
+        </Space>
+        {peutDecider && quatreYeux && (
+          <div style={{ marginTop: 8 }}>
+            <Typography.Text type="secondary">Principe des quatre yeux : vous ne pouvez pas valider un fichier que vous avez généré ou soumis.</Typography.Text>
+          </div>
+        )}
+        {!resume.valideXsd && (
+          <div style={{ marginTop: 8 }}>
+            <Typography.Text type="secondary">Le téléchargement est bloqué tant que le XML n’est pas conforme au schéma XSD.</Typography.Text>
+          </div>
+        )}
+      </div>
 
       <Modal
         title="Rejeter ce fichier"
