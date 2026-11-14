@@ -17,6 +17,7 @@ import java.util.Set;
 public class AccesSocietes {
 
     private static final String ROLE_EXPERT = "ROLE_EXPERT_RH";
+    private static final String ROLE_ADMIN = "ROLE_ADMIN";
 
     private final AffectationService affectations;
 
@@ -30,6 +31,12 @@ public class AccesSocietes {
 
     private boolean estExpert(Authentication auth) {
         return auth != null && auth.getAuthorities().stream().anyMatch(a -> ROLE_EXPERT.equals(a.getAuthority()));
+    }
+
+    /** L'administrateur ne consulte que la vue de supervision de l'historique (aucune donnée par salarié). */
+    public boolean estAdmin() {
+        Authentication auth = authentification();
+        return auth != null && auth.getAuthorities().stream().anyMatch(a -> ROLE_ADMIN.equals(a.getAuthority()));
     }
 
     /** Garde uniquement les sociétés accessibles à l'utilisateur courant. */

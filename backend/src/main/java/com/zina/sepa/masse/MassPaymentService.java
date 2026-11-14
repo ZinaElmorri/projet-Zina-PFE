@@ -305,7 +305,16 @@ public class MassPaymentService {
                 .filter(f -> valideXsd == null || valideXsd.equals(f.isValideXsd()))
                 .filter(f -> statut == null || statut.isBlank() || statut.equalsIgnoreCase(statutDe(f)))
                 .map(this::resume)
+                .map(r -> acces.estAdmin() ? supervision(r) : r)
                 .collect(Collectors.toList());
+    }
+
+    /** Vue de supervision : ni matricules, ni motifs, ni acteurs du workflow. */
+    private static FichierResume supervision(FichierResume r) {
+        return new FichierResume(r.id(), r.nomFichier(), r.clientId(), r.periode(), null, r.nbTransactions(),
+                r.ctrlSum(), r.xsdNom(), r.versionMessage(), r.valideXsd(), r.nbErreurs(), r.generePar(),
+                r.genereLe(), r.statutFichier(), r.nbErreursTotal(), r.nbAvertissements(), r.nbSuspectsIa(),
+                null, null, null, null);
     }
 
     public FichierDetail detail(Long id) {

@@ -4,11 +4,16 @@ import { Alert, Button, Input, Select, Space, Table, Tag } from 'antd'
 import api from '../../api/client'
 import ActionButton from '../../components/ActionButton.jsx'
 import PageHeader from '../../components/PageHeader.jsx'
+import { useAuth } from '../../context/AuthContext.jsx'
+import { estAdmin } from '../../constants/roles.js'
 import { formatDate, formatMontant } from '../../utils/format.js'
 import { BASE, messageEchec, STATUTS_FICHIER, telechargerFichier, urlResultat } from './parcours.js'
 
 export default function Historique() {
   const navigate = useNavigate()
+  const { user } = useAuth()
+  // L'administrateur supervise : il ne voit ni le résultat détaillé, ni le XML, et ne crée rien.
+  const supervision = estAdmin(user?.role)
   const [fichiers, setFichiers] = useState([])
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState('')
@@ -54,7 +59,7 @@ export default function Historique() {
       },
     },
     { title: 'Par', dataIndex: 'generePar', render: (p) => p || '—' },
-    {
+    ...(supervision ? [] : [{
       title: 'Actions',
       fixed: 'right',
       render: (_, f) => (
@@ -66,15 +71,15 @@ export default function Historique() {
           </ActionButton>
         </Space>
       ),
-    },
+    }]),
   ]
 
   return (
     <div>
       <PageHeader
         title="Historique des fichiers"
-        subtitle="Cliquez sur une ligne pour ouvrir le résultat du contrôle."
-        actions={[<Link key="nouveau" to={BASE}><Button type="primary">Nouveau virement</Button></Link>]}
+        subtitle={supervision ? 'Vue de supervision (lecture seule)' : 'Cliquez sur une ligne pour ouvrir le résultat du contrôle.'}
+        actions={supervision ? undefined : [<Link key="nouveau" to={BASE}><Button type="primary">Nouveau virement</Button></Link>]}
       />
       {erreur && <Alert type="error" showIcon message={erreur} style={{ margin: '16px 0' }} />}
       <Space wrap style={{ margin: '16px 0' }}>
@@ -101,7 +106,7 @@ export default function Historique() {
         pagination={{ pageSize: 15, hideOnSinglePage: true }}
         scroll={{ x: 'max-content' }}
         locale={{ emptyText: 'Aucun fichier SEPA enregistré dans l’historique.' }}
-        onRow={(f) => ({ onClick: () => navigate(urlResultat(f.id)), style: { cursor: 'pointer' } })}
+        onRow={supervision ? undefined : (f) => ({ onClick: () => navigate(urlResultat(f.id)), style: { cursor: 'pointer' } })}
       />
     </div>
   )

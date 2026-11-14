@@ -33,6 +33,8 @@ export const peutAffecter = est('MANAGER')
 export const peutTraiterAnomalies = est('MANAGER', 'EXPERT_RH')
 // Données et actions métier de paie : Manager et Expert RH uniquement (miroir de Roles.METIER).
 export const peutVoirTransactions = est('EXPERT_RH', 'MANAGER')
+/** Résultat d'un fichier : XML, IBAN, détail par salarié. L'administrateur n'a que la supervision de l'historique. */
+export const peutVoirResultat = est('EXPERT_RH', 'MANAGER')
 // Pilotage : l'administrateur n'a ni tableau de bord opérationnel ni indicateurs.
 export const peutVoirDashboard = est('EXPERT_RH', 'MANAGER')
 export const peutVoirKpi = est('EXPERT_RH', 'MANAGER')

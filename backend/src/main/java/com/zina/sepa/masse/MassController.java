@@ -32,12 +32,14 @@ public class MassController {
     }
 
     @GetMapping("/filtres")
+    @PreAuthorize(Roles.METIER)
     public FiltresResponse filtres(@RequestParam(required = false) String clientId,
                                    @RequestParam(required = false) String periode) {
         return service.filtres(clientId, periode);
     }
 
     @GetMapping("/paiements")
+    @PreAuthorize(Roles.METIER)
     public PaiementsResponse paiements(@RequestParam(required = false) String clientId,
                                        @RequestParam(required = false) String periode,
                                        @RequestParam(required = false) List<String> matricules,
@@ -46,6 +48,7 @@ public class MassController {
     }
 
     @PostMapping("/analyse-ia")
+    @PreAuthorize(Roles.METIER)
     public AnalyseIaMasse analyseIa(@RequestParam(required = false) String clientId,
                                     @RequestParam(required = false) String periode,
                                     @RequestParam(required = false) List<String> matricules,
@@ -54,11 +57,13 @@ public class MassController {
     }
 
     @GetMapping("/xsd")
+    @PreAuthorize(Roles.METIER)
     public List<XsdUtilisable> xsd() {
         return service.xsdUtilisables();
     }
 
     @GetMapping("/xsd/{id}/analyse")
+    @PreAuthorize(Roles.METIER)
     public AnalyseXsd analyse(@PathVariable Long id) {
         return service.analyse(id);
     }
@@ -110,16 +115,19 @@ public class MassController {
     }
 
     @GetMapping("/fichiers/{id}")
+    @PreAuthorize(Roles.METIER)
     public FichierDetail detail(@PathVariable Long id) {
         return service.detail(id);
     }
 
     @GetMapping("/fichiers/{id}/resultat")
+    @PreAuthorize(Roles.METIER)
     public ResultatFichier resultat(@PathVariable Long id) {
         return service.resultat(id);
     }
 
     @GetMapping("/fichiers/{id}/telecharger")
+    @PreAuthorize(Roles.METIER)
     public ResponseEntity<byte[]> telecharger(@PathVariable Long id, HttpServletRequest http) {
         FichierSepaGenere f = service.pourTelecharger(id, http);
         byte[] contenu = f.getContenuXml().getBytes(StandardCharsets.UTF_8);

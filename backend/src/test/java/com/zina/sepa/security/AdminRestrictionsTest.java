@@ -9,6 +9,9 @@ import com.zina.sepa.service.BusinessControlService;
 import com.zina.sepa.service.XmlGenerationService;
 import com.zina.sepa.recommendation.AnomalieController;
 import com.zina.sepa.recommendation.AnomalieService;
+import com.zina.sepa.masse.FichierWorkflowService;
+import com.zina.sepa.masse.MassController;
+import com.zina.sepa.masse.MassPaymentService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,11 +49,13 @@ class AdminRestrictionsTest {
                     mock(AuditService.class));
         }
         @Bean AnomalieController anomalies() { return new AnomalieController(mock(AnomalieService.class)); }
+        @Bean MassController masse() { return new MassController(mock(MassPaymentService.class), mock(FichierWorkflowService.class)); }
     }
 
     @Autowired TransactionController transactions;
     @Autowired AiDetectionController aiDetection;
     @Autowired AnomalieController anomalies;
+    @Autowired MassController masse;
 
     @AfterEach
     void deconnecter() {
@@ -85,6 +90,35 @@ class AdminRestrictionsTest {
             assertThat(autorise(() -> transactions.list())).as("liste " + role).isTrue();
             assertThat(autorise(() -> transactions.controler(null))).as("contrôle " + role).isTrue();
             assertThat(autorise(() -> aiDetection.detect(null))).as("détection IA " + role).isTrue();
+        }
+    }
+
+    @Test
+    void masse_ferme_a_l_admin_sauf_l_historique() {
+        connecte("ADMIN");
+        assertThat(autorise(() -> masse.historique(null, null, null, null))).as("historique").isTrue();
+        assertThat(autorise(() -> masse.filtres(null, null))).as("filtres").isFalse();
+        assertThat(autorise(() -> masse.paiements(null, null, null, null))).as("paiements").isFalse();
+        assertThat(autorise(() -> masse.analyseIa(null, null, null, null))).as("analyse IA").isFalse();
+        assertThat(autorise(() -> masse.xsd())).as("xsd").isFalse();
+        assertThat(autorise(() -> masse.analyse(1L))).as("analyse xsd").isFalse();
+        assertThat(autorise(() -> masse.detail(1L))).as("détail").isFalse();
+        assertThat(autorise(() -> masse.resultat(1L))).as("résultat").isFalse();
+        assertThat(autorise(() -> masse.telecharger(1L, null))).as("téléchargement").isFalse();
+        assertThat(autorise(() -> masse.apercu(null, null))).as("aperçu").isFalse();
+        assertThat(autorise(() -> masse.enregistrer(null, null))).as("génération").isFalse();
+        assertThat(autorise(() -> masse.controler(null, null))).as("contrôle").isFalse();
+        for (String role : List.of("MANAGER", "EXPERT_RH")) {
+            connecte(role);
+            assertThat(autorise(() -> masse.historique(null, null, null, null))).as("historique " + role).isTrue();
+            assertThat(autorise(() -> masse.filtres(null, null))).as("filtres " + role).isTrue();
+            assertThat(autorise(() -> masse.paiements(null, null, null, null))).as("paiements " + role).isTrue();
+            assertThat(autorise(() -> masse.analyseIa(null, null, null, null))).as("analyse IA " + role).isTrue();
+            assertThat(autorise(() -> masse.xsd())).as("xsd " + role).isTrue();
+            assertThat(autorise(() -> masse.analyse(1L))).as("analyse xsd " + role).isTrue();
+            assertThat(autorise(() -> masse.detail(1L))).as("détail " + role).isTrue();
+            assertThat(autorise(() -> masse.resultat(1L))).as("résultat " + role).isTrue();
+            assertThat(autorise(() -> masse.telecharger(1L, null))).as("téléchargement " + role).isTrue();
         }
     }
 

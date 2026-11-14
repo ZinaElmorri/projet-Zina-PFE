@@ -16,6 +16,7 @@ import {
   peutValider,
   peutVoirDashboard,
   peutVoirKpi,
+  peutVoirResultat,
   peutVoirTransactions,
 } from './constants/roles.js'
 
@@ -68,7 +69,7 @@ export default function App() {
             <Route index element={<ProtectedRoute autorise={peutPreparer}><NouveauVirement /></ProtectedRoute>} />
             <Route path="historique" element={<VirementsHistorique />} />
             <Route path="a-valider" element={<ProtectedRoute autorise={peutValider}><FichiersAValider /></ProtectedRoute>} />
-            <Route path="resultat/:id" element={<ResultatControle />}>
+            <Route path="resultat/:id" element={<ProtectedRoute autorise={peutVoirResultat}><ResultatControle /></ProtectedRoute>}>
               <Route index element={<Navigate to="synthese" replace />} />
               <Route path="synthese" element={<ResultatSynthese />} />
               <Route path="xml" element={<ResultatXml />} />
