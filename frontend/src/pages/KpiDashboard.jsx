@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Alert, Button, Card, Col, DatePicker, Empty, Input, Progress, Row, Skeleton, Space, Table, Tag, Tooltip, Typography } from 'antd'
+import { Alert, Button, Card, Col, DatePicker, Empty, Input, Progress, Row, Skeleton, Space, Tag, Tooltip, Typography } from 'antd'
 import {
   AlertOutlined,
   ArrowDownOutlined,
@@ -330,25 +330,6 @@ export default function KpiDashboard() {
             </Col>
             <Col xs={24} md={12} xl={6}>
               <Panneau titre="Anomalies par type"><Barres data={kpi.anomaliesParType} couleur={COULEURS.bleu} /></Panneau>
-            </Col>
-            <Col xs={24} md={12}>
-              <Panneau titre="Clients par département"><Barres data={kpi.clientsParDepartement} couleur={COULEURS.vert} /></Panneau>
-            </Col>
-            <Col xs={24} md={12}>
-              <Panneau titre="Top 5 clients à anomalies">
-                {kpi.topClientsAnomalies.length === 0 ? <Vide texte="Aucune anomalie par client" /> : (
-                  <Table
-                    size="small"
-                    pagination={false}
-                    rowKey="clientId"
-                    dataSource={kpi.topClientsAnomalies}
-                    columns={[
-                      { title: 'Client', dataIndex: 'clientId' },
-                      { title: 'Anomalies', dataIndex: 'nbAnomalies', align: 'right', render: (n) => <Tag color="orange">{nf.format(n)}</Tag> },
-                    ]}
-                  />
-                )}
-              </Panneau>
             </Col>
           </Row>
         </div>
