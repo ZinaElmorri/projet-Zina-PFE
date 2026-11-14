@@ -11,6 +11,7 @@ import com.zina.sepa.face.FaceService;
 import com.zina.sepa.otp.OtpService;
 import com.zina.sepa.repository.UserRepository;
 import com.zina.sepa.security.JwtService;
+import com.zina.sepa.security.MethodeConnexion;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DisabledException;
@@ -74,10 +75,14 @@ public class AuthService {
         }
 
         var user = userRepository.findByUsername(request.username()).orElseThrow();
-        return finaliserConnexion(user, ip, "Connexion réussie");
+        return finaliserConnexion(user, MethodeConnexion.MOT_DE_PASSE, ip, "Connexion réussie");
     }
 
-    /** Connexion par reconnaissance faciale : le visage remplace le mot de passe (l'OTP reste exigé s'il est actif). */
+    /**
+     * Connexion par reconnaissance faciale : si le visage correspond, la session est ouverte sans OTP.
+     * Toute autre issue (visage refusé, module indisponible, erreur inattendue) refuse la connexion sans
+     * jamais émettre de token : le client doit alors se reconnecter avec mot de passe + OTP.
+     */
     public AuthResponse faceLogin(FaceLoginRequest request, HttpServletRequest httpRequest) {
         String ip = AuditService.extractIp(httpRequest);
         User user;
@@ -87,12 +92,21 @@ public class AuthService {
             auditService.log(AuditAction.LOGIN, "Échec reconnaissance faciale : " + e.getMessage(), "ECHEC",
                     request.username(), ip);
             throw e;
+        } catch (RuntimeException e) {
+            auditService.log(AuditAction.LOGIN, "Reconnaissance faciale indisponible : " + e.getMessage(), "ECHEC",
+                    request.username(), ip);
+            throw new IllegalStateException(
+                    "Reconnaissance faciale indisponible : connectez-vous avec votre mot de passe (un code de vérification vous sera demandé).");
         }
-        return finaliserConnexion(user, ip, "Connexion réussie (reconnaissance faciale)");
+        return finaliserConnexion(user, MethodeConnexion.FACIALE, ip, "Connexion réussie (reconnaissance faciale)");
     }
 
-    private AuthResponse finaliserConnexion(User user, String ip, String details) {
-        if (!otpService.isEnabled()) {
+    /**
+     * Décision unique selon la méthode : faciale → session créée ; mot de passe → code OTP exigé.
+     * L'OTP ne dépend volontairement pas du réglage {@code app.otp.enabled} : un mot de passe seul n'ouvre jamais de session.
+     */
+    private AuthResponse finaliserConnexion(User user, MethodeConnexion methode, String ip, String details) {
+        if (!methode.exigeOtp()) {
             return emettreToken(user, ip, details);
         }
 

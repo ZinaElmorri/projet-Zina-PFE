@@ -49,7 +49,15 @@ export default function Login() {
         navigate('/')
       }
     } catch (err) {
-      setError(apiError(err, faceMode ? 'Visage non reconnu' : 'Identifiants invalides'))
+      if (faceMode) {
+        // Visage refusé ou module indisponible : aucune session n'est ouverte, on bascule vers mot de passe + OTP.
+        setFaceMode(false)
+        setCameraReady(false)
+        setPassword('')
+        setError(`${apiError(err, 'Visage non reconnu').replace(/[.\s]+$/, '')}. Utilisez votre mot de passe : un code de vérification vous sera demandé.`)
+      } else {
+        setError(apiError(err, 'Identifiants invalides'))
+      }
     } finally {
       setBusy(false)
     }
