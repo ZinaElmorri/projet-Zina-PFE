@@ -24,20 +24,21 @@ public class AnomalieController {
 
     /** Liste des anomalies ; sans paramètre, comportement inchangé (toutes). */
     @GetMapping
+    @PreAuthorize(Roles.METIER)
     public List<AnomalieDto> lister(@RequestParam(required = false) String statut) {
         return anomalieService.lister(statut);
     }
 
     /** Relance la détection et réconcilie le registre. */
     @PostMapping("/detecter")
-    @PreAuthorize(Roles.CONSULTATION)
+    @PreAuthorize(Roles.METIER)
     public DetectionResume detecter() {
         return anomalieService.detecter();
     }
 
     /** Change le statut d'une anomalie (commentaire obligatoire pour IGNOREE). */
     @PatchMapping("/{id}/statut")
-    @PreAuthorize(Roles.CONSULTATION)
+    @PreAuthorize(Roles.METIER)
     public AnomalieDto changerStatut(@PathVariable Long id,
                                      @RequestBody ChangementStatutRequest request) {
         return anomalieService.changerStatut(id, request.statut(), request.commentaire());

@@ -26,6 +26,7 @@ import {
   peutGererSocietes,
   peutGererUtilisateurs,
   peutPreparer,
+  peutTraiterAnomalies,
   peutValider,
   peutVoirDashboard,
   peutVoirKpi,
@@ -98,7 +99,7 @@ function menuItems(role) {
     },
     {
       type: 'group', label: 'Contrôle', children: [
-        { key: '/anomalies', icon: <AlertOutlined />, label: 'Anomalies' },
+        ...(peutTraiterAnomalies(role) ? [{ key: '/anomalies', icon: <AlertOutlined />, label: 'Anomalies' }] : []),
         { key: '/xsd', icon: <FileSearchOutlined />, label: 'Schémas XSD' },
       ],
     },

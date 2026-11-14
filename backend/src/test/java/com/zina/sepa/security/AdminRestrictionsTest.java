@@ -7,6 +7,8 @@ import com.zina.sepa.repository.TransactionRepository;
 import com.zina.sepa.service.AuditService;
 import com.zina.sepa.service.BusinessControlService;
 import com.zina.sepa.service.XmlGenerationService;
+import com.zina.sepa.recommendation.AnomalieController;
+import com.zina.sepa.recommendation.AnomalieService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,10 +45,12 @@ class AdminRestrictionsTest {
             return new AiDetectionController(mock(AiAnomalyService.class), mock(TransactionRepository.class),
                     mock(AuditService.class));
         }
+        @Bean AnomalieController anomalies() { return new AnomalieController(mock(AnomalieService.class)); }
     }
 
     @Autowired TransactionController transactions;
     @Autowired AiDetectionController aiDetection;
+    @Autowired AnomalieController anomalies;
 
     @AfterEach
     void deconnecter() {
@@ -81,6 +85,20 @@ class AdminRestrictionsTest {
             assertThat(autorise(() -> transactions.list())).as("liste " + role).isTrue();
             assertThat(autorise(() -> transactions.controler(null))).as("contrôle " + role).isTrue();
             assertThat(autorise(() -> aiDetection.detect(null))).as("détection IA " + role).isTrue();
+        }
+    }
+
+    @Test
+    void anomalies_fermees_a_l_admin_ouvertes_aux_autres_roles() {
+        connecte("ADMIN");
+        assertThat(autorise(() -> anomalies.lister(null))).as("liste").isFalse();
+        assertThat(autorise(() -> anomalies.detecter())).as("détection").isFalse();
+        assertThat(autorise(() -> anomalies.changerStatut(1L, null))).as("statut").isFalse();
+        for (String role : List.of("MANAGER", "EXPERT_RH")) {
+            connecte(role);
+            assertThat(autorise(() -> anomalies.lister(null))).as("liste " + role).isTrue();
+            assertThat(autorise(() -> anomalies.detecter())).as("détection " + role).isTrue();
+            assertThat(autorise(() -> anomalies.changerStatut(1L, null))).as("statut " + role).isTrue();
         }
     }
 }

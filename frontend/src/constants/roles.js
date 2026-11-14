@@ -30,7 +30,7 @@ export const peutPreparer = est('EXPERT_RH')
 export const peutSoumettre = peutPreparer
 export const peutValider = est('MANAGER')
 export const peutAffecter = est('MANAGER')
-export const peutTraiterAnomalies = est('ADMIN', 'MANAGER', 'EXPERT_RH')
+export const peutTraiterAnomalies = est('MANAGER', 'EXPERT_RH')
 // Données et actions métier de paie : Manager et Expert RH uniquement (miroir de Roles.METIER).
 export const peutVoirTransactions = est('EXPERT_RH', 'MANAGER')
 // Pilotage : l'administrateur n'a ni tableau de bord opérationnel ni indicateurs.
