@@ -29,6 +29,7 @@ import {
   peutValider,
   peutVoirDashboard,
   peutVoirKpi,
+  peutVoirTransactions,
 } from '../constants/roles.js'
 
 const { Sider, Header, Content } = AntLayout
@@ -88,7 +89,7 @@ function menuItems(role) {
     },
     {
       type: 'group', label: 'Paie et virements', children: [
-        { key: '/transactions', icon: <SwapOutlined />, label: 'Transactions' },
+        ...(peutVoirTransactions(role) ? [{ key: '/transactions', icon: <SwapOutlined />, label: 'Transactions' }] : []),
         ...(peutPreparer(role) ? [{ key: '/virements-masse', icon: <SendOutlined />, label: 'Virements de masse' }] : []),
         ...(peutValider(role) ? [{ key: A_VALIDER, icon: <CheckSquareOutlined />, label: 'Fichiers à valider' }] : []),
         { key: HISTORIQUE, icon: <HistoryOutlined />, label: 'Historique SEPA' },

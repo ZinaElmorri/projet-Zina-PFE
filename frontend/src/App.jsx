@@ -15,6 +15,7 @@ import {
   peutValider,
   peutVoirDashboard,
   peutVoirKpi,
+  peutVoirTransactions,
 } from './constants/roles.js'
 
 const Affectations = lazy(() => import('./pages/Affectations.jsx'))
@@ -60,7 +61,7 @@ export default function App() {
         >
           <Route path="/" element={<ProtectedRoute autorise={peutVoirDashboard} redirection={PAGE_ACCUEIL_ADMIN}><Dashboard /></ProtectedRoute>} />
           <Route path="/kpi" element={<ProtectedRoute autorise={peutVoirKpi}><KpiDashboard /></ProtectedRoute>} />
-          <Route path="/transactions" element={<Transactions />} />
+          <Route path="/transactions" element={<ProtectedRoute autorise={peutVoirTransactions}><Transactions /></ProtectedRoute>} />
           <Route path="/anomalies" element={<Anomalies />} />
           <Route path="/virements-masse">
             <Route index element={<ProtectedRoute autorise={peutPreparer}><NouveauVirement /></ProtectedRoute>} />

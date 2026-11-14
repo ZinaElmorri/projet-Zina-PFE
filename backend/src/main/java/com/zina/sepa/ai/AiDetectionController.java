@@ -32,7 +32,7 @@ public class AiDetectionController {
     }
 
     @PostMapping("/detect")
-    @PreAuthorize(Roles.CONSULTATION)
+    @PreAuthorize(Roles.METIER)
     public AnalyseResult detect(HttpServletRequest request) {
         AnalyseResult resultat = aiAnomalyService.analyser(transactionRepository.findAll());
         long suspects = resultat.resultats() == null ? 0

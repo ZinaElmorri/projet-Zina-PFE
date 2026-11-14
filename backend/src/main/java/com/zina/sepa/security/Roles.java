@@ -25,6 +25,8 @@ public final class Roles {
     public static final String CONSULTATION = "hasAnyRole('EXPERT_RH','MANAGER','ADMIN')";
     /** Import, modification et suppression des schémas XSD. */
     public static final String XSD = "hasAnyRole('ADMIN','MANAGER')";
+    /** Données et actions métier de paie : l'administrateur n'y a pas accès. */
+    public static final String METIER = "hasAnyRole('EXPERT_RH','MANAGER')";
 
     private Roles() {
     }

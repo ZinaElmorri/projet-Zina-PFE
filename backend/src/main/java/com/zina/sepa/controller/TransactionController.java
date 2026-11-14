@@ -37,6 +37,7 @@ public class TransactionController {
     }
 
     @GetMapping
+    @PreAuthorize(Roles.METIER)
     public List<Transaction> list() {
         return repository.findAll();
     }
@@ -89,6 +90,7 @@ public class TransactionController {
 
     /** Contrôles métier RH sur toutes les transactions en brouillon. */
     @PostMapping("/controler")
+    @PreAuthorize(Roles.METIER)
     public ValidationResult controler(HttpServletRequest request) {
         var result = businessControlService.controle(
                 repository.findByStatut(TransactionStatus.BROUILLON));
