@@ -35,10 +35,10 @@ export const peutTraiterAnomalies = est('MANAGER', 'EXPERT_RH')
 export const peutVoirTransactions = est('EXPERT_RH', 'MANAGER')
 /** Résultat d'un fichier : XML, IBAN, détail par salarié. L'administrateur n'a que la supervision de l'historique. */
 export const peutVoirResultat = est('EXPERT_RH', 'MANAGER')
-// Pilotage : l'administrateur n'a ni tableau de bord opérationnel ni indicateurs.
-export const peutVoirDashboard = est('EXPERT_RH', 'MANAGER')
-export const peutVoirKpi = est('EXPERT_RH', 'MANAGER')
-/** Les montants globaux ne sont affichés qu'au Manager ; l'Expert RH a une version limitée. */
-export const peutVoirKpiComplet = est('MANAGER')
+// Pilotage : vue opérationnelle pour Expert RH et Manager, vue globale (agrégats) pour l'administrateur.
+export const peutVoirDashboard = est('EXPERT_RH', 'MANAGER', 'ADMIN')
+export const peutVoirKpi = est('EXPERT_RH', 'MANAGER', 'ADMIN')
+/** Les montants globaux sont affichés au Manager et à l'administrateur ; l'Expert RH a une version limitée. */
+export const peutVoirKpiComplet = est('MANAGER', 'ADMIN')
 /** Page d'accueil des rôles sans tableau de bord. */
 export const PAGE_ACCUEIL_ADMIN = '/users'
