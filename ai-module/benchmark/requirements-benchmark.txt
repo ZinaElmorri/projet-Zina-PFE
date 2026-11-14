@@ -1,0 +1,2 @@
+Faker==40.54.0
+matplotlib==3.11.2

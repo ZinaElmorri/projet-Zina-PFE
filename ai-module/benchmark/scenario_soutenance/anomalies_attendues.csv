@@ -1,0 +1,13 @@
+fiche_id,matricule,nom,type_anomalie,montant,montant_habituel,description,type_libelle
+6889,EMP00252,Simone Caron,montant_nul_negatif,0.0,1958.6,"Montant nul ou négatif : 0,00 €",Montant nul ou négatif
+6920,EMP00284,Lorraine Bouchet,doublon,1978.44,1978.44,"Salarié présent deux fois dans le fichier (même montant, même IBAN)",Doublon (salarié payé deux fois)
+6961,EMP00325,Joseph Gomes,hausse_subtile,4741.08,3310.11,"Hausse de 43 % sans justification (4 741,08 € au lieu de 3 310,11 €)",Hausse subtile (+25 à +60 %)
+7042,EMP00407,Claude Guillet,montant_multiplie,14251.92,4564.14,"Montant 3,1× le salaire habituel (14 251,92 € au lieu de 4 564,14 €)",Montant multiplié par 3 à 10
+7159,EMP00525,Victoire Picard,iban_partage,3717.98,3717.98,IBAN identique à celui d'un autre salarié de la société,IBAN partagé entre deux salariés
+7163,EMP00529,Hugues Regnier,iban_change_montant_eleve,4220.79,2112.83,"IBAN modifié et montant élevé (4 220,79 € au lieu de 2 112,83 €)",IBAN modifié et montant élevé
+7359,EMP00731,Théodore Bouvier,iban_partage,1993.75,1993.75,IBAN identique à celui d'un autre salarié de la société,IBAN partagé entre deux salariés
+7564,EMP00941,Théodore Martinez,erreur_virgule,35.54,3554.04,"Erreur de virgule : 35,54 € au lieu de 3 554,04 €",Erreur de virgule (×100 ou ÷100)
+7649,EMP01027,Georges Berger,erreur_virgule,183014.0,1830.14,"Erreur de virgule : 183 014,00 € au lieu de 1 830,14 €",Erreur de virgule (×100 ou ÷100)
+7740,EMP01122,Constance Martel,salarie_fantome,2120.53,0.0,Salarié sans aucun historique de paie,Salarié fantôme (sans historique)
+7741,EMP00129,Laure Picard,salarie_sorti_paye,1930.47,0.0,Salarié sorti depuis plusieurs mois encore payé,Salarié sorti encore payé
+7742,EMP00284,Lorraine Bouchet,doublon,1978.44,1978.44,"Salarié présent deux fois dans le fichier (même montant, même IBAN)",Doublon (salarié payé deux fois)

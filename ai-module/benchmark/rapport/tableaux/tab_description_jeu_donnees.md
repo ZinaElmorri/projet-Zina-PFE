@@ -1,0 +1,15 @@
+| Caractéristique | Valeur |
+| :--- | ---: |
+| Sociétés | 9 |
+| Salariés distincts (hors fantômes) | 4 621 |
+| Effectif mensuel moyen | 4 003 |
+| Entrées / sorties sur la période | 631 / 505 |
+| Mois de paie | 18 (juil. 2024 – déc. 2025) |
+| Fiches de paie | 73 568 |
+| Fiches anormales étiquetées | 1 517 (2,06 %) |
+| Types d'anomalies | 9 |
+| Fiches normales atypiques : primes | 749 |
+| Fiches normales atypiques : 13e mois | 1 986 |
+| Fiches normales atypiques : changements d'IBAN légitimes | 152 |
+
+*Description du jeu de données synthétique de référence.*

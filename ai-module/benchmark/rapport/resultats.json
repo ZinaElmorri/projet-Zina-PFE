@@ -1,0 +1,260 @@
+{
+  "jeuDeDonnees": {
+    "graine": 42,
+    "nbSocietes": 9,
+    "nbSalaries": 4621,
+    "effectifMensuelMoyen": 4002.8,
+    "nbMois": 18,
+    "periode": [
+      "2024-07",
+      "2025-12"
+    ],
+    "nbFiches": 73568,
+    "nbAnomalies": 1517,
+    "tauxAnomalies": 0.0206,
+    "entrees": 631,
+    "sorties": 505,
+    "evenementsNormaux": {
+      "treizieme_mois": 1986,
+      "prime": 749,
+      "iban_change_legitime": 152
+    },
+    "anomaliesParType": {
+      "montant_multiplie": 153,
+      "erreur_virgule": 176,
+      "hausse_subtile": 169,
+      "montant_nul_negatif": 168,
+      "doublon": 184,
+      "iban_change_montant_eleve": 181,
+      "iban_partage": 184,
+      "salarie_fantome": 157,
+      "salarie_sorti_paye": 145
+    },
+    "anomaliesParMois": [
+      75,
+      96,
+      67,
+      83,
+      90,
+      81,
+      89,
+      86,
+      100,
+      79,
+      93,
+      87,
+      76,
+      74,
+      92,
+      84,
+      83,
+      82
+    ],
+    "partitions": {
+      "entrainement": {
+        "mois": [
+          1,
+          12
+        ],
+        "fiches": 48791,
+        "anomalies": 1026,
+        "taux": 0.021,
+        "anomaliesParType": {
+          "montant_multiplie": 98,
+          "erreur_virgule": 121,
+          "hausse_subtile": 115,
+          "montant_nul_negatif": 105,
+          "doublon": 128,
+          "iban_change_montant_eleve": 123,
+          "iban_partage": 132,
+          "salarie_fantome": 109,
+          "salarie_sorti_paye": 95
+        }
+      },
+      "validation": {
+        "mois": [
+          13,
+          15
+        ],
+        "fiches": 12354,
+        "anomalies": 242,
+        "taux": 0.0196,
+        "anomaliesParType": {
+          "montant_multiplie": 31,
+          "erreur_virgule": 31,
+          "hausse_subtile": 27,
+          "montant_nul_negatif": 28,
+          "doublon": 30,
+          "iban_change_montant_eleve": 27,
+          "iban_partage": 30,
+          "salarie_fantome": 21,
+          "salarie_sorti_paye": 17
+        }
+      },
+      "test": {
+        "mois": [
+          16,
+          18
+        ],
+        "fiches": 12423,
+        "anomalies": 249,
+        "taux": 0.02,
+        "anomaliesParType": {
+          "montant_multiplie": 24,
+          "erreur_virgule": 24,
+          "hausse_subtile": 27,
+          "montant_nul_negatif": 35,
+          "doublon": 26,
+          "iban_change_montant_eleve": 31,
+          "iban_partage": 22,
+          "salarie_fantome": 27,
+          "salarie_sorti_paye": 33
+        }
+      }
+    },
+    "societes": [
+      {
+        "id": "SOC-01",
+        "nom": "Laurent et Fils",
+        "salaries": 1159,
+        "employes": 862,
+        "cadres": 261,
+        "dirigeants": 36,
+        "treizieme": false,
+        "fiches": 18380,
+        "anomalies": 331
+      },
+      {
+        "id": "SOC-02",
+        "nom": "Moulin",
+        "salaries": 927,
+        "employes": 739,
+        "cadres": 163,
+        "dirigeants": 25,
+        "treizieme": false,
+        "fiches": 14809,
+        "anomalies": 275
+      },
+      {
+        "id": "SOC-03",
+        "nom": "Joly Gallet SA",
+        "salaries": 692,
+        "employes": 501,
+        "cadres": 168,
+        "dirigeants": 23,
+        "treizieme": true,
+        "fiches": 10971,
+        "anomalies": 253
+      },
+      {
+        "id": "SOC-04",
+        "nom": "Maury S.A.R.L.",
+        "salaries": 592,
+        "employes": 437,
+        "cadres": 144,
+        "dirigeants": 11,
+        "treizieme": false,
+        "fiches": 9273,
+        "anomalies": 179
+      },
+      {
+        "id": "SOC-05",
+        "nom": "Martinez SA",
+        "salaries": 455,
+        "employes": 326,
+        "cadres": 122,
+        "dirigeants": 7,
+        "treizieme": false,
+        "fiches": 7310,
+        "anomalies": 168
+      },
+      {
+        "id": "SOC-06",
+        "nom": "Rey Bodin S.A.S.",
+        "salaries": 340,
+        "employes": 265,
+        "cadres": 68,
+        "dirigeants": 7,
+        "treizieme": true,
+        "fiches": 5415,
+        "anomalies": 119
+      },
+      {
+        "id": "SOC-07",
+        "nom": "Guilbert S.A.",
+        "salaries": 227,
+        "employes": 166,
+        "cadres": 55,
+        "dirigeants": 6,
+        "treizieme": false,
+        "fiches": 3794,
+        "anomalies": 105
+      },
+      {
+        "id": "SOC-08",
+        "nom": "Vasseur",
+        "salaries": 135,
+        "employes": 101,
+        "cadres": 30,
+        "dirigeants": 4,
+        "treizieme": false,
+        "fiches": 2147,
+        "anomalies": 50
+      },
+      {
+        "id": "SOC-09",
+        "nom": "Pruvost",
+        "salaries": 94,
+        "employes": 62,
+        "cadres": 25,
+        "dirigeants": 7,
+        "treizieme": true,
+        "fiches": 1469,
+        "anomalies": 37
+      }
+    ],
+    "salaireMedianParProfil": {
+      "employé": 2176.75,
+      "cadre": 4159.82,
+      "dirigeant": 9685.77
+    },
+    "parametres": {
+      "tauxEvenements": 0.0178,
+      "poidsTypes": {
+        "doublon": 0.5,
+        "iban_partage": 0.5
+      },
+      "probabilitePrime": 0.01,
+      "probabiliteChangementIbanLegitime": 0.0025,
+      "probabilitePromotion": 0.004,
+      "probabiliteDepart": 0.008,
+      "probabiliteEmbauche": 0.009,
+      "bruitMensuel": 0.012,
+      "societesTreiziemeMois": [
+        2,
+        5,
+        8
+      ],
+      "historiqueMois": 6
+    },
+    "scenarioSoutenance": {
+      "graine": 2026,
+      "societe": "SOC-01",
+      "mois": "2025-10",
+      "fiches": 1100,
+      "anomalies": 12,
+      "casNormauxAtypiques": 9,
+      "anomaliesParType": {
+        "montant_multiplie": 1,
+        "erreur_virgule": 2,
+        "hausse_subtile": 1,
+        "montant_nul_negatif": 1,
+        "doublon": 2,
+        "iban_change_montant_eleve": 1,
+        "iban_partage": 2,
+        "salarie_fantome": 1,
+        "salarie_sorti_paye": 1
+      }
+    }
+  }
+}

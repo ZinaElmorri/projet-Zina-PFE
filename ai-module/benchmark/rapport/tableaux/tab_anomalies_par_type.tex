@@ -1,0 +1,22 @@
+\begin{table}[htbp]
+\centering
+\caption{Anomalies étiquetées par type et par jeu (nombre de fiches).}
+\label{tab:anomalies_par_type}
+\small
+\begin{tabular}{lrrrrp{6cm}}
+\toprule
+\textbf{Type d'anomalie} & \textbf{Entraînement} & \textbf{Validation} & \textbf{Test} & \textbf{Total} & \textbf{Principe d'injection} \\
+\midrule
+Montant multiplié par 3 à 10 & 98 & 31 & 24 & 153 & Montant légitime × tirage uniforme dans [3 ; 10] \\
+Erreur de virgule (×100 ou ÷100) & 121 & 31 & 24 & 176 & Montant légitime × 100 ou ÷ 100 (une chance sur deux) \\
+Hausse subtile (+25 à +60 \%) & 115 & 27 & 27 & 169 & Montant légitime × tirage uniforme dans [1,25 ; 1,60] \\
+Montant nul ou négatif & 105 & 28 & 35 & 168 & Montant égal à 0 ou à l'opposé du montant légitime \\
+Doublon (salarié payé deux fois) & 128 & 30 & 26 & 184 & Fiche recopiée à l'identique ; les deux fiches sont étiquetées \\
+IBAN modifié et montant élevé & 123 & 27 & 31 & 181 & Nouvel IBAN valide et montant légitime × [1,5 ; 3] \\
+IBAN partagé entre deux salariés & 132 & 30 & 22 & 184 & Un salarié reprend l'IBAN d'un collègue ; les deux fiches sont étiquetées \\
+Salarié fantôme (sans historique) & 109 & 21 & 27 & 157 & Nouveau salarié sans historique, salaire plausible (× [0,9 ; 1,5] du salaire type) \\
+Salarié sorti encore payé & 95 & 17 & 33 & 145 & Salarié parti depuis 2 à 4 mois, payé à nouveau à son salaire habituel \\
+Total & 1\,026 & 242 & 249 & 1\,517 &  \\
+\bottomrule
+\end{tabular}
+\end{table}

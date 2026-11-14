@@ -33,4 +33,6 @@ Thumbs.db
 
 # Modèle IA : métriques recalculées à chaque entraînement
 ai-module/app/montant_suspect/models/metrics.json
+# Banc d'essai IA : jeu de données complet régénérable (python -m benchmark.describe_dataset)
+ai-module/benchmark/data/
 .pytest_cache/

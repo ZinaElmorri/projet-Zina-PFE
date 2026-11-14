@@ -1,0 +1,13 @@
+| Société | Raison sociale (fictive) | Salariés | Employés / cadres / dirigeants | 13e mois | Fiches | Anomalies |
+| :--- | :--- | ---: | ---: | :---: | ---: | ---: |
+| SOC-01 | Laurent et Fils | 1 159 | 862 / 261 / 36 | non | 18 380 | 331 |
+| SOC-02 | Moulin | 927 | 739 / 163 / 25 | non | 14 809 | 275 |
+| SOC-03 | Joly Gallet SA | 692 | 501 / 168 / 23 | oui | 10 971 | 253 |
+| SOC-04 | Maury S.A.R.L. | 592 | 437 / 144 / 11 | non | 9 273 | 179 |
+| SOC-05 | Martinez SA | 455 | 326 / 122 / 7 | non | 7 310 | 168 |
+| SOC-06 | Rey Bodin S.A.S. | 340 | 265 / 68 / 7 | oui | 5 415 | 119 |
+| SOC-07 | Guilbert S.A. | 227 | 166 / 55 / 6 | non | 3 794 | 105 |
+| SOC-08 | Vasseur | 135 | 101 / 30 / 4 | non | 2 147 | 50 |
+| SOC-09 | Pruvost | 94 | 62 / 25 / 7 | oui | 1 469 | 37 |
+
+*Sociétés simulées : effectifs, profils, 13e mois et anomalies injectées.*
