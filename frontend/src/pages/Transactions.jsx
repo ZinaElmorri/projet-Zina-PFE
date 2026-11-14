@@ -1,10 +1,22 @@
 import { useEffect, useState } from 'react'
+import { Tag } from 'antd'
 import api from '../api/client'
 import ActionButton from '../components/ActionButton.jsx'
 import { peutPreparer, peutValider } from '../constants/roles.js'
 import { useAuth } from '../context/AuthContext.jsx'
+import { formatMontant, masquerIban } from '../utils/format.js'
 
 const empty = { employeId: '', nomBeneficiaire: '', iban: '', bic: '', montant: '', libelle: '' }
+
+const STATUTS = {
+  BROUILLON: { label: 'Non approuvé', color: 'default' },
+  VALIDEE: { label: 'Validée', color: 'blue' },
+  APPROUVEE: { label: 'Approuvée', color: 'green' },
+  REJETEE: { label: 'Rejetée', color: 'red' },
+}
+
+// Affichage uniquement : le montant reste exprimé dans sa devise d'origine.
+const afficherMontant = (t) => (!t.devise || t.devise === 'EUR' ? formatMontant(t.montant) : `${t.montant} ${t.devise}`)
 
 export default function Transactions() {
   const { user } = useAuth()
@@ -150,9 +162,14 @@ export default function Transactions() {
               <td>{t.id}</td>
               <td>{t.employeId}</td>
               <td>{t.nomBeneficiaire}</td>
-              <td>{t.iban}</td>
-              <td>{t.montant} {t.devise}</td>
-              <td>{t.statut === 'BROUILLON' ? 'Non approuvé' : t.statut}</td>
+              <td>{masquerIban(t.iban)}</td>
+              <td>{afficherMontant(t)}</td>
+              <td>
+                {(() => {
+                  const s = STATUTS[t.statut] || { label: t.statut, color: 'default' }
+                  return <Tag color={s.color}>{s.label}</Tag>
+                })()}
+              </td>
               <td>{t.niveauRisque || '—'}</td>
               <td>{t.scoreRisque != null ? Number(t.scoreRisque).toFixed(2).replace('.', ',') : '—'}</td>
               <td>
