@@ -1,0 +1,3 @@
+**Légende proposée** : Causes des faux positifs sur le jeu de test (nombre moyen de fiches par graine).
+
+**Interprétation** : Au seuil actuel, 61 % des faux positifs sont des 13e mois, 24 des changements d'IBAN légitimes (signalés d'office par la règle IBAN) et 17 d'autres fiches normales. Pour le seuil choisi sur la validation, les 13e mois représentent 87 % des faux positifs. Les primes ponctuelles, pourtant conçues comme des cas difficiles, génèrent très peu de fausses alertes : leur amplitude (jusqu'à +35 %) reste dans la tolérance du modèle. Presque toutes les fausses alertes proviennent donc de situations légitimes mais prévisibles que le modèle ignore, ce qui indique les améliorations les plus rentables.

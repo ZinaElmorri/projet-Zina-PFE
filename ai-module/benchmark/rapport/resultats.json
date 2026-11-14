@@ -256,5 +256,687 @@
         "salarie_sorti_paye": 1
       }
     }
+  },
+  "evaluation": {
+    "protocole": {
+      "graines": [
+        42,
+        7,
+        11,
+        23,
+        31
+      ],
+      "decoupage": {
+        "entrainement": [
+          1,
+          12
+        ],
+        "validation": [
+          13,
+          15
+        ],
+        "test": [
+          16,
+          18
+        ]
+      },
+      "choixSeuil": "maximisation du F1 sur la validation",
+      "configurationRetenue": "en_service",
+      "prevalenceTest": 0.019740772355786994
+    },
+    "modele": {
+      "algorithme": "Isolation Forest + règle IBAN modifié",
+      "nbArbres": 200,
+      "contamination": 0.01,
+      "variables": [
+        "montant",
+        "ecart_moyenne_salarie",
+        "zscore_client",
+        "variation_mois_precedent",
+        "iban_change_recent",
+        "nb_paiements_meme_iban"
+      ],
+      "nbEntrainement": 48508.4,
+      "tempsEntrainementS": {
+        "moyenne": 1.3514022800023668,
+        "ecartType": 0.15822295577359083
+      },
+      "tempsPredictionMsPour1000": {
+        "moyenne": 22.247246888029114,
+        "ecartType": 4.466517285054987
+      }
+    },
+    "configurations": {
+      "en_service": {
+        "nom": "Décision actuelle en production (score ≥ 0,5 ou IBAN modifié)",
+        "metriques": {
+          "precision": {
+            "moyenne": 0.473581903281293,
+            "ecartType": 0.09418458933769931
+          },
+          "rappel": {
+            "moyenne": 0.3803936892396833,
+            "ecartType": 0.02936497303391965
+          },
+          "f1": {
+            "moyenne": 0.4191697101483617,
+            "ecartType": 0.05001656216821294
+          },
+          "rocAuc": {
+            "moyenne": 0.8400918332696851,
+            "ecartType": 0.010496759196744473
+          },
+          "prAuc": {
+            "moyenne": 0.40692952704216745,
+            "ecartType": 0.03921695798151294
+          },
+          "fpPour1000": {
+            "moyenne": 8.87141561867794,
+            "ecartType": 3.145661660126438
+          }
+        },
+        "seuil": {
+          "moyenne": 0.5,
+          "ecartType": 0.0,
+          "parGraine": [
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+            0.5
+          ]
+        },
+        "matriceConfusionMoyenne": {
+          "vraisPositifs": 91.8,
+          "fauxPositifs": 108.4,
+          "fauxNegatifs": 149.6,
+          "vraisNegatifs": 11882.4
+        },
+        "rappelParType": [
+          {
+            "type": "montant_multiplie",
+            "libelle": "Montant multiplié par 3 à 10",
+            "rappel": {
+              "moyenne": 0.9785145888594166,
+              "ecartType": 0.028026480513256857
+            },
+            "nbTestMoyen": 25.6
+          },
+          {
+            "type": "erreur_virgule",
+            "libelle": "Erreur de virgule (×100 ou ÷100)",
+            "rappel": {
+              "moyenne": 0.575,
+              "ecartType": 0.07168604389202189
+            },
+            "nbTestMoyen": 24.0
+          },
+          {
+            "type": "hausse_subtile",
+            "libelle": "Hausse subtile (+25 à +60 %)",
+            "rappel": {
+              "moyenne": 0.031957671957671956,
+              "ecartType": 0.02987352379021187
+            },
+            "nbTestMoyen": 28.4
+          },
+          {
+            "type": "montant_nul_negatif",
+            "libelle": "Montant nul ou négatif",
+            "rappel": {
+              "moyenne": 0.2830952380952381,
+              "ecartType": 0.16980447606203714
+            },
+            "nbTestMoyen": 30.4
+          },
+          {
+            "type": "doublon",
+            "libelle": "Doublon (salarié payé deux fois)",
+            "rappel": {
+              "moyenne": 0.06433566433566433,
+              "ecartType": 0.0903587429662271
+            },
+            "nbTestMoyen": 27.2
+          },
+          {
+            "type": "iban_change_montant_eleve",
+            "libelle": "IBAN modifié et montant élevé",
+            "rappel": {
+              "moyenne": 1.0,
+              "ecartType": 0.0
+            },
+            "nbTestMoyen": 27.8
+          },
+          {
+            "type": "iban_partage",
+            "libelle": "IBAN partagé entre deux salariés",
+            "rappel": {
+              "moyenne": 0.5725108225108224,
+              "ecartType": 0.04348441213453743
+            },
+            "nbTestMoyen": 22.8
+          },
+          {
+            "type": "salarie_fantome",
+            "libelle": "Salarié fantôme (sans historique)",
+            "rappel": {
+              "moyenne": 0.0,
+              "ecartType": 0.0
+            },
+            "nbTestMoyen": 28.6
+          },
+          {
+            "type": "salarie_sorti_paye",
+            "libelle": "Salarié sorti encore payé",
+            "rappel": {
+              "moyenne": 0.0,
+              "ecartType": 0.0
+            },
+            "nbTestMoyen": 26.6
+          }
+        ],
+        "fauxPositifsParCause": {
+          "treizieme_mois": 66.2,
+          "prime": 1.0,
+          "iban_change_legitime": 24.4,
+          "autre": 16.8
+        },
+        "parPeriode": {
+          "oct_nov": {
+            "precision": {
+              "moyenne": 0.6526162141679382,
+              "ecartType": 0.03934135891926605
+            },
+            "rappel": {
+              "moyenne": 0.3498416778435688,
+              "ecartType": 0.02169325485111747
+            },
+            "f1": {
+              "moyenne": 0.4547990961862851,
+              "ecartType": 0.022163052790777085
+            },
+            "fp_pour_1000": {
+              "moyenne": 3.751693366155341,
+              "ecartType": 0.8714319027006806
+            }
+          },
+          "dec": {
+            "precision": {
+              "moyenne": 0.34127939113101446,
+              "ecartType": 0.11856949726286523
+            },
+            "rappel": {
+              "moyenne": 0.4453192000578948,
+              "ecartType": 0.07260541565052273
+            },
+            "f1": {
+              "moyenne": 0.37626167641497416,
+              "ecartType": 0.08430284810149515
+            },
+            "fp_pour_1000": {
+              "moyenne": 19.14271620448789,
+              "ecartType": 8.216463159920146
+            }
+          }
+        }
+      },
+      "if_seul": {
+        "nom": "Isolation Forest seul (seuil choisi sur la validation)",
+        "metriques": {
+          "precision": {
+            "moyenne": 0.14767568279099783,
+            "ecartType": 0.049896333138400334
+          },
+          "rappel": {
+            "moyenne": 0.5680389283365405,
+            "ecartType": 0.08837836251020562
+          },
+          "f1": {
+            "moyenne": 0.22894714178599682,
+            "ecartType": 0.056478936023396306
+          },
+          "rocAuc": {
+            "moyenne": 0.8400094595965928,
+            "ecartType": 0.010222340017690693
+          },
+          "prAuc": {
+            "moyenne": 0.40967961835835265,
+            "ecartType": 0.054874314009046604
+          },
+          "fpPour1000": {
+            "moyenne": 70.81523661007331,
+            "ecartType": 21.21397723806529
+          }
+        },
+        "seuil": {
+          "moyenne": 0.33840000000000003,
+          "ecartType": 0.0676390419802055,
+          "parGraine": [
+            0.358,
+            0.21,
+            0.408,
+            0.344,
+            0.372
+          ]
+        },
+        "matriceConfusionMoyenne": {
+          "vraisPositifs": 136.8,
+          "fauxPositifs": 866.4,
+          "fauxNegatifs": 104.6,
+          "vraisNegatifs": 11124.4
+        },
+        "rappelParType": [
+          {
+            "type": "montant_multiplie",
+            "libelle": "Montant multiplié par 3 à 10",
+            "rappel": {
+              "moyenne": 1.0,
+              "ecartType": 0.0
+            },
+            "nbTestMoyen": 25.6
+          },
+          {
+            "type": "erreur_virgule",
+            "libelle": "Erreur de virgule (×100 ou ÷100)",
+            "rappel": {
+              "moyenne": 1.0,
+              "ecartType": 0.0
+            },
+            "nbTestMoyen": 24.0
+          },
+          {
+            "type": "hausse_subtile",
+            "libelle": "Hausse subtile (+25 à +60 %)",
+            "rappel": {
+              "moyenne": 0.2550582010582011,
+              "ecartType": 0.24912211384862973
+            },
+            "nbTestMoyen": 28.4
+          },
+          {
+            "type": "montant_nul_negatif",
+            "libelle": "Montant nul ou négatif",
+            "rappel": {
+              "moyenne": 1.0,
+              "ecartType": 0.0
+            },
+            "nbTestMoyen": 30.4
+          },
+          {
+            "type": "doublon",
+            "libelle": "Doublon (salarié payé deux fois)",
+            "rappel": {
+              "moyenne": 0.28251748251748254,
+              "ecartType": 0.37073754853519
+            },
+            "nbTestMoyen": 27.2
+          },
+          {
+            "type": "iban_change_montant_eleve",
+            "libelle": "IBAN modifié et montant élevé",
+            "rappel": {
+              "moyenne": 1.0,
+              "ecartType": 0.0
+            },
+            "nbTestMoyen": 27.8
+          },
+          {
+            "type": "iban_partage",
+            "libelle": "IBAN partagé entre deux salariés",
+            "rappel": {
+              "moyenne": 0.6558441558441558,
+              "ecartType": 0.17740468900290063
+            },
+            "nbTestMoyen": 22.8
+          },
+          {
+            "type": "salarie_fantome",
+            "libelle": "Salarié fantôme (sans historique)",
+            "rappel": {
+              "moyenne": 0.0,
+              "ecartType": 0.0
+            },
+            "nbTestMoyen": 28.6
+          },
+          {
+            "type": "salarie_sorti_paye",
+            "libelle": "Salarié sorti encore payé",
+            "rappel": {
+              "moyenne": 0.009523809523809523,
+              "ecartType": 0.019047619047619046
+            },
+            "nbTestMoyen": 26.6
+          }
+        ],
+        "fauxPositifsParCause": {
+          "treizieme_mois": 757.0,
+          "prime": 9.2,
+          "iban_change_legitime": 5.6,
+          "autre": 94.6
+        },
+        "parPeriode": {
+          "oct_nov": {
+            "precision": {
+              "moyenne": 0.5482434393709092,
+              "ecartType": 0.08755502071089219
+            },
+            "rappel": {
+              "moyenne": 0.5373959962046946,
+              "ecartType": 0.1015451001351337
+            },
+            "f1": {
+              "moyenne": 0.5294145702467755,
+              "ecartType": 0.02731518297036169
+            },
+            "fp_pour_1000": {
+              "moyenne": 9.685189079964072,
+              "ecartType": 5.0224184450083476
+            }
+          },
+          "dec": {
+            "precision": {
+              "moyenne": 0.06739724056724289,
+              "ecartType": 0.027512627138830938
+            },
+            "rappel": {
+              "moyenne": 0.6329146316294113,
+              "ecartType": 0.07844949176789562
+            },
+            "f1": {
+              "moyenne": 0.1197250795862816,
+              "ecartType": 0.04273409163972788
+            },
+            "fp_pour_1000": {
+              "moyenne": 193.32683238382523,
+              "ecartType": 59.247430421764975
+            }
+          }
+        }
+      },
+      "if_regle_iban": {
+        "nom": "Isolation Forest + règle IBAN modifié (seuil choisi sur la validation)",
+        "metriques": {
+          "precision": {
+            "moyenne": 0.15670070309591705,
+            "ecartType": 0.06257332904530112
+          },
+          "rappel": {
+            "moyenne": 0.5680389283365405,
+            "ecartType": 0.08837836251020562
+          },
+          "f1": {
+            "moyenne": 0.2379684458458251,
+            "ecartType": 0.06616753884428724
+          },
+          "rocAuc": {
+            "moyenne": 0.8397531759006298,
+            "ecartType": 0.010579118449903899
+          },
+          "prAuc": {
+            "moyenne": 0.3256607458746339,
+            "ecartType": 0.03793668250168532
+          },
+          "fpPour1000": {
+            "moyenne": 68.05394401167482,
+            "ecartType": 22.3736233744748
+          }
+        },
+        "seuil": {
+          "moyenne": 0.3444,
+          "ecartType": 0.07076044092570367,
+          "parGraine": [
+            0.358,
+            0.21,
+            0.42,
+            0.362,
+            0.372
+          ]
+        },
+        "matriceConfusionMoyenne": {
+          "vraisPositifs": 136.8,
+          "fauxPositifs": 832.6,
+          "fauxNegatifs": 104.6,
+          "vraisNegatifs": 11158.2
+        },
+        "rappelParType": [
+          {
+            "type": "montant_multiplie",
+            "libelle": "Montant multiplié par 3 à 10",
+            "rappel": {
+              "moyenne": 1.0,
+              "ecartType": 0.0
+            },
+            "nbTestMoyen": 25.6
+          },
+          {
+            "type": "erreur_virgule",
+            "libelle": "Erreur de virgule (×100 ou ÷100)",
+            "rappel": {
+              "moyenne": 1.0,
+              "ecartType": 0.0
+            },
+            "nbTestMoyen": 24.0
+          },
+          {
+            "type": "hausse_subtile",
+            "libelle": "Hausse subtile (+25 à +60 %)",
+            "rappel": {
+              "moyenne": 0.2550582010582011,
+              "ecartType": 0.24912211384862973
+            },
+            "nbTestMoyen": 28.4
+          },
+          {
+            "type": "montant_nul_negatif",
+            "libelle": "Montant nul ou négatif",
+            "rappel": {
+              "moyenne": 1.0,
+              "ecartType": 0.0
+            },
+            "nbTestMoyen": 30.4
+          },
+          {
+            "type": "doublon",
+            "libelle": "Doublon (salarié payé deux fois)",
+            "rappel": {
+              "moyenne": 0.28251748251748254,
+              "ecartType": 0.37073754853519
+            },
+            "nbTestMoyen": 27.2
+          },
+          {
+            "type": "iban_change_montant_eleve",
+            "libelle": "IBAN modifié et montant élevé",
+            "rappel": {
+              "moyenne": 1.0,
+              "ecartType": 0.0
+            },
+            "nbTestMoyen": 27.8
+          },
+          {
+            "type": "iban_partage",
+            "libelle": "IBAN partagé entre deux salariés",
+            "rappel": {
+              "moyenne": 0.6558441558441558,
+              "ecartType": 0.17740468900290063
+            },
+            "nbTestMoyen": 22.8
+          },
+          {
+            "type": "salarie_fantome",
+            "libelle": "Salarié fantôme (sans historique)",
+            "rappel": {
+              "moyenne": 0.0,
+              "ecartType": 0.0
+            },
+            "nbTestMoyen": 28.6
+          },
+          {
+            "type": "salarie_sorti_paye",
+            "libelle": "Salarié sorti encore payé",
+            "rappel": {
+              "moyenne": 0.009523809523809523,
+              "ecartType": 0.019047619047619046
+            },
+            "nbTestMoyen": 26.6
+          }
+        ],
+        "fauxPositifsParCause": {
+          "treizieme_mois": 707.4,
+          "prime": 9.0,
+          "iban_change_legitime": 24.4,
+          "autre": 91.8
+        },
+        "parPeriode": {
+          "oct_nov": {
+            "precision": {
+              "moyenne": 0.5007558941717598,
+              "ecartType": 0.05848734063227517
+            },
+            "rappel": {
+              "moyenne": 0.5373959962046946,
+              "ecartType": 0.1015451001351337
+            },
+            "f1": {
+              "moyenne": 0.5092684981627089,
+              "ecartType": 0.029431513702974078
+            },
+            "fp_pour_1000": {
+              "moyenne": 11.180553203786948,
+              "ecartType": 4.314945673240768
+            }
+          },
+          "dec": {
+            "precision": {
+              "moyenne": 0.07548331347579262,
+              "ecartType": 0.03952141734541063
+            },
+            "rappel": {
+              "moyenne": 0.6329146316294113,
+              "ecartType": 0.07844949176789562
+            },
+            "f1": {
+              "moyenne": 0.13089393643551994,
+              "ecartType": 0.05757291394655423
+            },
+            "fp_pour_1000": {
+              "moyenne": 182.01089448001918,
+              "ecartType": 63.438258994180075
+            }
+          }
+        }
+      }
+    },
+    "seuilEnService": 0.5,
+    "seuilConfigure": 0.6,
+    "courbePrecisionRappel": {
+      "rappel": [
+        0.0,
+        0.02,
+        0.04,
+        0.06,
+        0.08,
+        0.1,
+        0.12,
+        0.14,
+        0.16,
+        0.18,
+        0.2,
+        0.22,
+        0.24,
+        0.26,
+        0.28,
+        0.3,
+        0.32,
+        0.34,
+        0.36,
+        0.38,
+        0.4,
+        0.42,
+        0.44,
+        0.46,
+        0.48,
+        0.5,
+        0.52,
+        0.54,
+        0.56,
+        0.58,
+        0.6,
+        0.62,
+        0.64,
+        0.66,
+        0.68,
+        0.7,
+        0.72,
+        0.74,
+        0.76,
+        0.78,
+        0.8,
+        0.82,
+        0.84,
+        0.86,
+        0.88,
+        0.9,
+        0.92,
+        0.94,
+        0.96,
+        0.98,
+        1.0
+      ],
+      "precision": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9722,
+        0.9633,
+        0.9386,
+        0.9306,
+        0.9161,
+        0.8934,
+        0.8708,
+        0.8317,
+        0.7769,
+        0.7011,
+        0.669,
+        0.5634,
+        0.5201,
+        0.4983,
+        0.4424,
+        0.431,
+        0.3716,
+        0.3282,
+        0.2765,
+        0.2638,
+        0.2283,
+        0.1269,
+        0.1069,
+        0.109,
+        0.1108,
+        0.1123,
+        0.1138,
+        0.1156,
+        0.1179,
+        0.1194,
+        0.121,
+        0.1227,
+        0.1207,
+        0.0995,
+        0.0733,
+        0.0485,
+        0.0415,
+        0.0343,
+        0.0302,
+        0.0279,
+        0.0264,
+        0.0245,
+        0.0227,
+        0.0216,
+        0.0198
+      ]
+    },
+    "configurationRetenue": "en_service"
   }
 }

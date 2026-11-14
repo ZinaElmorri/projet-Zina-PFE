@@ -322,13 +322,7 @@ de suspicion et des raisons lisibles, à partir d'un modèle Isolation Forest et
 module de façon rigoureuse (découpage chronologique, seuil choisi sur la validation, résultats finaux sur le test,
 cinq graines) en quatre étapes : 0 jeu de données, A évaluation du modèle, B comparaison des approches, C intégration
 dans l'application. *Les sections correspondant aux étapes A, B et C seront ajoutées au fur et à mesure.*""")
-    rp.ecrire_section("99_reproduction", """## Reproduction
-
-Depuis le dossier `ai-module/` (environnement virtuel avec `pip install -r benchmark/requirements-benchmark.txt`) :
-
-```
-python -m benchmark.describe_dataset      # étape 0 : jeu de données, tableaux, figures, scénario de soutenance
-```""")
+    rp.ecrire_reproduction()
 
 
 # --- Scénario de soutenance ---------------------------------------------------------------------------

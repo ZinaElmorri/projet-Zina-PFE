@@ -165,6 +165,24 @@ def assembler_rapport() -> str:
     return chemin
 
 
+def ecrire_reproduction() -> None:
+    """Section « Reproduction » du rapport : une commande par étape."""
+    lignes = "\n".join(f"{commande:<46}# {role}" for commande, role in COMMANDES_REPRODUCTION)
+    ecrire_section("99_reproduction", f"""## Reproduction
+
+Depuis le dossier `ai-module/` (environnement virtuel avec `pip install -r benchmark/requirements-benchmark.txt`) :
+
+```
+{lignes}
+```""")
+
+
+COMMANDES_REPRODUCTION = [
+    ("python -m benchmark.describe_dataset", "étape 0 : jeu de données, scénario de soutenance"),
+    ("python -m benchmark.evaluate_full", "étape A : évaluation du modèle (5 graines, ~1 min)"),
+]
+
+
 def lire_fichier(chemin: str) -> str:
     with open(chemin, encoding="utf-8") as f:
         return f.read().strip()

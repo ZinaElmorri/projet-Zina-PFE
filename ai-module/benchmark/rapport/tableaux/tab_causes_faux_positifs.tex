@@ -1,0 +1,14 @@
+\begin{table}[htbp]
+\centering
+\caption{Causes des faux positifs sur le jeu de test (nombre moyen de fiches par graine).}
+\label{tab:causes_faux_positifs}
+\small
+\begin{tabular}{p{4.2cm}rrrrr}
+\toprule
+\textbf{Configuration} & \textbf{Faux positifs} & \textbf{13e mois} & \textbf{Primes} & \textbf{Changements d'IBAN légitimes} & \textbf{Autres fiches normales} \\
+\midrule
+Décision actuelle (seuil effectif 0,5) & 108 & 66 & 1 & 24 & 17 \\
+Isolation Forest, seuil validé & 866 & 757 & 9 & 6 & 95 \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,0 +1,21 @@
+\begin{table}[htbp]
+\centering
+\caption{Taux de détection (rappel) par type d'anomalie sur le jeu de test, moyenne ± écart-type sur 5 graines.}
+\label{tab:detection_par_type}
+\small
+\begin{tabular}{p{5cm}rp{3.2cm}p{3.2cm}}
+\toprule
+\textbf{Type d'anomalie} & \textbf{Fiches (test)} & \textbf{Décision actuelle (seuil effectif 0,5)} & \textbf{Isolation Forest, seuil validé} \\
+\midrule
+Montant multiplié par 3 à 10 & 26 & 98 $\pm$ 3\,\% & 100 $\pm$ 0\,\% \\
+Erreur de virgule (×100 ou ÷100) & 24 & 57 $\pm$ 7\,\% & 100 $\pm$ 0\,\% \\
+Hausse subtile (+25 à +60 %) & 28 & 3 $\pm$ 3\,\% & 26 $\pm$ 25\,\% \\
+Montant nul ou négatif & 30 & 28 $\pm$ 17\,\% & 100 $\pm$ 0\,\% \\
+Doublon (salarié payé deux fois) & 27 & 6 $\pm$ 9\,\% & 28 $\pm$ 37\,\% \\
+IBAN modifié et montant élevé & 28 & 100 $\pm$ 0\,\% & 100 $\pm$ 0\,\% \\
+IBAN partagé entre deux salariés & 23 & 57 $\pm$ 4\,\% & 66 $\pm$ 18\,\% \\
+Salarié fantôme (sans historique) & 29 & 0 $\pm$ 0\,\% & 0 $\pm$ 0\,\% \\
+Salarié sorti encore payé & 27 & 0 $\pm$ 0\,\% & 1 $\pm$ 2\,\% \\
+\bottomrule
+\end{tabular}
+\end{table}

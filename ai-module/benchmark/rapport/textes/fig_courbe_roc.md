@@ -1,0 +1,3 @@
+**Légende proposée** : Courbe ROC du modèle en service sur le jeu de test (trait fin : chaque graine ; trait épais : moyenne).
+
+**Interprétation** : La courbe ROC s'écarte nettement de la diagonale, avec une aire de 0,84 ± 0,01. Autrement dit, une fiche anormale tirée au hasard reçoit un score plus élevé qu'une fiche normale dans environ 84 % des cas. Cette mesure doit toutefois être lue avec prudence : comme les fiches normales sont environ 50 fois plus nombreuses, un taux de faux positifs de quelques pourcents correspond déjà à beaucoup de fausses alertes en valeur absolue. C'est pourquoi la courbe précision–rappel, plus sensible au déséquilibre, est la référence de ce rapport. La ROC confirme néanmoins que le score ordonne correctement les fiches.

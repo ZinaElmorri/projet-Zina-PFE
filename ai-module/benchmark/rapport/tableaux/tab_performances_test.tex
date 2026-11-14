@@ -1,0 +1,15 @@
+\begin{table}[htbp]
+\centering
+\caption{Performances sur le jeu de test (mois 16 à 18), moyenne ± écart-type sur 5 graines. Référence au hasard : PR-AUC = taux d'anomalies (2,0~\%), ROC-AUC = 0,50.}
+\label{tab:performances_test}
+\small
+\begin{tabular}{p{4.6cm}rrrrrrr}
+\toprule
+\textbf{Configuration} & \textbf{Précision} & \textbf{Rappel} & \textbf{F1} & \textbf{ROC-AUC} & \textbf{PR-AUC} & \textbf{Faux positifs / 1 000 fiches} & \textbf{Seuil} \\
+\midrule
+Décision actuelle en production (score ≥ 0,5 ou IBAN modifié) & 0,47 $\pm$ 0,09 & 0,38 $\pm$ 0,03 & 0,42 $\pm$ 0,05 & 0,84 $\pm$ 0,01 & 0,41 $\pm$ 0,04 & 8,9 $\pm$ 3,1 & 0,50 \\
+Isolation Forest seul (seuil choisi sur la validation) & 0,15 $\pm$ 0,05 & 0,57 $\pm$ 0,09 & 0,23 $\pm$ 0,06 & 0,84 $\pm$ 0,01 & 0,41 $\pm$ 0,05 & 70,8 $\pm$ 21,2 & 0,34 $\pm$ 0,07 \\
+Isolation Forest + règle IBAN modifié (seuil choisi sur la validation) & 0,16 $\pm$ 0,06 & 0,57 $\pm$ 0,09 & 0,24 $\pm$ 0,07 & 0,84 $\pm$ 0,01 & 0,33 $\pm$ 0,04 & 68,1 $\pm$ 22,4 & 0,34 $\pm$ 0,07 \\
+\bottomrule
+\end{tabular}
+\end{table}

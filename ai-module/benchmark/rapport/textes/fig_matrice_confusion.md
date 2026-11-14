@@ -1,0 +1,3 @@
+**Légende proposée** : Matrices de confusion moyennes sur le jeu de test (effectifs par graine et part de la ligne réelle).
+
+**Interprétation** : À gauche, la décision actuelle signale en moyenne 92 anomalies vraies sur 241, et laisse passer 150 anomalies (faux négatifs). Les faux positifs sont peu nombreux en proportion (108 fiches sur plus de 12 000), ce qui ménage l'Expert RH. À droite, le seuil recalibré avec la règle IBAN détecte davantage d'anomalies mais produit 833 faux positifs en moyenne, soit une charge de vérification nettement supérieure. Le choix du seuil traduit donc un arbitrage entre anomalies manquées et temps de vérification, à fixer avec les utilisateurs.
