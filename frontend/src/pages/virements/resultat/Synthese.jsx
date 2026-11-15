@@ -138,7 +138,7 @@ export default function Synthese() {
             titre="Statut du fichier"
             couleur="#1677ff"
             valeur={<Tag color={statut.color} style={{ fontSize: 14, padding: '2px 10px' }}>{statut.label}</Tag>}
-            detail={estValide ? 'Validé : le XML peut être envoyé à la banque.'
+            detail={estValide ? 'Validé par le Manager : le XML peut être envoyé à la banque.'
               : resume.valideXsd ? 'Téléchargement de contrôle possible (non validé).'
                 : 'Corrigez les erreurs puis régénérez le fichier.'}
           />

@@ -7,7 +7,7 @@ export const STATUTS_FICHIER = {
   BROUILLON: { label: 'Brouillon', color: 'blue' },
   NON_CONFORME: { label: 'Non conforme', color: 'red' },
   SOUMIS: { label: 'Soumis à validation', color: 'orange' },
-  VALIDE: { label: 'Validé', color: 'green' },
+  VALIDE: { label: 'Validé par le Manager', color: 'green' },
   REJETE: { label: 'Rejeté', color: 'volcano' },
 }
 
