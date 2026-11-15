@@ -169,7 +169,7 @@ function DashboardOperationnel() {
         type="info"
         showIcon
         style={{ margin: '16px 0', background: '#EEF3FA', borderColor: '#D6E0EF' }}
-        message={`Les éléments « à traiter » sont comptés à date. Les chiffres « ce mois-ci » portent sur ${moisCourant} et sur toutes les sociétés.`}
+        message={`Les éléments « à traiter » sont comptés à date. Les chiffres « ce mois-ci » portent sur ${moisCourant} et sur ${manager ? 'toutes les sociétés' : 'les sociétés qui vous sont affectées'}.`}
         action={peutVoirKpi(user?.role) && <Link to="/kpi">Voir les indicateurs</Link>}
       />
       {indisponibles && (

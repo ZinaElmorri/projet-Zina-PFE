@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -118,6 +119,72 @@ public class KpiDashboardService {
                 safe(() -> topClients(periode, clientId), List.of()),
                 safe(() -> transactionRepository.countTotal(
                         TransactionStatus.SUPPRIMEE, debut, fin, clientId), 0L));
+    }
+
+    /**
+     * KPI limités à un ensemble de sociétés (périmètre d'un Expert RH). Chaque indicateur est la somme des
+     * indicateurs de chaque société : les populations de fiches sont disjointes, donc les sommes sont exactes
+     * et les taux sont recalculés sur les totaux.
+     */
+    public KpiResponse kpiPourSocietes(DashboardFilter filtre, Collection<String> societes) {
+        YearMonth mois = periode(filtre == null ? null : filtre.periode());
+        List<KpiResponse> parSociete = societes.stream().sorted()
+                .map(s -> kpi(new DashboardFilter(mois.format(YM), s, null, null)))
+                .toList();
+
+        long fiches = parSociete.stream().mapToLong(KpiResponse::fichesGenerees).sum();
+        long erreurs = parSociete.stream().mapToLong(KpiResponse::nbErreurs).sum();
+
+        Map<String, long[]> evolution = new LinkedHashMap<>();
+        for (int i = 11; i >= 0; i--) {
+            evolution.put(mois.minusMonths(i).format(YM), new long[2]);
+        }
+        parSociete.forEach(k -> k.evolutionMensuelle().forEach(p -> {
+            long[] cumul = evolution.get(p.periode());
+            cumul[0] += p.fichesGenerees();
+            cumul[1] += p.nbErreurs();
+        }));
+
+        return new KpiResponse(
+                mois.format(YM),
+                fiches,
+                parSociete.stream().mapToLong(KpiResponse::clientsConcernes).sum(),
+                erreurs,
+                taux(erreurs, fiches),
+                parSociete.stream().map(KpiResponse::montantTotalVire).reduce(BigDecimal.ZERO, BigDecimal::add),
+                sommeNullable(parSociete.stream().map(KpiResponse::lotsGeneres).toList()),
+                sommeNullable(parSociete.stream().map(KpiResponse::lotsValidesXsd).toList()),
+                sommeNullable(parSociete.stream().map(KpiResponse::lotsValidesManager).toList()),
+                fusion(parSociete.stream().flatMap(k -> k.anomaliesParType().stream()).toList()),
+                fusion(parSociete.stream().flatMap(k -> k.anomaliesParSource().stream()).toList()),
+                new StatutCount(
+                        parSociete.stream().mapToLong(k -> k.anomaliesParStatut().ouvertes()).sum(),
+                        parSociete.stream().mapToLong(k -> k.anomaliesParStatut().corrigees()).sum(),
+                        parSociete.stream().mapToLong(k -> k.anomaliesParStatut().ignorees()).sum()),
+                List.of(),
+                List.of(),
+                evolution.entrySet().stream()
+                        .map(e -> new EvolutionPoint(e.getKey(), e.getValue()[0], e.getValue()[1],
+                                taux(e.getValue()[1], e.getValue()[0])))
+                        .toList(),
+                parSociete.stream().flatMap(k -> k.topClientsAnomalies().stream())
+                        .sorted((a, b) -> Long.compare(b.nbAnomalies(), a.nbAnomalies()))
+                        .limit(5).toList(),
+                parSociete.stream().mapToLong(KpiResponse::transactionsTotal).sum());
+    }
+
+    /** Somme de valeurs éventuellement indisponibles : null si l'une d'elles l'est (0 sans aucune valeur). */
+    private static Long sommeNullable(List<Long> valeurs) {
+        if (valeurs.stream().anyMatch(java.util.Objects::isNull)) {
+            return null;
+        }
+        return valeurs.stream().mapToLong(Long::longValue).sum();
+    }
+
+    private static List<LabelValue> fusion(List<LabelValue> valeurs) {
+        Map<String, Long> cumul = new LinkedHashMap<>();
+        valeurs.forEach(v -> cumul.merge(v.label(), v.value(), Long::sum));
+        return cumul.entrySet().stream().map(e -> new LabelValue(e.getKey(), e.getValue())).toList();
     }
 
     /** Lots (fichiers SEPA générés) de la période ; null si l'historique n'est pas disponible. */

@@ -1,6 +1,7 @@
 package com.zina.sepa.dashboard;
 
 import org.junit.jupiter.api.Test;
+import com.zina.sepa.masse.AccesSocietes;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -26,6 +27,9 @@ class KpiDashboardControllerTest {
     @Mock
     DashboardAnomalieRepository anomalieRepository;
 
+    @Mock
+    AccesSocietes acces;
+
     @Test
     void periode_par_defaut_est_le_mois_dernier() throws Exception {
         when(transactionRepository.countFiches(any(), any(), any(), any())).thenReturn(0L);
@@ -39,7 +43,7 @@ class KpiDashboardControllerTest {
         when(anomalieRepository.erreursParMois(any(), any(), any(), any(), any(), any())).thenReturn(List.of());
 
         KpiDashboardService service = new KpiDashboardService(transactionRepository, anomalieRepository);
-        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new KpiDashboardController(service)).build();
+        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new KpiDashboardController(service, acces)).build();
 
         String moisDernier = YearMonth.now().minusMonths(1).format(DateTimeFormatter.ofPattern("yyyy-MM"));
 

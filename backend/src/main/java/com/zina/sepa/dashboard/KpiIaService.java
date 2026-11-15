@@ -48,6 +48,15 @@ public class KpiIaService {
         return new KpiIa(mois.format(YM), total, iaSeule, part, total - iaSeule);
     }
 
+    /** Indicateurs IA limités à un ensemble de sociétés (périmètre d'un Expert RH) : somme société par société. */
+    public KpiIa kpiPourSocietes(String periodeDemandee, java.util.Collection<String> societes) {
+        List<KpiIa> parSociete = societes.stream().sorted().map(s -> kpi(periodeDemandee, s)).toList();
+        long total = parSociete.stream().mapToLong(KpiIa::anomaliesIa).sum();
+        long iaSeule = parSociete.stream().mapToLong(KpiIa::anomaliesIaSeule).sum();
+        BigDecimal part = total == 0 ? null : BigDecimal.valueOf(iaSeule * 100.0 / total).setScale(1, RoundingMode.HALF_UP);
+        return new KpiIa(periode(periodeDemandee).format(YM), total, iaSeule, part, total - iaSeule);
+    }
+
     private boolean vueParLesRegles(Transaction t, LocalDateTime debut, LocalDateTime fin, String clientId) {
         if (t.getIban() == null || t.getIban().isBlank() || !controles.ibanValide(t.getIban())) {
             return true;

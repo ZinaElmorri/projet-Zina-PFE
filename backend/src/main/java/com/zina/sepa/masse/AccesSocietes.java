@@ -7,6 +7,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -37,6 +38,15 @@ public class AccesSocietes {
     public boolean estAdmin() {
         Authentication auth = authentification();
         return auth != null && auth.getAuthorities().stream().anyMatch(a -> ROLE_ADMIN.equals(a.getAuthority()));
+    }
+
+    /** Sociétés auxquelles l'utilisateur est limité ; vide si aucune restriction (Manager, Admin, traitements internes). */
+    public Optional<Set<String>> perimetre() {
+        Authentication auth = authentification();
+        if (!estExpert(auth)) {
+            return Optional.empty();
+        }
+        return Optional.of(affectations.societesDe(auth.getName()));
     }
 
     /** Garde uniquement les sociétés accessibles à l'utilisateur courant. */

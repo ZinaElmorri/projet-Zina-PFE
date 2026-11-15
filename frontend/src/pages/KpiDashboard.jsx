@@ -296,7 +296,7 @@ export default function KpiDashboard() {
           <span>
             Une <strong>fiche</strong> est une ligne de paie (un salarié, un montant) : le Manager l'<strong>approuve</strong>.
             Un <strong>fichier SEPA</strong> est le XML créé à partir de fiches approuvées : l'Expert RH le soumet, le Manager le <strong>valide</strong> avant l'envoi à la banque.
-            Les indicateurs portent sur la période choisie et sur la société filtrée (toutes par défaut). Passez la souris sur <InfoCircleOutlined /> pour la définition de chaque indicateur.
+            Les indicateurs portent sur la période choisie et sur la société filtrée ({complet ? 'toutes par défaut' : 'par défaut, toutes les sociétés qui vous sont affectées'}). Passez la souris sur <InfoCircleOutlined /> pour la définition de chaque indicateur.
           </span>
         )}
       />
@@ -316,7 +316,7 @@ export default function KpiDashboard() {
           </label>
           <label>
             <div className="kpi-champ">Société</div>
-            <Input placeholder="Toutes les sociétés" allowClear value={clientId} onChange={(e) => setClientId(e.target.value)} onPressEnter={load} style={{ width: 220 }} />
+            <Input placeholder={complet ? 'Toutes les sociétés' : 'Mes sociétés'} allowClear value={clientId} onChange={(e) => setClientId(e.target.value)} onPressEnter={load} style={{ width: 220 }} />
           </label>
           <Button type="primary" icon={<ReloadOutlined />} onClick={load} loading={loading}>Appliquer</Button>
         </Space>
