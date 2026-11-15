@@ -9,6 +9,7 @@ import {
   EuroOutlined,
   FileDoneOutlined,
   FileTextOutlined,
+  InfoCircleOutlined,
   MinusOutlined,
   PercentageOutlined,
   ReloadOutlined,
@@ -26,6 +27,20 @@ const euro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR'
 
 const COULEURS = { primaire: '#1F3A5F', bleu: '#2D5283', vert: '#2E7D32', orange: '#D97706', rouge: '#C62828', or: '#B8893B', gris: '#8C99AB' }
 const SOURCES = { REGLE: COULEURS.bleu, XSD: COULEURS.orange, IA: COULEURS.vert }
+const LIBELLES_SOURCES = { REGLE: 'Contrôles métier', XSD: 'Validation XSD', IA: 'Contrôle IA' }
+// Types d'anomalies : libellé lisible ; `avertissement` = non bloquant (ne compte pas dans le taux d'erreur).
+const TYPES_ANOMALIES = {
+  IBAN_INVALIDE: { libelle: 'IBAN invalide' },
+  BIC_INVALIDE: { libelle: 'BIC invalide' },
+  MONTANT_INVALIDE: { libelle: 'Montant invalide' },
+  DOUBLON_PAIEMENT: { libelle: 'Doublon de paiement' },
+  NET_SUPERIEUR_BRUT: { libelle: 'Net supérieur au brut' },
+  ERREUR_XSD: { libelle: 'Erreur XSD' },
+  CTRL_SUM_INCOHERENT: { libelle: 'Somme de contrôle incohérente' },
+  IBAN_PARTAGE: { libelle: 'IBAN partagé', avertissement: true },
+  MONTANT_SUSPECT: { libelle: 'Montant suspect (IA)', avertissement: true },
+}
+const libelleType = (code) => TYPES_ANOMALIES[code]?.libelle || code.replaceAll('_', ' ').toLowerCase()
 
 // Objectifs : `cible` atteint = vert ; entre `cible` et `limite` = orange ; au-delà = rouge.
 // sens 'haut' : plus c'est haut, mieux c'est ; 'bas' : plus c'est bas, mieux c'est.
@@ -77,13 +92,16 @@ function Variation({ actuel, precedent, mois, sens, relatif = false }) {
   )
 }
 
-/** Carte indicateur : icône, valeur, libellé, objectif et variation facultatifs. */
-function Indicateur({ icone, couleur, valeur, libelle, detail, objectif, variation }) {
+/** Carte indicateur : icône, valeur, libellé, objectif et variation facultatifs ; `aide` = définition au survol. */
+function Indicateur({ icone, couleur, valeur, libelle, detail, objectif, variation, aide }) {
   return (
     <Card className="kpi-carte" styles={{ body: { padding: 18 } }} style={{ borderTop: `3px solid ${couleur}`, height: '100%' }}>
       <div className="kpi-carte__tete">
         <span className="kpi-carte__icone" style={{ background: `${couleur}1A`, color: couleur }}>{icone}</span>
         <Typography.Text type="secondary">{libelle}</Typography.Text>
+        {aide && (
+          <Tooltip title={aide}><InfoCircleOutlined style={{ color: COULEURS.gris, marginLeft: 6, cursor: 'help' }} aria-label={`Définition : ${libelle}`} /></Tooltip>
+        )}
       </div>
       <div className="kpi-carte__valeur" style={{ color: couleur }}>{valeur}</div>
       <Space direction="vertical" size={2}>
@@ -107,7 +125,9 @@ function Barres({ data, couleur }) {
     <div className="kpi-barres">
       {data.map((d) => (
         <div className="kpi-barres__ligne" key={d.label}>
-          <Tooltip title={d.label}><span className="kpi-barres__label">{d.label.replaceAll('_', ' ')}</span></Tooltip>
+          <Tooltip title={TYPES_ANOMALIES[d.label]?.avertissement ? 'Avertissement : ne compte pas dans le taux d’erreur' : 'Erreur bloquante'}>
+            <span className="kpi-barres__label">{libelleType(d.label)}{TYPES_ANOMALIES[d.label]?.avertissement ? ' ⚠' : ''}</span>
+          </Tooltip>
           <span className="kpi-barres__valeur">{nf.format(d.value)}</span>
           <Progress percent={(d.value / max) * 100} showInfo={false} strokeColor={couleur} size={['100%', 10]} />
         </div>
@@ -131,7 +151,7 @@ function Anneau({ data }) {
             const segment = (
               <circle key={d.label} r={r} fill="none" strokeWidth="22" stroke={SOURCES[d.label] || COULEURS.gris}
                 strokeDasharray={`${part * c} ${c}`} strokeDashoffset={-decalage * c}>
-                <title>{`${d.label} : ${nf.format(d.value)}`}</title>
+                <title>{`${LIBELLES_SOURCES[d.label] || d.label} : ${nf.format(d.value)}`}</title>
               </circle>
             )
             decalage += part
@@ -145,7 +165,7 @@ function Anneau({ data }) {
         {data.map((d) => (
           <li key={d.label}>
             <span className="kpi-legende__point" style={{ background: SOURCES[d.label] || COULEURS.gris }} />
-            <span>{d.label}</span>
+            <span>{LIBELLES_SOURCES[d.label] || d.label}</span>
             <strong>{nf.format(d.value)}</strong>
             <span className="kpi-legende__part">{Math.round((d.value / total) * 100)} %</span>
           </li>
@@ -158,7 +178,7 @@ function Anneau({ data }) {
 // Évolution sur 12 mois : fiches (barres, axe gauche) et taux d'erreur (courbe, axe droit en %).
 function Evolution({ points }) {
   if (!points || points.length === 0 || points.every((p) => p.fichesGenerees === 0 && Number(p.tauxErreur) === 0)) {
-    return <Vide texte="Aucune fiche générée sur les 12 derniers mois" />
+    return <Vide texte="Aucune fiche approuvée sur les 12 derniers mois" />
   }
   const w = 640, h = 240, gauche = 38, droite = 46, bas = 26, haut = 26
   const maxF = Math.max(1, ...points.map((p) => p.fichesGenerees))
@@ -189,7 +209,7 @@ function Evolution({ points }) {
         {points.map((p, i) => (
           <rect key={p.periode} x={x(i) - largeur / 2} y={yF(p.fichesGenerees)} width={largeur} rx="3"
             height={Math.max(0, h - bas - yF(p.fichesGenerees))} fill={COULEURS.bleu} opacity="0.85">
-            <title>{`${p.periode} : ${nf.format(p.fichesGenerees)} fiche(s), taux d'erreur ${nf1.format(Number(p.tauxErreur))} %`}</title>
+            <title>{`${p.periode} : ${nf.format(p.fichesGenerees)} fiche(s) approuvée(s), taux d'erreur ${nf1.format(Number(p.tauxErreur))} %`}</title>
           </rect>
         ))}
         <path d={courbe} fill="none" stroke={COULEURS.rouge} strokeWidth="2" strokeLinejoin="round" />
@@ -201,8 +221,8 @@ function Evolution({ points }) {
         ))}
       </svg>
       <Space size="large" className="kpi-legende-ligne">
-        <span><span className="kpi-legende__point" style={{ background: COULEURS.bleu }} />Fiches générées (axe gauche)</span>
-        <span><span className="kpi-legende__point" style={{ background: COULEURS.rouge }} />Taux d'erreur en % (axe droit)</span>
+        <span><span className="kpi-legende__point" style={{ background: COULEURS.bleu }} />Fiches approuvées (axe gauche)</span>
+        <span><span className="kpi-legende__point" style={{ background: COULEURS.rouge }} />Taux d'erreur des fiches approuvées, en % (axe droit)</span>
       </Space>
     </>
   )
@@ -252,13 +272,33 @@ export default function KpiDashboard() {
   const moisAvant = periodeAffichee ? dayjs(`${moisPrecedent(periodeAffichee)}-01`).format('MMM').replace('.', '') : ''
   const statuts = kpi?.anomaliesParStatut
   const lots = kpi && kpi.lotsGeneres != null ? `${kpi.lotsValidesXsd} / ${kpi.lotsGeneres}` : '—'
+  // Anomalies de la période : erreurs bloquantes (comptées dans le taux d'erreur) et avertissements.
+  const repartition = (kpi?.anomaliesParType || []).reduce((acc, t) => {
+    if (TYPES_ANOMALIES[t.label]?.avertissement) acc.avertissements += t.value
+    else acc.bloquantes += t.value
+    return acc
+  }, { bloquantes: 0, avertissements: 0 })
 
   return (
     <div>
       <PageHeader
         title="Indicateurs des flux SEPA"
         subtitle={periodeAffichee ? `Période : ${libelleMois(periodeAffichee)} — comparée à ${libelleMois(moisPrecedent(periodeAffichee))}` : 'Chargement des indicateurs…'}
-        actions={!complet ? [<Tag key="vue" color="blue">Vue limitée</Tag>] : undefined}
+        actions={!complet ? [<Tooltip key="vue" title="Les montants globaux sont réservés au Manager et à l'administrateur."><Tag color="blue">Vue limitée : montants masqués</Tag></Tooltip>] : undefined}
+      />
+
+      <Alert
+        type="info"
+        showIcon
+        style={{ margin: '16px 0 0', background: '#EEF3FA', borderColor: '#D6E0EF' }}
+        message="Comment lire cette page"
+        description={(
+          <span>
+            Une <strong>fiche</strong> est une ligne de paie (un salarié, un montant) : le Manager l'<strong>approuve</strong>.
+            Un <strong>fichier SEPA</strong> est le XML créé à partir de fiches approuvées : l'Expert RH le soumet, le Manager le <strong>valide</strong> avant l'envoi à la banque.
+            Les indicateurs portent sur la période choisie et sur la société filtrée (toutes par défaut). Passez la souris sur <InfoCircleOutlined /> pour la définition de chaque indicateur.
+          </span>
+        )}
       />
 
       <Card style={{ margin: '16px 0' }} styles={{ body: { padding: 16 } }}>
@@ -290,47 +330,63 @@ export default function KpiDashboard() {
           <Row gutter={[16, 16]}>
             <Col xs={24} sm={12} lg={8} xxl={6}>
               <Indicateur icone={<CheckCircleOutlined />} couleur={couleurObjectif(actuel.approbation, OBJECTIFS.approbation)}
-                valeur={pct(actuel.approbation)} libelle="Taux d'approbation" objectif={OBJECTIFS.approbation.libelle}
+                valeur={pct(actuel.approbation)} libelle="Taux d'approbation des transactions" objectif={OBJECTIFS.approbation.libelle}
+                aide="Fiches de paie approuvées par le Manager ÷ toutes les transactions du mois (hors supprimées)."
                 detail={actuel.approbation == null ? 'Aucune transaction sur la période' : `${nf.format(kpi.fichesGenerees)} approuvées sur ${nf.format(kpi.transactionsTotal)} transactions`}
                 variation={<Variation actuel={actuel.approbation} precedent={avant.approbation} mois={moisAvant} sens="haut" />} />
             </Col>
             <Col xs={24} sm={12} lg={8} xxl={6}>
               <Indicateur icone={<PercentageOutlined />} couleur={couleurObjectif(actuel.erreur, OBJECTIFS.erreur)}
-                valeur={pct(actuel.erreur)} libelle="Taux d'erreur des fiches" objectif={OBJECTIFS.erreur.libelle}
-                detail={kpi.fichesGenerees > 0 ? `${nf.format(kpi.nbErreurs)} erreur(s) sur ${nf.format(kpi.fichesGenerees)} fiche(s)` : 'Aucune fiche sur la période'}
+                valeur={pct(actuel.erreur)} libelle="Taux d'erreur des fiches approuvées" objectif={OBJECTIFS.erreur.libelle}
+                aide="Fiches approuvées ayant au moins une erreur bloquante non ignorée (IBAN, BIC, montant, doublon, XSD…) ÷ fiches approuvées. Les avertissements (IBAN partagé, montant suspect de l'IA) ne comptent pas."
+                detail={kpi.fichesGenerees > 0 ? `${nf.format(kpi.nbErreurs)} ${kpi.nbErreurs > 1 ? 'fiches' : 'fiche'} en erreur bloquante sur ${nf.format(kpi.fichesGenerees)} approuvées` : 'Aucune fiche approuvée sur la période'}
                 variation={<Variation actuel={actuel.erreur} precedent={avant.erreur} mois={moisAvant} sens="bas" />} />
             </Col>
             <Col xs={24} sm={12} lg={8} xxl={6}>
               <Indicateur icone={<FileDoneOutlined />} couleur={couleurObjectif(actuel.conformite, OBJECTIFS.conformite)}
-                valeur={pct(actuel.conformite)} libelle="Conformité XSD" objectif={OBJECTIFS.conformite.libelle}
-                detail={kpi.lotsGeneres == null ? 'Donnée non disponible' : kpi.lotsGeneres === 0 ? 'Aucun fichier généré sur la période' : `${lots} lots valides`}
+                valeur={pct(actuel.conformite)} libelle="Fichiers SEPA conformes au XSD" objectif={OBJECTIFS.conformite.libelle}
+                aide="Fichiers XML générés dont la validation XSD réussit ÷ fichiers générés sur la période. Un fichier conforme n'est pas forcément validé par le Manager."
+                detail={kpi.lotsGeneres == null ? 'Donnée non disponible' : kpi.lotsGeneres === 0 ? 'Aucun fichier généré sur la période' : `${lots} fichiers conformes`}
                 variation={<Variation actuel={actuel.conformite} precedent={avant.conformite} mois={moisAvant} sens="haut" />} />
             </Col>
             {complet && (
               <Col xs={24} sm={12} lg={8} xxl={6}>
-                <Indicateur icone={<EuroOutlined />} couleur={COULEURS.or} valeur={euro.format(kpi.montantTotalVire || 0)} libelle="Montant total viré"
-                  detail={kpi.fichesGenerees === 0 ? 'Aucun virement sur la période' : undefined}
+                <Indicateur icone={<EuroOutlined />} couleur={COULEURS.or} valeur={euro.format(kpi.montantTotalVire || 0)} libelle="Montant des fiches approuvées"
+                  aide="Somme des montants des fiches approuvées de la période. Ce n'est pas un montant envoyé à la banque : il faut encore générer, soumettre et faire valider le fichier."
+                  detail={kpi.fichesGenerees === 0 ? 'Aucune fiche approuvée sur la période' : undefined}
                   variation={<Variation actuel={actuel.montant} precedent={avant.montant} mois={moisAvant} sens="neutre" relatif />} />
               </Col>
             )}
             <Col xs={24} sm={12} lg={8} xxl={6}>
-              <Indicateur icone={<FileTextOutlined />} couleur={COULEURS.bleu} valeur={nf.format(kpi.fichesGenerees)} libelle="Fiches de paie générées" />
+              <Indicateur icone={<FileTextOutlined />} couleur={COULEURS.bleu} valeur={nf.format(kpi.fichesGenerees)} libelle="Fiches de paie approuvées"
+                aide="Lignes de paie (un salarié, un montant) approuvées par le Manager sur la période."
+                detail="Approuvées par le Manager" />
             </Col>
             <Col xs={24} sm={12} lg={8} xxl={6}>
-              <Indicateur icone={<BankOutlined />} couleur={COULEURS.primaire} valeur={nf.format(kpi.clientsConcernes)} libelle="Sociétés concernées" />
+              <Indicateur icone={<FileDoneOutlined />} couleur={COULEURS.primaire} libelle="Fichiers SEPA générés"
+                aide="Fichiers XML créés par les Experts RH à partir des fiches approuvées, quel que soit leur statut (brouillon, soumis, validé, rejeté)."
+                valeur={kpi.lotsGeneres != null ? nf.format(kpi.lotsGeneres) : '—'}
+                detail={kpi.lotsValidesManager != null ? `dont ${nf.format(kpi.lotsValidesManager)} ${kpi.lotsValidesManager > 1 ? 'validés' : 'validé'} par le Manager` : 'Donnée non disponible'} />
             </Col>
             <Col xs={24} sm={12} lg={8} xxl={6}>
-              <Indicateur icone={<AlertOutlined />} couleur={COULEURS.orange} libelle="Anomalies de la période"
+              <Indicateur icone={<BankOutlined />} couleur={COULEURS.primaire} valeur={nf.format(kpi.clientsConcernes)} libelle="Sociétés avec fiches approuvées"
+                aide="Nombre de sociétés distinctes ayant au moins une fiche approuvée sur la période (les fiches sans société ne sont pas comptées)." />
+            </Col>
+            <Col xs={24} sm={12} lg={8} xxl={6}>
+              <Indicateur icone={<AlertOutlined />} couleur={COULEURS.orange} libelle="Anomalies signalées"
+                aide="Toutes les anomalies de la période, sur toutes les fiches (brouillon, approuvée, rejetée), avertissements compris. Les erreurs bloquantes des seules fiches approuvées forment le taux d'erreur."
                 valeur={<span>{nf.format(statuts.ouvertes)}<span className="kpi-sep"> / </span>{nf.format(statuts.corrigees)}<span className="kpi-sep"> / </span>{nf.format(statuts.ignorees)}</span>}
-                detail={`ouvertes / corrigées / ignorées — ${libelleMois(periodeAffichee)}`} />
+                detail={`ouvertes / corrigées / ignorées — ${libelleMois(periodeAffichee)}. Dont ${nf.format(repartition.bloquantes)} ${repartition.bloquantes > 1 ? 'erreurs bloquantes' : 'erreur bloquante'} et ${nf.format(repartition.avertissements)} ${repartition.avertissements > 1 ? 'avertissements' : 'avertissement'}.`} />
             </Col>
             <Col xs={24} sm={12} lg={8} xxl={6}>
-              <Indicateur icone={<RobotOutlined />} couleur={COULEURS.vert} libelle="Anomalies détectées par l'IA"
+              <Indicateur icone={<RobotOutlined />} couleur={COULEURS.vert} libelle="Fiches signalées par l'IA"
+                aide="Fiches de la période signalées comme suspectes par la dernière analyse IA (montant inhabituel, IBAN modifié…)."
                 valeur={kpiIa ? nf.format(kpiIa.anomaliesIa) : '—'}
-                detail={kpiIa ? `fiches signalées par l'IA — ${libelleMois(periodeAffichee)}` : 'Donnée non disponible'} />
+                detail={kpiIa ? `signalées par le contrôle IA — ${libelleMois(periodeAffichee)}` : 'Donnée non disponible'} />
             </Col>
             <Col xs={24} sm={12} lg={8} xxl={6}>
               <Indicateur icone={<RobotOutlined />} couleur={COULEURS.primaire} libelle="Part détectée par l'IA seule"
+                aide="Parmi les fiches signalées par l'IA, part que les contrôles métier (IBAN/BIC invalide, montant nul, doublon) ne signalent pas : c'est l'apport propre de l'IA."
                 valeur={kpiIa && kpiIa.partIaSeule != null ? `${nf1.format(kpiIa.partIaSeule)} %` : '—'}
                 detail={!kpiIa ? 'Donnée non disponible'
                   : kpiIa.anomaliesIa === 0 ? 'Aucune fiche signalée par l\'IA sur la période'

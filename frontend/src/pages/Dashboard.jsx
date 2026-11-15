@@ -47,6 +47,57 @@ function CarteAction({ icone, libelle, valeur, aide, urgence, vers }) {
 
 const compter = (resultat, filtre) => (resultat.status === 'fulfilled' ? resultat.value.data.filter(filtre).length : null)
 
+const pluriel = (n, singulier, plurielMot) => (n > 1 ? plurielMot : singulier)
+
+/** Chiffres du mois, identiques pour les trois rôles (seul le montant est réservé au Manager et à l'Admin). */
+function ChiffresDuMois({ k, moisCourant, avecMontant }) {
+  const fichiers = k && k.lotsGeneres != null ? k.lotsGeneres : null
+  const cartes = [
+    {
+      libelle: 'Fiches de paie approuvées',
+      valeur: k ? nf.format(k.fichesGenerees) : '—',
+      detail: 'Lignes de paie approuvées par le Manager',
+    },
+    {
+      libelle: 'Fichiers SEPA générés',
+      valeur: fichiers != null ? nf.format(fichiers) : '—',
+      detail: k && k.lotsValidesManager != null
+        ? `dont ${nf.format(k.lotsValidesManager)} ${pluriel(k.lotsValidesManager, 'validé', 'validés')} par le Manager (prêt${k.lotsValidesManager > 1 ? 's' : ''} pour la banque)`
+        : 'Fichiers XML créés à partir des fiches',
+    },
+    {
+      libelle: "Taux d'erreur des fiches approuvées",
+      valeur: k ? `${nf.format(Number(k.tauxErreur))} %` : '—',
+      detail: k && k.fichesGenerees > 0
+        ? `${nf.format(k.nbErreurs)} ${pluriel(k.nbErreurs, 'fiche', 'fiches')} en erreur bloquante sur ${nf.format(k.fichesGenerees)}`
+        : 'Aucune fiche approuvée sur la période',
+    },
+    ...(avecMontant ? [{
+      libelle: 'Montant des fiches approuvées',
+      valeur: k ? formatMontant(k.montantTotalVire) : '—',
+      detail: 'Somme des fiches approuvées (pas encore envoyée à la banque)',
+    }] : []),
+  ]
+  return (
+    <>
+      <Typography.Title level={5} style={{ margin: '28px 0 12px' }}>
+        Ce mois-ci <Tag style={{ marginLeft: 8 }}>{moisCourant}</Tag>
+      </Typography.Title>
+      <Row gutter={[16, 16]}>
+        {cartes.map((s) => (
+          <Col xs={24} sm={12} lg={avecMontant ? 6 : 8} key={s.libelle}>
+            <Card styles={{ body: { padding: 16 } }} style={{ height: '100%' }}>
+              <Typography.Text type="secondary">{s.libelle}</Typography.Text>
+              <div style={{ fontSize: 24, fontWeight: 700, color: '#1F3A5F' }}>{s.valeur}</div>
+              <Typography.Text type="secondary" style={{ fontSize: 12 }}>{s.detail}</Typography.Text>
+            </Card>
+          </Col>
+        ))}
+      </Row>
+    </>
+  )
+}
+
 function DashboardOperationnel() {
   const { user } = useAuth()
   const [donnees, setDonnees] = useState(null)
@@ -77,31 +128,31 @@ function DashboardOperationnel() {
   const aTraiter = [
     ...(manager
       ? [{
-        cle: 'valider', icone: <CheckSquareOutlined />, libelle: 'Fichiers à valider', urgence: 'orange',
-        valeur: compter(fichiers, (f) => f.statutFichier === 'SOUMIS'), aide: 'Fichiers soumis par les Experts RH', vers: '/virements-masse/a-valider',
+        cle: 'valider', icone: <CheckSquareOutlined />, libelle: 'Fichiers SEPA à valider', urgence: 'orange',
+        valeur: compter(fichiers, (f) => f.statutFichier === 'SOUMIS'), aide: 'Soumis par les Experts RH, en attente de votre validation', vers: '/virements-masse/a-valider',
       }]
       : [
         {
-          cle: 'rejetes', icone: <FileExcelOutlined />, libelle: 'Fichiers rejetés à corriger', urgence: 'rouge',
-          valeur: compter(fichiers, (f) => f.statutFichier === 'REJETE'), aide: 'Voir le motif et relancer un contrôle', vers: '/virements-masse/historique',
+          cle: 'rejetes', icone: <FileExcelOutlined />, libelle: 'Fichiers SEPA rejetés à corriger', urgence: 'rouge',
+          valeur: compter(fichiers, (f) => f.statutFichier === 'REJETE'), aide: 'Rejetés par le Manager : voir le motif et relancer un contrôle', vers: '/virements-masse/historique',
         },
         {
-          cle: 'brouillons', icone: <EditOutlined />, libelle: 'Brouillons à soumettre', urgence: 'orange',
-          valeur: compter(fichiers, (f) => f.statutFichier === 'BROUILLON' && f.valideXsd), aide: 'Fichiers conformes pas encore soumis', vers: '/virements-masse/historique',
+          cle: 'brouillons', icone: <EditOutlined />, libelle: 'Fichiers SEPA à soumettre', urgence: 'orange',
+          valeur: compter(fichiers, (f) => f.statutFichier === 'BROUILLON' && f.valideXsd), aide: 'Brouillons conformes au XSD, pas encore soumis au Manager', vers: '/virements-masse/historique',
         },
       ]),
     {
       cle: 'anomalies', icone: <AlertOutlined />, libelle: 'Anomalies ouvertes', urgence: 'rouge',
-      valeur: anomalies.status === 'fulfilled' ? anomalies.value.data.length : null, aide: 'À corriger ou ignorer', vers: '/anomalies',
+      valeur: anomalies.status === 'fulfilled' ? anomalies.value.data.length : null, aide: 'Erreurs et avertissements à corriger ou ignorer', vers: '/anomalies',
     },
     {
-      cle: 'attente', icone: <ClockCircleOutlined />, libelle: 'Transactions en attente', urgence: 'orange',
+      cle: 'attente', icone: <ClockCircleOutlined />, libelle: 'Transactions à approuver', urgence: 'orange',
       valeur: compter(transactions, (t) => t.statut === 'BROUILLON' || t.statut === 'VALIDEE'),
-      aide: manager ? 'À approuver' : 'Pas encore approuvées', vers: '/transactions',
+      aide: manager ? 'Fiches de paie en attente de votre approbation' : 'Fiches de paie pas encore approuvées par le Manager', vers: '/transactions',
     },
     {
       cle: 'rejetees', icone: <CloseCircleOutlined />, libelle: 'Transactions rejetées', urgence: 'rouge',
-      valeur: compter(transactions, (t) => t.statut === 'REJETEE'), aide: 'À revoir', vers: '/transactions',
+      valeur: compter(transactions, (t) => t.statut === 'REJETEE'), aide: 'Fiches de paie refusées, à revoir', vers: '/transactions',
     },
   ]
   const indisponibles = [fichiers, anomalies, transactions].some((r) => r.status === 'rejected')
@@ -118,7 +169,7 @@ function DashboardOperationnel() {
         type="info"
         showIcon
         style={{ margin: '16px 0', background: '#EEF3FA', borderColor: '#D6E0EF' }}
-        message={`Les éléments à traiter sont comptés à date. Les chiffres du mois portent sur ${moisCourant}.`}
+        message={`Les éléments « à traiter » sont comptés à date. Les chiffres « ce mois-ci » portent sur ${moisCourant} et sur toutes les sociétés.`}
         action={peutVoirKpi(user?.role) && <Link to="/kpi">Voir les indicateurs</Link>}
       />
       {indisponibles && (
@@ -132,23 +183,7 @@ function DashboardOperationnel() {
         ))}
       </Row>
 
-      <Typography.Title level={5} style={{ margin: '28px 0 12px' }}>
-        Ce mois-ci <Tag style={{ marginLeft: 8 }}>{moisCourant}</Tag>
-      </Typography.Title>
-      <Row gutter={[16, 16]}>
-        {[
-          { libelle: 'Fiches approuvées', valeur: k ? nf.format(k.fichesGenerees) : '—' },
-          { libelle: 'Fichiers SEPA générés', valeur: k && k.lotsGeneres != null ? nf.format(k.lotsGeneres) : '—' },
-          { libelle: "Taux d'erreur", valeur: k ? `${nf.format(Number(k.tauxErreur))} %` : '—' },
-        ].map((s) => (
-          <Col xs={24} sm={8} key={s.libelle}>
-            <Card styles={{ body: { padding: 16 } }}>
-              <Typography.Text type="secondary">{s.libelle}</Typography.Text>
-              <div style={{ fontSize: 24, fontWeight: 700, color: '#1F3A5F' }}>{s.valeur}</div>
-            </Card>
-          </Col>
-        ))}
-      </Row>
+      <ChiffresDuMois k={k} moisCourant={moisCourant} avecMontant={false} />
     </div>
   )
 }
@@ -195,10 +230,10 @@ function DashboardAdmin() {
     : []
 
   const cartes = [
-    { cle: 'soumis', icone: <ClockCircleOutlined />, libelle: 'Fichiers en attente de validation', urgence: 'orange', valeur: compterStatut('SOUMIS'), aide: 'Soumis, en attente du Manager', vers: VERS_HISTORIQUE },
-    { cle: 'rejetes', icone: <FileExcelOutlined />, libelle: 'Fichiers rejetés', urgence: 'rouge', valeur: compterStatut('REJETE'), aide: 'Retournés aux Experts RH', vers: VERS_HISTORIQUE },
+    { cle: 'soumis', icone: <ClockCircleOutlined />, libelle: 'Fichiers SEPA en attente de validation', urgence: 'orange', valeur: compterStatut('SOUMIS'), aide: 'Soumis par les Experts RH, en attente du Manager', vers: VERS_HISTORIQUE },
+    { cle: 'rejetes', icone: <FileExcelOutlined />, libelle: 'Fichiers SEPA rejetés', urgence: 'rouge', valeur: compterStatut('REJETE'), aide: 'Rejetés par le Manager, retournés aux Experts RH', vers: VERS_HISTORIQUE },
     {
-      cle: 'xsd', icone: <CloseCircleOutlined />, libelle: 'Fichiers non conformes au XSD', urgence: 'rouge',
+      cle: 'xsd', icone: <CloseCircleOutlined />, libelle: 'Fichiers SEPA non conformes au XSD', urgence: 'rouge',
       valeur: liste ? liste.filter((f) => !f.valideXsd).length : null, aide: 'Voir l’historique', vers: VERS_HISTORIQUE,
     },
   ]
@@ -211,40 +246,28 @@ function DashboardAdmin() {
         type="info"
         showIcon
         style={{ margin: '16px 0', background: '#EEF3FA', borderColor: '#D6E0EF' }}
-        message={`Statistiques globales, sans donnée individuelle de paie. Fichiers : tout l'historique ; chiffres du mois : ${moisCourant}.`}
+        message={`Statistiques globales, sans donnée individuelle de paie. « Supervision » et « Par société » : tout l'historique des fichiers ; « Ce mois-ci » : ${moisCourant}, toutes sociétés.`}
         action={<Link to="/kpi">Voir les indicateurs</Link>}
       />
       {(!liste || !k) && (
         <Alert type="warning" showIcon style={{ marginBottom: 16 }} message="Certaines données n'ont pas pu être chargées : les cartes concernées affichent « — »." />
       )}
 
-      <Typography.Title level={5} style={{ margin: '8px 0 12px' }}>Supervision des fichiers</Typography.Title>
+      <Typography.Title level={5} style={{ margin: '8px 0 12px' }}>
+        Supervision des fichiers SEPA <Tag style={{ marginLeft: 8 }}>tout l’historique</Tag>
+      </Typography.Title>
       <Row gutter={[16, 16]}>
         {cartes.map(({ cle, ...carte }) => (
           <Col xs={24} sm={12} lg={8} key={cle}><CarteAction {...carte} /></Col>
         ))}
       </Row>
 
-      <Typography.Title level={5} style={{ margin: '28px 0 12px' }}>
-        Ce mois-ci <Tag style={{ marginLeft: 8 }}>{moisCourant}</Tag>
-      </Typography.Title>
-      <Row gutter={[16, 16]}>
-        {[
-          { libelle: 'Fiches approuvées', valeur: k ? nf.format(k.fichesGenerees) : '—' },
-          { libelle: 'Fichiers SEPA générés', valeur: k && k.lotsGeneres != null ? nf.format(k.lotsGeneres) : '—' },
-          { libelle: "Taux d'erreur", valeur: k ? `${nf.format(Number(k.tauxErreur))} %` : '—' },
-          { libelle: 'Montant total viré', valeur: k ? formatMontant(k.montantTotalVire) : '—' },
-        ].map((s) => (
-          <Col xs={24} sm={12} lg={6} key={s.libelle}>
-            <Card styles={{ body: { padding: 16 } }}>
-              <Typography.Text type="secondary">{s.libelle}</Typography.Text>
-              <div style={{ fontSize: 24, fontWeight: 700, color: '#1F3A5F' }}>{s.valeur}</div>
-            </Card>
-          </Col>
-        ))}
-      </Row>
+      <ChiffresDuMois k={k} moisCourant={moisCourant} avecMontant />
 
-      <Typography.Title level={5} style={{ margin: '28px 0 12px' }}>Par société</Typography.Title>
+      <Typography.Title level={5} style={{ margin: '28px 0 4px' }}>Par société</Typography.Title>
+      <Typography.Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
+        Cumul de tout l’historique des fichiers SEPA générés (un même salarié compte une fois par fichier).
+      </Typography.Text>
       <Table
         size="small"
         rowKey="societe"
@@ -253,9 +276,9 @@ function DashboardAdmin() {
         locale={{ emptyText: liste ? 'Aucun fichier SEPA enregistré.' : 'Donnée non disponible' }}
         columns={[
           { title: 'Société', dataIndex: 'societe' },
-          { title: 'Fichiers', dataIndex: 'fichiers', align: 'right' },
-          { title: 'Salariés (cumul)', dataIndex: 'salaries', align: 'right' },
-          { title: 'Montant total', dataIndex: 'montant', align: 'right', render: formatMontant },
+          { title: 'Fichiers générés', dataIndex: 'fichiers', align: 'right' },
+          { title: 'Fiches dans les fichiers', dataIndex: 'salaries', align: 'right' },
+          { title: 'Montant des fichiers', dataIndex: 'montant', align: 'right', render: formatMontant },
           { title: 'Non conformes XSD', dataIndex: 'nonConformes', align: 'right', render: (n) => (n > 0 ? <Tag color="red">{n}</Tag> : <Tag color="green">0</Tag>) },
         ]}
       />

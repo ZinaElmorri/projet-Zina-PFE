@@ -24,4 +24,11 @@ public interface FichierSepaGenereRepository extends JpaRepository<FichierSepaGe
             + "and (:clientId is null or f.clientId = :clientId)")
     long countLotsValides(@Param("debut") LocalDateTime debut, @Param("fin") LocalDateTime fin,
                           @Param("clientId") String clientId);
+
+    // Lots générés sur la période puis validés par un Manager (statut VALIDE du circuit de validation).
+    @Query("select count(f) from FichierSepaGenere f "
+            + "where f.statutFichier = 'VALIDE' and f.genereLe >= :debut and f.genereLe < :fin "
+            + "and (:clientId is null or f.clientId = :clientId)")
+    long countLotsValidesManager(@Param("debut") LocalDateTime debut, @Param("fin") LocalDateTime fin,
+                                 @Param("clientId") String clientId);
 }

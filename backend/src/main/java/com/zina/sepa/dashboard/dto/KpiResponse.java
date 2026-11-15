@@ -13,6 +13,8 @@ public record KpiResponse(
         BigDecimal montantTotalVire,
         Long lotsGeneres,
         Long lotsValidesXsd,
+        /** Lots de la période validés par un Manager (null si l'historique n'est pas disponible). */
+        Long lotsValidesManager,
         List<LabelValue> anomaliesParType,
         List<LabelValue> anomaliesParSource,
         StatutCount anomaliesParStatut,

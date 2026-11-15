@@ -108,6 +108,7 @@ public class KpiDashboardService {
                 montant,
                 lots(debut, fin, clientId, false),
                 lots(debut, fin, clientId, true),
+                lotsManager(debut, fin, clientId),
                 safe(() -> parType(periode, clientId), List.of()),
                 safe(() -> parSource(periode, clientId), List.of()),
                 safe(() -> parStatut(periode, clientId), new StatutCount(0, 0, 0)),
@@ -127,6 +128,14 @@ public class KpiDashboardService {
         return safe(() -> valides
                 ? fichierRepository.countLotsValides(debut, fin, clientId)
                 : fichierRepository.countLots(debut, fin, clientId), null);
+    }
+
+    /** Lots de la période validés par un Manager ; null si l'historique n'est pas disponible. */
+    private Long lotsManager(LocalDateTime debut, LocalDateTime fin, String clientId) {
+        if (fichierRepository == null) {
+            return null;
+        }
+        return safe(() -> fichierRepository.countLotsValidesManager(debut, fin, clientId), null);
     }
 
     // ------------------------------------------------------------------
