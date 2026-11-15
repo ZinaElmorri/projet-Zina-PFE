@@ -53,9 +53,7 @@ async function ecran(session, chemin, nom, { attente = 1200, complet = false, ha
   console.log('capture', nom)
 }
 
-const admin = await connexion('admin', 'admin123')
 const manager = await connexion('manager1', 'manager1123')
-await ecran(admin, '/qualite-ia', 'capture_qualite_modele_ia.png', { complet: true })
 await ecran(expert, `/virements-masse/resultat/${fichier.id}/synthese`, 'capture_synthese_controle_ia.png', { recadrage: { x: 240, y: 56, width: 1200, height: 430 } })
 await ecran(expert, `/virements-masse/resultat/${fichier.id}/controle-ia`, 'capture_sous_page_controle_ia.png', { complet: true })
 await ecran(manager, '/kpi', 'capture_kpi_ia.png', { complet: true })
