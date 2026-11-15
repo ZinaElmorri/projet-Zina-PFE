@@ -275,8 +275,8 @@ export default function KpiDashboard() {
             />
           </label>
           <label>
-            <div className="kpi-champ">Client</div>
-            <Input placeholder="Tous les clients" allowClear value={clientId} onChange={(e) => setClientId(e.target.value)} onPressEnter={load} style={{ width: 220 }} />
+            <div className="kpi-champ">Société</div>
+            <Input placeholder="Toutes les sociétés" allowClear value={clientId} onChange={(e) => setClientId(e.target.value)} onPressEnter={load} style={{ width: 220 }} />
           </label>
           <Button type="primary" icon={<ReloadOutlined />} onClick={load} loading={loading}>Appliquer</Button>
         </Space>
@@ -317,7 +317,7 @@ export default function KpiDashboard() {
               <Indicateur icone={<FileTextOutlined />} couleur={COULEURS.bleu} valeur={nf.format(kpi.fichesGenerees)} libelle="Fiches de paie générées" />
             </Col>
             <Col xs={24} sm={12} lg={8} xxl={6}>
-              <Indicateur icone={<BankOutlined />} couleur={COULEURS.primaire} valeur={nf.format(kpi.clientsConcernes)} libelle="Clients concernés" />
+              <Indicateur icone={<BankOutlined />} couleur={COULEURS.primaire} valeur={nf.format(kpi.clientsConcernes)} libelle="Sociétés concernées" />
             </Col>
             <Col xs={24} sm={12} lg={8} xxl={6}>
               <Indicateur icone={<AlertOutlined />} couleur={COULEURS.orange} libelle="Anomalies de la période"

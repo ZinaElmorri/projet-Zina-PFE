@@ -84,7 +84,7 @@ def build_reasons(row: pd.Series) -> List[str]:
     if int(row["iban_change_recent"]) == 1:
         raisons.append("IBAN modifi\u00e9 ce mois-ci")
     if abs(float(row["zscore_client"])) >= 2.0:
-        raisons.append("Montant tr\u00e8s \u00e9loign\u00e9 des autres salari\u00e9s du client")
+        raisons.append("Montant tr\u00e8s \u00e9loign\u00e9 des autres salari\u00e9s de la soci\u00e9t\u00e9")
     variation = float(row["variation_mois_precedent"])
     if variation >= 50.0:
         raisons.append(f"Hausse de {variation:.0f}% par rapport au mois pr\u00e9c\u00e9dent")
