@@ -1,0 +1,3 @@
+**Légende proposée** : Rappel par type d'anomalie (en %) pour les principales approches, jeu de test.
+
+**Interprétation** : La carte de chaleur résume les complémentarités : les colonnes de règles sont foncées pour les doublons et les montants nuls, celles des modèles statistiques pour les IBAN. La colonne de l'hybride optimisé est la plus foncée dans l'ensemble, sauf pour l'IBAN partagé. Seules les deux dernières lignes (salarié fantôme, salarié sorti) restent entièrement claires, et la hausse subtile ne devient détectable qu'après retrait du montant brut. Les deux types sans détection appellent des informations nouvelles (historique de présence, rapprochement avec le registre du personnel) plutôt qu'un algorithme différent.

@@ -1,0 +1,3 @@
+**Légende proposée** : Variation de la PR-AUC lorsqu'une variable est retirée de l'Isolation Forest (test et validation).
+
+**Interprétation** : Une barre négative signale une variable utile (sa suppression dégrade la PR-AUC), une barre positive une variable qui gêne le modèle. Les barres du test et de la validation vont dans le même sens pour les six variables, ce qui valide la sélection faite sur la validation seule. Le montant brut et le z-score dans la société sont les deux variables nuisibles. L'indicateur d'IBAN modifié, la variation sur le mois précédent et le nombre de paiements sur le même IBAN sont parmi les plus utiles, l'écart à la moyenne du salarié étant à un niveau comparable. Cette lecture a servi à construire la variante à variables retenues.

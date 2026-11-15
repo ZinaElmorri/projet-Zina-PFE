@@ -1,0 +1,3 @@
+**Légende proposée** : Répartition des anomalies de chaque type selon le détecteur (règles, IA, les deux, aucun).
+
+**Interprétation** : Le diagramme montre pour chaque type la part des anomalies vues par les deux détecteurs, par les règles seules, par l'IA seule ou par aucun. Les erreurs de montant importantes sont retrouvées par les deux approches, ce qui les rend robustes. Les anomalies qui ne contredisent aucune règle simple (IBAN partagé, erreur de virgule vers le bas) relèvent surtout de l'IA, ou ne sont détectées par personne. La partie grise, importante pour la hausse subtile, le salarié fantôme et le salarié sorti, désigne les anomalies non couvertes par le dispositif actuel et oriente les évolutions futures. Aucun des deux détecteurs ne suffit seul.

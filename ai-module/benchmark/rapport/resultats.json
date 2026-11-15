@@ -938,5 +938,1434 @@
       ]
     },
     "configurationRetenue": "en_service"
+  },
+  "comparaison": {
+    "approches": {
+      "regles": {
+        "nom": "Règles métier seules",
+        "metriques": {
+          "precision": {
+            "moyenne": 0.2024923262273975,
+            "ecartType": 0.008505815170075459
+          },
+          "rappel": {
+            "moyenne": 0.48457399075790697,
+            "ecartType": 0.015112652600405481
+          },
+          "f1": {
+            "moyenne": 0.28535637586142865,
+            "ecartType": 0.0071050033629080685
+          },
+          "prAuc": {
+            "moyenne": 0.11105441900295265,
+            "ecartType": 0.003998109198331795
+          },
+          "rocAuc": {
+            "moyenne": 0.7231797372059674,
+            "ecartType": 0.007379750757643262
+          },
+          "fpPour1000": {
+            "moyenne": 37.5906856074413,
+            "ecartType": 1.031585754978524
+          }
+        },
+        "f1Validation": {
+          "moyenne": 0.6525790224914336,
+          "ecartType": 0.019737086153730973
+        },
+        "seuil": null,
+        "tempsEntrainementS": {
+          "moyenne": 0.0,
+          "ecartType": 0.0
+        },
+        "tempsPredictionMsPour1000": {
+          "moyenne": 5.584360588083756,
+          "ecartType": 1.8228120674124362
+        },
+        "rappelParType": {
+          "montant_multiplie": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "erreur_virgule": {
+            "moyenne": 0.5416666666666667,
+            "ecartType": 0.13176156917368245
+          },
+          "hausse_subtile": {
+            "moyenne": 0.027142857142857146,
+            "ecartType": 0.02407471363764674
+          },
+          "montant_nul_negatif": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "doublon": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "iban_change_montant_eleve": {
+            "moyenne": 0.6605700992555831,
+            "ecartType": 0.06779684148377331
+          },
+          "iban_partage": {
+            "moyenne": 0.06937229437229438,
+            "ecartType": 0.047850186771380095
+          },
+          "salarie_fantome": {
+            "moyenne": 0.0,
+            "ecartType": 0.0
+          },
+          "salarie_sorti_paye": {
+            "moyenne": 0.0,
+            "ecartType": 0.0
+          }
+        }
+      },
+      "if_actuel": {
+        "nom": "Isolation Forest, décision actuelle",
+        "metriques": {
+          "precision": {
+            "moyenne": 0.473581903281293,
+            "ecartType": 0.09418458933769931
+          },
+          "rappel": {
+            "moyenne": 0.3803936892396833,
+            "ecartType": 0.02936497303391965
+          },
+          "f1": {
+            "moyenne": 0.4191697101483617,
+            "ecartType": 0.05001656216821294
+          },
+          "prAuc": {
+            "moyenne": 0.40692952704216745,
+            "ecartType": 0.03921695798151294
+          },
+          "rocAuc": {
+            "moyenne": 0.8400918332696851,
+            "ecartType": 0.010496759196744473
+          },
+          "fpPour1000": {
+            "moyenne": 8.87141561867794,
+            "ecartType": 3.145661660126438
+          }
+        },
+        "f1Validation": {
+          "moyenne": 0.4618589370952389,
+          "ecartType": 0.04623875619261923
+        },
+        "seuil": {
+          "moyenne": 0.5,
+          "ecartType": 0.0
+        },
+        "tempsEntrainementS": {
+          "moyenne": 2.9945204599993303,
+          "ecartType": 0.2650195472761788
+        },
+        "tempsPredictionMsPour1000": {
+          "moyenne": 48.6904603571734,
+          "ecartType": 5.6000827140219105
+        },
+        "rappelParType": {
+          "montant_multiplie": {
+            "moyenne": 0.9785145888594166,
+            "ecartType": 0.028026480513256857
+          },
+          "erreur_virgule": {
+            "moyenne": 0.575,
+            "ecartType": 0.07168604389202189
+          },
+          "hausse_subtile": {
+            "moyenne": 0.031957671957671956,
+            "ecartType": 0.02987352379021187
+          },
+          "montant_nul_negatif": {
+            "moyenne": 0.2830952380952381,
+            "ecartType": 0.16980447606203714
+          },
+          "doublon": {
+            "moyenne": 0.06433566433566433,
+            "ecartType": 0.0903587429662271
+          },
+          "iban_change_montant_eleve": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "iban_partage": {
+            "moyenne": 0.5725108225108224,
+            "ecartType": 0.04348441213453743
+          },
+          "salarie_fantome": {
+            "moyenne": 0.0,
+            "ecartType": 0.0
+          },
+          "salarie_sorti_paye": {
+            "moyenne": 0.0,
+            "ecartType": 0.0
+          }
+        }
+      },
+      "if_valide": {
+        "nom": "Isolation Forest, seuil validé",
+        "metriques": {
+          "precision": {
+            "moyenne": 0.14767568279099783,
+            "ecartType": 0.049896333138400334
+          },
+          "rappel": {
+            "moyenne": 0.5680389283365405,
+            "ecartType": 0.08837836251020562
+          },
+          "f1": {
+            "moyenne": 0.22894714178599682,
+            "ecartType": 0.056478936023396306
+          },
+          "prAuc": {
+            "moyenne": 0.40967961835835265,
+            "ecartType": 0.054874314009046604
+          },
+          "rocAuc": {
+            "moyenne": 0.8400094595965928,
+            "ecartType": 0.010222340017690693
+          },
+          "fpPour1000": {
+            "moyenne": 70.81523661007331,
+            "ecartType": 21.21397723806529
+          }
+        },
+        "f1Validation": {
+          "moyenne": 0.5779876052105104,
+          "ecartType": 0.01848246884615305
+        },
+        "seuil": {
+          "moyenne": 0.33840000000000003,
+          "ecartType": 0.0676390419802055
+        },
+        "tempsEntrainementS": {
+          "moyenne": 2.9945204599993303,
+          "ecartType": 0.2650195472761788
+        },
+        "tempsPredictionMsPour1000": {
+          "moyenne": 48.6904603571734,
+          "ecartType": 5.6000827140219105
+        },
+        "rappelParType": {
+          "montant_multiplie": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "erreur_virgule": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "hausse_subtile": {
+            "moyenne": 0.2550582010582011,
+            "ecartType": 0.24912211384862973
+          },
+          "montant_nul_negatif": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "doublon": {
+            "moyenne": 0.28251748251748254,
+            "ecartType": 0.37073754853519
+          },
+          "iban_change_montant_eleve": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "iban_partage": {
+            "moyenne": 0.6558441558441558,
+            "ecartType": 0.17740468900290063
+          },
+          "salarie_fantome": {
+            "moyenne": 0.0,
+            "ecartType": 0.0
+          },
+          "salarie_sorti_paye": {
+            "moyenne": 0.009523809523809523,
+            "ecartType": 0.019047619047619046
+          }
+        }
+      },
+      "lof": {
+        "nom": "Local Outlier Factor",
+        "metriques": {
+          "precision": {
+            "moyenne": 0.07120476037808894,
+            "ecartType": 0.04130645771322153
+          },
+          "rappel": {
+            "moyenne": 0.16808118687480525,
+            "ecartType": 0.06791092502725012
+          },
+          "f1": {
+            "moyenne": 0.09791045190517042,
+            "ecartType": 0.051417171006068095
+          },
+          "prAuc": {
+            "moyenne": 0.05548447953102037,
+            "ecartType": 0.02167514970558319
+          },
+          "rocAuc": {
+            "moyenne": 0.5771336618173153,
+            "ecartType": 0.04797114837897782
+          },
+          "fpPour1000": {
+            "moyenne": 49.4471973986081,
+            "ecartType": 17.703713881320354
+          }
+        },
+        "f1Validation": {
+          "moyenne": 0.11815302955501324,
+          "ecartType": 0.027867515528598022
+        },
+        "seuil": {
+          "moyenne": 1.9623082608265776,
+          "ecartType": 0.3183968915111379
+        },
+        "tempsEntrainementS": {
+          "moyenne": 6.696625920006772,
+          "ecartType": 2.2519836846314805
+        },
+        "tempsPredictionMsPour1000": {
+          "moyenne": 127.81300613359637,
+          "ecartType": 40.92537874193902
+        },
+        "rappelParType": {
+          "montant_multiplie": {
+            "moyenne": 0.33777534309768187,
+            "ecartType": 0.22709472814230183
+          },
+          "erreur_virgule": {
+            "moyenne": 0.2416666666666667,
+            "ecartType": 0.14043582955293932
+          },
+          "hausse_subtile": {
+            "moyenne": 0.2426878306878307,
+            "ecartType": 0.05482158034691916
+          },
+          "montant_nul_negatif": {
+            "moyenne": 0.07202898550724637,
+            "ecartType": 0.06928930791656385
+          },
+          "doublon": {
+            "moyenne": 0.14575424575424575,
+            "ecartType": 0.15568538750407993
+          },
+          "iban_change_montant_eleve": {
+            "moyenne": 0.1230955334987593,
+            "ecartType": 0.11621989417428887
+          },
+          "iban_partage": {
+            "moyenne": 0.35954045954045954,
+            "ecartType": 0.17318494149047117
+          },
+          "salarie_fantome": {
+            "moyenne": 0.026888888888888886,
+            "ecartType": 0.025302125026649393
+          },
+          "salarie_sorti_paye": {
+            "moyenne": 0.03835978835978836,
+            "ecartType": 0.03481626217219492
+          }
+        }
+      },
+      "ocsvm": {
+        "nom": "One-Class SVM",
+        "metriques": {
+          "precision": {
+            "moyenne": 0.568617376184414,
+            "ecartType": 0.11763613340280481
+          },
+          "rappel": {
+            "moyenne": 0.4719327948917094,
+            "ecartType": 0.047965419072908376
+          },
+          "f1": {
+            "moyenne": 0.5107809091760087,
+            "ecartType": 0.06285913848250733
+          },
+          "prAuc": {
+            "moyenne": 0.4475396996464777,
+            "ecartType": 0.0324234530254122
+          },
+          "rocAuc": {
+            "moyenne": 0.762551215547252,
+            "ecartType": 0.028386219537041932
+          },
+          "fpPour1000": {
+            "moyenne": 7.453634113163531,
+            "ecartType": 2.714869711409421
+          }
+        },
+        "f1Validation": {
+          "moyenne": 0.534440981970661,
+          "ecartType": 0.053090690244199164
+        },
+        "seuil": {
+          "moyenne": -0.08398240389158818,
+          "ecartType": 0.049567631600298784
+        },
+        "tempsEntrainementS": {
+          "moyenne": 0.27505649999366144,
+          "ecartType": 0.034914469066788516
+        },
+        "tempsPredictionMsPour1000": {
+          "moyenne": 29.81687160338563,
+          "ecartType": 4.03857375033393
+        },
+        "rappelParType": {
+          "montant_multiplie": {
+            "moyenne": 0.8809508707184868,
+            "ecartType": 0.12058881781462064
+          },
+          "erreur_virgule": {
+            "moyenne": 0.6666666666666666,
+            "ecartType": 0.17480147469502527
+          },
+          "hausse_subtile": {
+            "moyenne": 0.007407407407407407,
+            "ecartType": 0.014814814814814814
+          },
+          "montant_nul_negatif": {
+            "moyenne": 0.6593995859213251,
+            "ecartType": 0.20778181979751503
+          },
+          "doublon": {
+            "moyenne": 0.7896338955162484,
+            "ecartType": 0.23611146379810286
+          },
+          "iban_change_montant_eleve": {
+            "moyenne": 0.4321284119106699,
+            "ecartType": 0.12139401816325268
+          },
+          "iban_partage": {
+            "moyenne": 0.9192307692307692,
+            "ecartType": 0.08745761648822654
+          },
+          "salarie_fantome": {
+            "moyenne": 0.0,
+            "ecartType": 0.0
+          },
+          "salarie_sorti_paye": {
+            "moyenne": 0.0,
+            "ecartType": 0.0
+          }
+        }
+      },
+      "hybride": {
+        "nom": "Hybride : règles + Isolation Forest",
+        "metriques": {
+          "precision": {
+            "moyenne": 0.21081618674426505,
+            "ecartType": 0.013527486165768182
+          },
+          "rappel": {
+            "moyenne": 0.5578892274742944,
+            "ecartType": 0.04991714074715083
+          },
+          "f1": {
+            "moyenne": 0.3054396248729515,
+            "ecartType": 0.017687686962927447
+          },
+          "prAuc": {
+            "moyenne": 0.15389791912193784,
+            "ecartType": 0.008506166458036842
+          },
+          "rocAuc": {
+            "moyenne": 0.8391783788186473,
+            "ecartType": 0.011396984282026058
+          },
+          "fpPour1000": {
+            "moyenne": 41.32555001017527,
+            "ecartType": 5.228786101086244
+          }
+        },
+        "f1Validation": {
+          "moyenne": 0.6953803752799307,
+          "ecartType": 0.0351909196420098
+        },
+        "seuil": {
+          "moyenne": 0.5288,
+          "ecartType": 0.07897949100874227
+        },
+        "tempsEntrainementS": {
+          "moyenne": 2.9945204599993303,
+          "ecartType": 0.2650195472761788
+        },
+        "tempsPredictionMsPour1000": {
+          "moyenne": 54.27482094525715,
+          "ecartType": 6.516909372437672
+        },
+        "rappelParType": {
+          "montant_multiplie": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "erreur_virgule": {
+            "moyenne": 0.7,
+            "ecartType": 0.1611589967151143
+          },
+          "hausse_subtile": {
+            "moyenne": 0.06481481481481481,
+            "ecartType": 0.05862806322093675
+          },
+          "montant_nul_negatif": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "doublon": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "iban_change_montant_eleve": {
+            "moyenne": 0.8800297766749379,
+            "ecartType": 0.15671314874882142
+          },
+          "iban_partage": {
+            "moyenne": 0.365018315018315,
+            "ecartType": 0.16633787961785113
+          },
+          "salarie_fantome": {
+            "moyenne": 0.0,
+            "ecartType": 0.0
+          },
+          "salarie_sorti_paye": {
+            "moyenne": 0.0,
+            "ecartType": 0.0
+          }
+        }
+      },
+      "if_calendrier": {
+        "nom": "Isolation Forest + indicateur de décembre",
+        "metriques": {
+          "precision": {
+            "moyenne": 0.09509983624271479,
+            "ecartType": 0.02358852298591228
+          },
+          "rappel": {
+            "moyenne": 0.5847573097681644,
+            "ecartType": 0.0909619975015115
+          },
+          "f1": {
+            "moyenne": 0.16087987412101482,
+            "ecartType": 0.03522186800852903
+          },
+          "prAuc": {
+            "moyenne": 0.33323979141332455,
+            "ecartType": 0.0489352662388059
+          },
+          "rocAuc": {
+            "moyenne": 0.8188235357274133,
+            "ecartType": 0.007549438351010224
+          },
+          "fpPour1000": {
+            "moyenne": 128.99287298127894,
+            "ecartType": 79.13467744217431
+          }
+        },
+        "f1Validation": {
+          "moyenne": 0.5792591778862912,
+          "ecartType": 0.02737615398397929
+        },
+        "seuil": {
+          "moyenne": 0.31920000000000004,
+          "ecartType": 0.07568989364505674
+        },
+        "tempsEntrainementS": {
+          "moyenne": 2.7798692600044888,
+          "ecartType": 0.25182467560180694
+        },
+        "tempsPredictionMsPour1000": {
+          "moyenne": 24.11000504740706,
+          "ecartType": 6.106714733964711
+        },
+        "rappelParType": {
+          "montant_multiplie": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "erreur_virgule": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "hausse_subtile": {
+            "moyenne": 0.31013756613756616,
+            "ecartType": 0.2503365235388091
+          },
+          "montant_nul_negatif": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "doublon": {
+            "moyenne": 0.33681612505141917,
+            "ecartType": 0.3542886295943098
+          },
+          "iban_change_montant_eleve": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "iban_partage": {
+            "moyenne": 0.633982683982684,
+            "ecartType": 0.15621408715675306
+          },
+          "salarie_fantome": {
+            "moyenne": 0.02074074074074074,
+            "ecartType": 0.027075062048143802
+          },
+          "salarie_sorti_paye": {
+            "moyenne": 0.03809523809523809,
+            "ecartType": 0.05553287518900286
+          }
+        }
+      },
+      "if_collectif": {
+        "nom": "Isolation Forest + écart relatif à la société",
+        "metriques": {
+          "precision": {
+            "moyenne": 0.4023698800330271,
+            "ecartType": 0.1631906339055191
+          },
+          "rappel": {
+            "moyenne": 0.536826108843319,
+            "ecartType": 0.04061942866474535
+          },
+          "f1": {
+            "moyenne": 0.44065246172955524,
+            "ecartType": 0.09773277028295718
+          },
+          "prAuc": {
+            "moyenne": 0.5116887736238424,
+            "ecartType": 0.032069668636840284
+          },
+          "rocAuc": {
+            "moyenne": 0.8503836709493517,
+            "ecartType": 0.004800170233340906
+          },
+          "fpPour1000": {
+            "moyenne": 19.548099733500283,
+            "ecartType": 10.17376617890202
+          }
+        },
+        "f1Validation": {
+          "moyenne": 0.632308785969215,
+          "ecartType": 0.043159897746742344
+        },
+        "seuil": {
+          "moyenne": 0.41879999999999995,
+          "ecartType": 0.045106097148833436
+        },
+        "tempsEntrainementS": {
+          "moyenne": 3.1432037400023547,
+          "ecartType": 0.7689569807780582
+        },
+        "tempsPredictionMsPour1000": {
+          "moyenne": 22.619251289695555,
+          "ecartType": 3.2326282725500053
+        },
+        "rappelParType": {
+          "montant_multiplie": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "erreur_virgule": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "hausse_subtile": {
+            "moyenne": 0.3019153439153439,
+            "ecartType": 0.1877459363158591
+          },
+          "montant_nul_negatif": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "doublon": {
+            "moyenne": 0.08251748251748252,
+            "ecartType": 0.10224149304893462
+          },
+          "iban_change_montant_eleve": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "iban_partage": {
+            "moyenne": 0.4653679653679654,
+            "ecartType": 0.23707475128731906
+          },
+          "salarie_fantome": {
+            "moyenne": 0.0,
+            "ecartType": 0.0
+          },
+          "salarie_sorti_paye": {
+            "moyenne": 0.009523809523809523,
+            "ecartType": 0.019047619047619046
+          }
+        }
+      },
+      "if_optimise": {
+        "nom": "Isolation Forest, variables retenues sur la validation",
+        "metriques": {
+          "precision": {
+            "moyenne": 0.6818852014855977,
+            "ecartType": 0.2825130435376933
+          },
+          "rappel": {
+            "moyenne": 0.6110287931511179,
+            "ecartType": 0.08371832815434967
+          },
+          "f1": {
+            "moyenne": 0.5829601359241651,
+            "ecartType": 0.17438034855869633
+          },
+          "prAuc": {
+            "moyenne": 0.6176752916639179,
+            "ecartType": 0.02712634154578817
+          },
+          "rocAuc": {
+            "moyenne": 0.8270122773231655,
+            "ecartType": 0.01176522910814005
+          },
+          "fpPour1000": {
+            "moyenne": 20.51360701301121,
+            "ecartType": 35.34904178253212
+          }
+        },
+        "f1Validation": {
+          "moyenne": 0.7125330600570269,
+          "ecartType": 0.04097124991992967
+        },
+        "seuil": {
+          "moyenne": 0.4164,
+          "ecartType": 0.08461111038155687
+        },
+        "tempsEntrainementS": {
+          "moyenne": 3.1091134599992074,
+          "ecartType": 0.38130334471035926
+        },
+        "tempsPredictionMsPour1000": {
+          "moyenne": 26.22947106325757,
+          "ecartType": 4.74557897066009
+        },
+        "rappelParType": {
+          "montant_multiplie": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "erreur_virgule": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "hausse_subtile": {
+            "moyenne": 0.7481058201058202,
+            "ecartType": 0.181393337534581
+          },
+          "montant_nul_negatif": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "doublon": {
+            "moyenne": 0.26433566433566436,
+            "ecartType": 0.3773995716692998
+          },
+          "iban_change_montant_eleve": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "iban_partage": {
+            "moyenne": 0.4915584415584415,
+            "ecartType": 0.315944959990337
+          },
+          "salarie_fantome": {
+            "moyenne": 0.0,
+            "ecartType": 0.0
+          },
+          "salarie_sorti_paye": {
+            "moyenne": 0.0,
+            "ecartType": 0.0
+          }
+        }
+      },
+      "hybride_optimise": {
+        "nom": "Hybride optimisé : règles + IF à variables retenues",
+        "metriques": {
+          "precision": {
+            "moyenne": 0.8807205939529723,
+            "ecartType": 0.07734868902247832
+          },
+          "rappel": {
+            "moyenne": 0.6648430020710607,
+            "ecartType": 0.03233200260376365
+          },
+          "f1": {
+            "moyenne": 0.754336240870915,
+            "ecartType": 0.015995009822350532
+          },
+          "prAuc": {
+            "moyenne": 0.7137391476821418,
+            "ecartType": 0.016973163162637746
+          },
+          "rocAuc": {
+            "moyenne": 0.8368900346132856,
+            "ecartType": 0.012108871609355993
+          },
+          "fpPour1000": {
+            "moyenne": 2.011860924887286,
+            "ecartType": 1.6511858481857347
+          }
+        },
+        "f1Validation": {
+          "moyenne": 0.8084114813302887,
+          "ecartType": 0.032097759689911076
+        },
+        "seuil": {
+          "moyenne": 0.46320000000000006,
+          "ecartType": 0.011496086290559924
+        },
+        "tempsEntrainementS": {
+          "moyenne": 3.1091134599992074,
+          "ecartType": 0.38130334471035926
+        },
+        "tempsPredictionMsPour1000": {
+          "moyenne": 31.81383165134132,
+          "ecartType": 5.895853222163185
+        },
+        "rappelParType": {
+          "montant_multiplie": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "erreur_virgule": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "hausse_subtile": {
+            "moyenne": 0.6286772486772487,
+            "ecartType": 0.15372438367743171
+          },
+          "montant_nul_negatif": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "doublon": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "iban_change_montant_eleve": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "iban_partage": {
+            "moyenne": 0.3171994671994672,
+            "ecartType": 0.1974703093390172
+          },
+          "salarie_fantome": {
+            "moyenne": 0.0,
+            "ecartType": 0.0
+          },
+          "salarie_sorti_paye": {
+            "moyenne": 0.0,
+            "ecartType": 0.0
+          }
+        }
+      }
+    },
+    "valeurAjoutee": {
+      "parType": {
+        "montant_multiplie": {
+          "regles_seules": 0.6,
+          "ia_seule": 0.0,
+          "les_deux": 25.0,
+          "aucune": 0.0
+        },
+        "erreur_virgule": {
+          "regles_seules": 0.0,
+          "ia_seule": 0.8,
+          "les_deux": 13.0,
+          "aucune": 10.2
+        },
+        "hausse_subtile": {
+          "regles_seules": 0.4,
+          "ia_seule": 0.6,
+          "les_deux": 0.4,
+          "aucune": 27.0
+        },
+        "montant_nul_negatif": {
+          "regles_seules": 20.8,
+          "ia_seule": 0.0,
+          "les_deux": 9.6,
+          "aucune": 0.0
+        },
+        "doublon": {
+          "regles_seules": 25.6,
+          "ia_seule": 0.0,
+          "les_deux": 1.6,
+          "aucune": 0.0
+        },
+        "iban_change_montant_eleve": {
+          "regles_seules": 0.0,
+          "ia_seule": 9.4,
+          "les_deux": 18.4,
+          "aucune": 0.0
+        },
+        "iban_partage": {
+          "regles_seules": 0.0,
+          "ia_seule": 11.6,
+          "les_deux": 1.4,
+          "aucune": 9.8
+        },
+        "salarie_fantome": {
+          "regles_seules": 0.0,
+          "ia_seule": 0.0,
+          "les_deux": 0.0,
+          "aucune": 28.6
+        },
+        "salarie_sorti_paye": {
+          "regles_seules": 0.0,
+          "ia_seule": 0.0,
+          "les_deux": 0.0,
+          "aucune": 26.6
+        }
+      },
+      "fauxPositifs": {
+        "regles_seules": 423.0,
+        "ia_seule": 71.6,
+        "les_deux": 36.8
+      }
+    },
+    "valeurAjouteeSeuilValide": {
+      "parType": {
+        "montant_multiplie": {
+          "regles_seules": 0.0,
+          "ia_seule": 0.0,
+          "les_deux": 25.6,
+          "aucune": 0.0
+        },
+        "erreur_virgule": {
+          "regles_seules": 0.0,
+          "ia_seule": 11.0,
+          "les_deux": 13.0,
+          "aucune": 0.0
+        },
+        "hausse_subtile": {
+          "regles_seules": 0.0,
+          "ia_seule": 5.4,
+          "les_deux": 0.8,
+          "aucune": 22.2
+        },
+        "montant_nul_negatif": {
+          "regles_seules": 0.0,
+          "ia_seule": 0.0,
+          "les_deux": 30.4,
+          "aucune": 0.0
+        },
+        "doublon": {
+          "regles_seules": 19.6,
+          "ia_seule": 0.0,
+          "les_deux": 7.6,
+          "aucune": 0.0
+        },
+        "iban_change_montant_eleve": {
+          "regles_seules": 0.0,
+          "ia_seule": 9.4,
+          "les_deux": 18.4,
+          "aucune": 0.0
+        },
+        "iban_partage": {
+          "regles_seules": 0.0,
+          "ia_seule": 13.6,
+          "les_deux": 1.4,
+          "aucune": 7.8
+        },
+        "salarie_fantome": {
+          "regles_seules": 0.0,
+          "ia_seule": 0.0,
+          "les_deux": 0.0,
+          "aucune": 28.6
+        },
+        "salarie_sorti_paye": {
+          "regles_seules": 0.0,
+          "ia_seule": 0.2,
+          "les_deux": 0.0,
+          "aucune": 26.4
+        }
+      },
+      "fauxPositifs": {
+        "regles_seules": 69.0,
+        "ia_seule": 475.6,
+        "les_deux": 390.8
+      }
+    },
+    "ablation": {
+      "montant": {
+        "f1": {
+          "moyenne": 0.30699266628670496,
+          "ecartType": 0.11446662590903797
+        },
+        "rappel": {
+          "moyenne": 0.599641719918174,
+          "ecartType": 0.11309881118566928
+        },
+        "precision": {
+          "moyenne": 0.24296277384026427,
+          "ecartType": 0.15448081443450143
+        },
+        "prAuc": {
+          "moyenne": 0.507538709811157,
+          "ecartType": 0.031681317388873725
+        },
+        "prAucValidation": {
+          "moyenne": 0.6858351652399485,
+          "ecartType": 0.04065460902093839
+        },
+        "rappelParType": {
+          "montant_multiplie": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "erreur_virgule": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "hausse_subtile": {
+            "moyenne": 0.3644550264550265,
+            "ecartType": 0.3428745054066078
+          },
+          "montant_nul_negatif": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "doublon": {
+            "moyenne": 0.41818181818181815,
+            "ecartType": 0.4762109401348652
+          },
+          "iban_change_montant_eleve": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "iban_partage": {
+            "moyenne": 0.7357142857142857,
+            "ecartType": 0.21852940772540508
+          },
+          "salarie_fantome": {
+            "moyenne": 0.0,
+            "ecartType": 0.0
+          },
+          "salarie_sorti_paye": {
+            "moyenne": 0.0,
+            "ecartType": 0.0
+          }
+        }
+      },
+      "ecart_moyenne_salarie": {
+        "f1": {
+          "moyenne": 0.3303040550438868,
+          "ecartType": 0.07829853322606002
+        },
+        "rappel": {
+          "moyenne": 0.5404038947656181,
+          "ecartType": 0.0795247786246165
+        },
+        "precision": {
+          "moyenne": 0.261162538111461,
+          "ecartType": 0.10589321733904757
+        },
+        "prAuc": {
+          "moyenne": 0.3800740907258736,
+          "ecartType": 0.03161297093166537
+        },
+        "prAucValidation": {
+          "moyenne": 0.4871714436158888,
+          "ecartType": 0.028683219768060614
+        },
+        "rappelParType": {
+          "montant_multiplie": {
+            "moyenne": 0.9923076923076923,
+            "ecartType": 0.015384615384615375
+          },
+          "erreur_virgule": {
+            "moyenne": 0.975,
+            "ecartType": 0.03333333333333334
+          },
+          "hausse_subtile": {
+            "moyenne": 0.09705820105820107,
+            "ecartType": 0.06764474095992865
+          },
+          "montant_nul_negatif": {
+            "moyenne": 0.9121428571428571,
+            "ecartType": 0.12656368889590242
+          },
+          "doublon": {
+            "moyenne": 0.3297702297702298,
+            "ecartType": 0.35819032800668116
+          },
+          "iban_change_montant_eleve": {
+            "moyenne": 0.992,
+            "ecartType": 0.016000000000000014
+          },
+          "iban_partage": {
+            "moyenne": 0.6625541125541126,
+            "ecartType": 0.14146375429143515
+          },
+          "salarie_fantome": {
+            "moyenne": 0.0,
+            "ecartType": 0.0
+          },
+          "salarie_sorti_paye": {
+            "moyenne": 0.009523809523809523,
+            "ecartType": 0.019047619047619046
+          }
+        }
+      },
+      "zscore_client": {
+        "f1": {
+          "moyenne": 0.26359513372012366,
+          "ecartType": 0.0770065324933982
+        },
+        "rappel": {
+          "moyenne": 0.5639958657335832,
+          "ecartType": 0.07229558489228545
+        },
+        "precision": {
+          "moyenne": 0.1840978165113596,
+          "ecartType": 0.08101066329611074
+        },
+        "prAuc": {
+          "moyenne": 0.4587165102836847,
+          "ecartType": 0.030958789357646125
+        },
+        "prAucValidation": {
+          "moyenne": 0.6912965161526567,
+          "ecartType": 0.05695777758050345
+        },
+        "rappelParType": {
+          "montant_multiplie": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "erreur_virgule": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "hausse_subtile": {
+            "moyenne": 0.34557671957671954,
+            "ecartType": 0.23204102796861545
+          },
+          "montant_nul_negatif": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "doublon": {
+            "moyenne": 0.1902097902097902,
+            "ecartType": 0.29795134036039117
+          },
+          "iban_change_montant_eleve": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "iban_partage": {
+            "moyenne": 0.6334415584415585,
+            "ecartType": 0.12280455204525574
+          },
+          "salarie_fantome": {
+            "moyenne": 0.0,
+            "ecartType": 0.0
+          },
+          "salarie_sorti_paye": {
+            "moyenne": 0.0,
+            "ecartType": 0.0
+          }
+        }
+      },
+      "variation_mois_precedent": {
+        "f1": {
+          "moyenne": 0.2143152992602492,
+          "ecartType": 0.048657972619479156
+        },
+        "rappel": {
+          "moyenne": 0.5877265046999958,
+          "ecartType": 0.1416885340546345
+        },
+        "precision": {
+          "moyenne": 0.14375451724552427,
+          "ecartType": 0.06228900655941594
+        },
+        "prAuc": {
+          "moyenne": 0.3640071181145836,
+          "ecartType": 0.05032416034715527
+        },
+        "prAucValidation": {
+          "moyenne": 0.48360657863933343,
+          "ecartType": 0.05439425003175066
+        },
+        "rappelParType": {
+          "montant_multiplie": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "erreur_virgule": {
+            "moyenne": 0.9,
+            "ecartType": 0.14092945437739804
+          },
+          "hausse_subtile": {
+            "moyenne": 0.23362962962962958,
+            "ecartType": 0.19014772855379908
+          },
+          "montant_nul_negatif": {
+            "moyenne": 0.7890269151138717,
+            "ecartType": 0.28584490068133017
+          },
+          "doublon": {
+            "moyenne": 0.6363636363636364,
+            "ecartType": 0.44905778309921707
+          },
+          "iban_change_montant_eleve": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "iban_partage": {
+            "moyenne": 0.8202380952380952,
+            "ecartType": 0.20372105333935459
+          },
+          "salarie_fantome": {
+            "moyenne": 0.0,
+            "ecartType": 0.0
+          },
+          "salarie_sorti_paye": {
+            "moyenne": 0.009523809523809523,
+            "ecartType": 0.019047619047619046
+          }
+        }
+      },
+      "iban_change_recent": {
+        "f1": {
+          "moyenne": 0.20244586280224802,
+          "ecartType": 0.029151849011969284
+        },
+        "rappel": {
+          "moyenne": 0.6284345938536455,
+          "ecartType": 0.14157515790011274
+        },
+        "precision": {
+          "moyenne": 0.12103929270914712,
+          "ecartType": 0.015629671325795715
+        },
+        "prAuc": {
+          "moyenne": 0.3450333983043626,
+          "ecartType": 0.05834527668254124
+        },
+        "prAucValidation": {
+          "moyenne": 0.5354139118098549,
+          "ecartType": 0.06439864350299336
+        },
+        "rappelParType": {
+          "montant_multiplie": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "erreur_virgule": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "hausse_subtile": {
+            "moyenne": 0.5116613756613757,
+            "ecartType": 0.3730753550833032
+          },
+          "montant_nul_negatif": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "doublon": {
+            "moyenne": 0.620979020979021,
+            "ecartType": 0.43750523075193337
+          },
+          "iban_change_montant_eleve": {
+            "moyenne": 0.9378560794044665,
+            "ecartType": 0.09034438370173907
+          },
+          "iban_partage": {
+            "moyenne": 0.6617882117882118,
+            "ecartType": 0.38044741396175225
+          },
+          "salarie_fantome": {
+            "moyenne": 0.0,
+            "ecartType": 0.0
+          },
+          "salarie_sorti_paye": {
+            "moyenne": 0.009523809523809523,
+            "ecartType": 0.019047619047619046
+          }
+        }
+      },
+      "nb_paiements_meme_iban": {
+        "f1": {
+          "moyenne": 0.29224494249017435,
+          "ecartType": 0.11311846067079222
+        },
+        "rappel": {
+          "moyenne": 0.4744809474670483,
+          "ecartType": 0.025218513079790048
+        },
+        "precision": {
+          "moyenne": 0.22996786795715018,
+          "ecartType": 0.11434401073431537
+        },
+        "prAuc": {
+          "moyenne": 0.3788504253844297,
+          "ecartType": 0.05102820171313082
+        },
+        "prAucValidation": {
+          "moyenne": 0.4920980345654048,
+          "ecartType": 0.050511724501288754
+        },
+        "rappelParType": {
+          "montant_multiplie": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "erreur_virgule": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "hausse_subtile": {
+            "moyenne": 0.11393650793650793,
+            "ecartType": 0.02861168240188726
+          },
+          "montant_nul_negatif": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "doublon": {
+            "moyenne": 0.01818181818181818,
+            "ecartType": 0.03636363636363636
+          },
+          "iban_change_montant_eleve": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "iban_partage": {
+            "moyenne": 0.12370129870129869,
+            "ecartType": 0.06933471775758422
+          },
+          "salarie_fantome": {
+            "moyenne": 0.0,
+            "ecartType": 0.0
+          },
+          "salarie_sorti_paye": {
+            "moyenne": 0.009523809523809523,
+            "ecartType": 0.019047619047619046
+          }
+        }
+      },
+      "_complet": {
+        "f1": {
+          "moyenne": 0.22894714178599682,
+          "ecartType": 0.056478936023396306
+        },
+        "rappel": {
+          "moyenne": 0.5680389283365405,
+          "ecartType": 0.08837836251020562
+        },
+        "precision": {
+          "moyenne": 0.14767568279099783,
+          "ecartType": 0.049896333138400334
+        },
+        "prAuc": {
+          "moyenne": 0.40967961835835265,
+          "ecartType": 0.054874314009046604
+        },
+        "prAucValidation": {
+          "moyenne": 0.5853635036902052,
+          "ecartType": 0.0427274622745742
+        },
+        "rappelParType": {
+          "montant_multiplie": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "erreur_virgule": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "hausse_subtile": {
+            "moyenne": 0.2550582010582011,
+            "ecartType": 0.24912211384862973
+          },
+          "montant_nul_negatif": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "doublon": {
+            "moyenne": 0.28251748251748254,
+            "ecartType": 0.37073754853519
+          },
+          "iban_change_montant_eleve": {
+            "moyenne": 1.0,
+            "ecartType": 0.0
+          },
+          "iban_partage": {
+            "moyenne": 0.6558441558441558,
+            "ecartType": 0.17740468900290063
+          },
+          "salarie_fantome": {
+            "moyenne": 0.0,
+            "ecartType": 0.0
+          },
+          "salarie_sorti_paye": {
+            "moyenne": 0.009523809523809523,
+            "ecartType": 0.019047619047619046
+          }
+        }
+      }
+    },
+    "variablesRetenues": {
+      "nbGraines": 5,
+      "parVariable": {
+        "montant": 0,
+        "ecart_moyenne_salarie": 5,
+        "zscore_client": 0,
+        "variation_mois_precedent": 5,
+        "iban_change_recent": 4,
+        "nb_paiements_meme_iban": 5,
+        "ecart_relatif_societe": 5
+      }
+    }
+  },
+  "candidat": {
+    "version": "hybride-optimise-v2-2026-11-15",
+    "statut": "candidat, non active",
+    "graine": 42,
+    "variables": [
+      "ecart_moyenne_salarie",
+      "variation_mois_precedent",
+      "iban_change_recent",
+      "nb_paiements_meme_iban",
+      "ecart_relatif_societe"
+    ],
+    "seuilScore": 0.448,
+    "regles": {
+      "iban_invalide": true,
+      "montant_non_positif": true,
+      "doublon": true,
+      "montant_double_ecart_relatif_societe": 2.0
+    },
+    "nbEntrainement": 48791,
+    "hyperparametres": {
+      "nbArbres": 200,
+      "contamination": 0.01
+    },
+    "testGraine42": {
+      "precision": 0.8381,
+      "rappel": 0.7068,
+      "f1": 0.7669,
+      "fp_pour_1000": 2.7369
+    },
+    "moyenne5Graines": {
+      "precision": 0.8807,
+      "rappel": 0.6648,
+      "f1": 0.7543,
+      "prAuc": 0.7137,
+      "fpPour1000": 2.0119
+    },
+    "avertissement": "Entraîné et évalué sur des données synthétiques ; à confirmer sur des données réelles."
   }
 }

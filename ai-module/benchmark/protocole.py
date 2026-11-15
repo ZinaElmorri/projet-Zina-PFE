@@ -48,6 +48,10 @@ def _features_par_mois(df_part: pd.DataFrame) -> pd.DataFrame:
         f["evenement_normal"] = g["evenement_normal"].to_numpy()
         f["mois_depuis_dernier_paiement"] = g["mois_depuis_dernier_paiement"].to_numpy()
         f["iban_valide"] = f["iban"].map(ds.iban_valide).to_numpy()
+        # Effet collectif : écart à l'historique relatif à la médiane de la société pour le mois (13e mois, augmentation générale).
+        f["ecart_relatif_societe"] = f["ecart_moyenne_salarie"] / f.groupby("societe_id")["ecart_moyenne_salarie"].transform("median")
+        # Mois civil de la paie (information de la période, connue au moment du contrôle).
+        f["est_decembre"] = int(((ds.MOIS_DEBUT[1] - 1 + int(g["mois_index"].iloc[0]) - 1) % 12) + 1 == 12)
         morceaux.append(f)
     return pd.concat(morceaux, ignore_index=True)
 
@@ -85,18 +89,22 @@ def metriques_decision(y: np.ndarray, flags: np.ndarray) -> Dict[str, float]:
             "fp_pour_1000": fp / len(y) * 1000, "alertes_pour_1000": (tp + fp) / len(y) * 1000}
 
 
-def f1_selon_seuil(y: np.ndarray, score: np.ndarray, forces: np.ndarray | None = None) -> np.ndarray:
+def f1_selon_seuil(y: np.ndarray, score: np.ndarray, forces: np.ndarray | None = None,
+                   grille: np.ndarray | None = None) -> np.ndarray:
     """F1 pour chaque seuil de la grille ; ``forces`` = fiches toujours signalées (règle métier)."""
     y = np.asarray(y).astype(bool)
+    grille = GRILLE_SEUILS if grille is None else grille
     forces = np.zeros_like(y) if forces is None else np.asarray(forces).astype(bool)
-    resultat = np.empty(len(GRILLE_SEUILS))
-    for i, t in enumerate(GRILLE_SEUILS):
+    resultat = np.empty(len(grille))
+    for i, t in enumerate(grille):
         resultat[i] = metriques_decision(y, (score >= t) | forces)["f1"]
     return resultat
 
 
-def choisir_seuil(y_val: np.ndarray, score_val: np.ndarray, forces_val: np.ndarray | None = None) -> float:
+def choisir_seuil(y_val: np.ndarray, score_val: np.ndarray, forces_val: np.ndarray | None = None,
+                  grille: np.ndarray | None = None) -> float:
     """Seuil maximisant le F1 sur la VALIDATION (au milieu du plateau en cas d'égalité)."""
-    f1 = f1_selon_seuil(y_val, score_val, forces_val)
+    grille = GRILLE_SEUILS if grille is None else grille
+    f1 = f1_selon_seuil(y_val, score_val, forces_val, grille)
     meilleurs = np.flatnonzero(np.isclose(f1, f1.max()))
-    return float(GRILLE_SEUILS[meilleurs[len(meilleurs) // 2]])
+    return float(grille[meilleurs[len(meilleurs) // 2]])

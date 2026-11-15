@@ -1,0 +1,38 @@
+{
+  "version": "hybride-optimise-v2-2026-11-15",
+  "statut": "candidat, non active",
+  "graine": 42,
+  "variables": [
+    "ecart_moyenne_salarie",
+    "variation_mois_precedent",
+    "iban_change_recent",
+    "nb_paiements_meme_iban",
+    "ecart_relatif_societe"
+  ],
+  "seuilScore": 0.448,
+  "regles": {
+    "iban_invalide": true,
+    "montant_non_positif": true,
+    "doublon": true,
+    "montant_double_ecart_relatif_societe": 2.0
+  },
+  "nbEntrainement": 48791,
+  "hyperparametres": {
+    "nbArbres": 200,
+    "contamination": 0.01
+  },
+  "testGraine42": {
+    "precision": 0.8381,
+    "rappel": 0.7068,
+    "f1": 0.7669,
+    "fp_pour_1000": 2.7369
+  },
+  "moyenne5Graines": {
+    "precision": 0.8807,
+    "rappel": 0.6648,
+    "f1": 0.7543,
+    "prAuc": 0.7137,
+    "fpPour1000": 2.0119
+  },
+  "avertissement": "Entraîné et évalué sur des données synthétiques ; à confirmer sur des données réelles."
+}
