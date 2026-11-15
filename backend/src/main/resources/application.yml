@@ -40,6 +40,7 @@ app:
     timeout-ms: ${AI_TIMEOUT_MS:5000}
     score-threshold: ${AI_SCORE_THRESHOLD:0.6}
     history-months: ${AI_HISTORY_MONTHS:6}
+    benchmark-file: ${AI_BENCHMARK_FILE:../ai-module/benchmark/rapport/resultats.json}
   otp:
     enabled: ${OTP_ENABLED:true}
     expiration-minutes: ${OTP_EXPIRATION_MINUTES:5}

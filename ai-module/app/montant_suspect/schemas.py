@@ -25,6 +25,9 @@ class ResultatMS(BaseModel):
     score: float
     isAnomaly: bool
     raisons: List[str] = Field(default_factory=list)
+    # Champs ajoutés (facultatifs) : absents pour un paiement non signalé.
+    typeProbable: Optional[str] = None
+    recommandation: Optional[str] = None
 
 
 class DetectResponseMS(BaseModel):

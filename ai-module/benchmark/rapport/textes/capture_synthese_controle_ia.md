@@ -1,0 +1,3 @@
+**Légende proposée** : Synthèse du résultat d'un fichier : carte « Contrôle IA » avec le nombre de fiches suspectes, leur part et la répartition par type probable.
+
+**Interprétation** : La synthèse du fichier regroupe quatre cartes cliquables : validation XSD, contrôles métier, contrôle IA et statut. La carte IA indique le nombre de fiches suspectes sur le nombre de fiches analysées, le pourcentage correspondant, la version du modèle et la répartition par type probable d'anomalie. L'Expert RH ou le Manager voit ainsi en un coup d'œil ce que l'IA a relevé, et peut ouvrir le détail d'un clic. Si le module IA est indisponible, la carte l'indique et le fichier reste exploitable avec les seuls contrôles métier et la validation XSD.

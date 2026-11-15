@@ -1,0 +1,3 @@
+**Légende proposée** : Tableau de bord KPI : cartes « Anomalies détectées par l'IA » et « Part détectée par l'IA seule ».
+
+**Interprétation** : Deux indicateurs du tableau de bord KPI mesurent l'apport de l'IA sur la période choisie : le nombre de fiches signalées par l'IA et la part de celles que les contrôles métier ne signalent pas (IBAN ou BIC invalide, montant nul ou négatif, doublon). Cette seconde valeur chiffre la valeur ajoutée de l'IA face aux règles, comme l'analyse de la section 4. Les chiffres sont calculés sur la dernière analyse de chaque fiche ; en l'absence de fiche signalée, la part est indisponible (« — ») et non nulle.

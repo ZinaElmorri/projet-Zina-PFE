@@ -1,6 +1,9 @@
 package com.zina.sepa.security;
 
 import com.zina.sepa.ai.AiAnomalyService;
+import com.zina.sepa.ai.AdminAiController;
+import com.zina.sepa.ai.AiSupervisionService;
+import com.zina.sepa.ai.QualiteModeleService;
 import com.zina.sepa.ai.AiDetectionController;
 import com.zina.sepa.controller.TransactionController;
 import com.zina.sepa.repository.TransactionRepository;
@@ -50,12 +53,16 @@ class AdminRestrictionsTest {
         }
         @Bean AnomalieController anomalies() { return new AnomalieController(mock(AnomalieService.class)); }
         @Bean MassController masse() { return new MassController(mock(MassPaymentService.class), mock(FichierWorkflowService.class)); }
+        @Bean AdminAiController adminAi() {
+            return new AdminAiController(mock(AiSupervisionService.class), mock(QualiteModeleService.class));
+        }
     }
 
     @Autowired TransactionController transactions;
     @Autowired AiDetectionController aiDetection;
     @Autowired AnomalieController anomalies;
     @Autowired MassController masse;
+    @Autowired AdminAiController adminAi;
 
     @AfterEach
     void deconnecter() {
@@ -119,6 +126,18 @@ class AdminRestrictionsTest {
             assertThat(autorise(() -> masse.detail(1L))).as("détail " + role).isTrue();
             assertThat(autorise(() -> masse.resultat(1L))).as("résultat " + role).isTrue();
             assertThat(autorise(() -> masse.telecharger(1L, null))).as("téléchargement " + role).isTrue();
+        }
+    }
+
+    @Test
+    void qualite_du_modele_ia_reservee_a_l_admin_les_autres_endpoints_ia_inchanges() {
+        connecte("ADMIN");
+        assertThat(autorise(() -> adminAi.qualite())).as("qualité admin").isTrue();
+        assertThat(autorise(() -> adminAi.health())).as("health admin").isTrue();
+        for (String role : List.of("MANAGER", "EXPERT_RH")) {
+            connecte(role);
+            assertThat(autorise(() -> adminAi.qualite())).as("qualité " + role).isFalse();
+            assertThat(autorise(() -> adminAi.health())).as("health " + role).isTrue();
         }
     }
 

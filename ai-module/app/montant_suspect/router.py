@@ -4,7 +4,7 @@ from typing import Optional
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
-from .features import build_reasons, compute_features
+from .features import build_reasons, compute_features, recommandation, type_probable
 from .model import SOURCE_REEL, SOURCE_SYNTHETIQUE, MontantSuspectModel
 from .schemas import (
     DetectRequestMS,
@@ -50,11 +50,14 @@ def detect(request: DetectRequestMS) -> DetectResponseMS:
     for i in range(len(df)):
         row = df.iloc[i]
         is_anomaly = bool(flags[i])
+        type_anomalie = type_probable(row) if is_anomaly else None
         resultats.append(ResultatMS(
             ficheId=int(row["ficheId"]),
             score=round(float(scores[i]), 3),
             isAnomaly=is_anomaly,
             raisons=build_reasons(row) if is_anomaly else [],
+            typeProbable=type_anomalie,
+            recommandation=recommandation(type_anomalie) if is_anomaly else None,
         ))
     return DetectResponseMS(modelVersion=_model.version or "", resultats=resultats)
 

@@ -24,6 +24,17 @@ public class AiProperties {
     /** Nombre de mois d'historique transmis au modèle. */
     private int historyMonths = 6;
 
+    /** Résultats du dernier banc d'essai du modèle (resultats.json), lus par la page « Qualité du modèle IA ». */
+    private String benchmarkFile = "../ai-module/benchmark/rapport/resultats.json";
+
+    public String getBenchmarkFile() {
+        return benchmarkFile;
+    }
+
+    public void setBenchmarkFile(String benchmarkFile) {
+        this.benchmarkFile = benchmarkFile;
+    }
+
     public boolean isEnabled() {
         return enabled;
     }

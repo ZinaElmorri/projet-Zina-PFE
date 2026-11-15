@@ -8,6 +8,7 @@ import { peutPreparer, peutSoumettre, peutValider } from '../../../constants/rol
 import { useAuth } from '../../../context/AuthContext.jsx'
 import { formatDate, formatDateCourte, formatMontant } from '../../../utils/format.js'
 import { BASE, messageEchec, STATUTS_FICHIER, telechargerFichier, urlResultat } from '../parcours.js'
+import { repartitionParType } from './ia.js'
 
 function CarteControle({ titre, couleur, valeur, detail, onClick }) {
   return (
@@ -48,6 +49,8 @@ export default function Synthese() {
   const nbErreursXsd = resultat.erreursXsd.length
   const nbAvertissementsXsd = resultat.avertissementsXsd.length
   const nbErreursMetier = metier.erreurs.length
+  const typesIa = repartitionParType(ia.lignes || [])
+  const partIa = ia.nbAnalyses > 0 ? new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 }).format((ia.nbSuspects / ia.nbAnalyses) * 100) : '0'
   const statutCode = resume.statutFichier
   const statut = STATUTS_FICHIER[statutCode] || { label: statutCode, color: 'default' }
   const estValide = statutCode === 'VALIDE'
@@ -113,8 +116,20 @@ export default function Synthese() {
             titre="Contrôle IA"
             couleur={!ia.disponible ? '#8c8c8c' : ia.nbSuspects > 0 ? '#d46b08' : '#389e0d'}
             valeur={!ia.disponible ? 'Analyse IA indisponible'
-              : ia.nbSuspects > 0 ? pluriel(ia.nbSuspects, 'montant suspect', 'montants suspects') : 'Aucun montant suspect'}
-            detail={ia.disponible ? `${pluriel(ia.nbAnalyses, 'paiement analysé', 'paiements analysés')}${ia.modelVersion ? ` — modèle ${ia.modelVersion}` : ''}` : 'Le fichier reste exploitable sans l’IA.'}
+              : ia.nbSuspects > 0
+                ? `${pluriel(ia.nbSuspects, 'fiche suspecte', 'fiches suspectes')} sur ${ia.nbAnalyses} (${partIa} %)`
+                : 'Aucune fiche suspecte'}
+            detail={ia.disponible ? (
+              <span>
+                {`${pluriel(ia.nbAnalyses, 'paiement analysé', 'paiements analysés')}${ia.modelVersion ? ` — modèle ${ia.modelVersion}` : ''}`}
+                {typesIa.length > 0 && (
+                  <span style={{ display: 'block', marginTop: 6 }}>
+                    {typesIa.slice(0, 3).map((p) => <Tag key={p.type} color="geekblue" style={{ marginBottom: 4 }}>{p.type} × {p.nombre}</Tag>)}
+                    {typesIa.length > 3 && <Tag>+{typesIa.length - 3} autre(s)</Tag>}
+                  </span>
+                )}
+              </span>
+            ) : 'Le fichier reste exploitable sans l’IA.'}
             onClick={vers('controle-ia')}
           />
         </Col>

@@ -173,7 +173,8 @@ public class AiAnomalyService {
                 t.setSourceAnomalie(SOURCE_IA);
                 t.setModelVersion(response.modelVersion());
                 t.setRaisonsAnomalie(r.raisons() == null ? "" : String.join(" ; ", r.raisons()));
-                t.setRecommandation(RECOMMANDATION);
+                t.setRecommandation(r.recommandation() != null && !r.recommandation().isBlank()
+                        ? r.recommandation() : RECOMMANDATION);
                 transactionRepository.save(t);
             } else if (SOURCE_IA.equals(t.getSourceAnomalie())) {
                 // Évite les doublons si le traitement est relancé : purge l'ancienne anomalie IA.

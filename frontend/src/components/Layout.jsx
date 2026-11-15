@@ -12,6 +12,7 @@ import {
   FileSearchOutlined,
   HistoryOutlined,
   LogoutOutlined,
+  RobotOutlined,
   SendOutlined,
   SwapOutlined,
   TeamOutlined,
@@ -30,6 +31,7 @@ import {
   peutValider,
   peutVoirDashboard,
   peutVoirKpi,
+  peutVoirQualiteIa,
   peutVoirTransactions,
 } from '../constants/roles.js'
 
@@ -71,6 +73,7 @@ const FIL_ARIANE = {
   '/societes': ['Administration', 'Sociétés débitrices'],
   '/anomalies': ['Contrôle', 'Anomalies'],
   '/xsd': ['Contrôle', 'Schémas XSD'],
+  '/qualite-ia': ['Contrôle', 'Qualité du modèle IA'],
   '/users': ['Administration', 'Utilisateurs'],
   '/audit': ['Administration', "Journal d'audit"],
   '/profil': ['Mon compte', 'Profil'],
@@ -101,6 +104,7 @@ function menuItems(role) {
       type: 'group', label: 'Contrôle', children: [
         ...(peutTraiterAnomalies(role) ? [{ key: '/anomalies', icon: <AlertOutlined />, label: 'Anomalies' }] : []),
         { key: '/xsd', icon: <FileSearchOutlined />, label: 'Schémas XSD' },
+        ...(peutVoirQualiteIa(role) ? [{ key: '/qualite-ia', icon: <RobotOutlined />, label: 'Qualité du modèle IA' }] : []),
       ],
     },
     {

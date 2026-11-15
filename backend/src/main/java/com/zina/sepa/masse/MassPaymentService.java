@@ -433,10 +433,17 @@ public class MassPaymentService {
             return new LigneIa(t.getId(), t.getEmployeId(), t.getNomBeneficiaire(), t.getMontant(),
                     d == null ? null : d.score(), suspect,
                     suspect && d.raisons() != null ? d.raisons() : List.of(),
-                    suspect ? t.getRecommandation() : null);
+                    suspect ? t.getRecommandation() : null,
+                    d == null ? null : niveauIa(d.score()),
+                    suspect ? d.typeProbable() : null);
         }).collect(Collectors.toList());
         int suspects = (int) lignes.stream().filter(LigneIa::suspect).count();
         return new ResultatIa(true, ia.modelVersion(), lignes.size(), suspects, lignes);
+    }
+
+    /** Niveau affiché : mêmes bornes que le niveau de risque de la fiche (0,35 et 0,6) ; « critique » est fondu dans « élevé ». */
+    static String niveauIa(double score) {
+        return score >= 0.6 ? "ELEVE" : score >= 0.35 ? "MOYEN" : "FAIBLE";
     }
 
     private List<ErreurXsd> avertissementsXml(MassPaymentXmlGenerator.Genere genere, List<String> avertissements) {

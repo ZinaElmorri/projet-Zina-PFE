@@ -171,7 +171,11 @@ public final class MasseDto {
             Double score,
             boolean suspect,
             List<String> raisons,
-            String recommandation
+            String recommandation,
+            /** FAIBLE, MOYEN ou ELEVE selon le score (null pour un fichier antérieur à ce champ). */
+            String niveau,
+            /** Type d'anomalie le plus probable (null si non fourni par le module IA). */
+            String typeProbable
     ) {}
 
     /** {@code disponible} est faux si l'IA est désactivée, injoignable ou si le fichier est antérieur à l'analyse. */

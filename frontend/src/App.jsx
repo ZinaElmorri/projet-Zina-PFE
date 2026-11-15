@@ -16,6 +16,7 @@ import {
   peutValider,
   peutVoirDashboard,
   peutVoirKpi,
+  peutVoirQualiteIa,
   peutVoirResultat,
   peutVoirTransactions,
 } from './constants/roles.js'
@@ -28,6 +29,7 @@ const Dashboard = lazy(() => import('./pages/Dashboard.jsx'))
 const KpiDashboard = lazy(() => import('./pages/KpiDashboard.jsx'))
 const Login = lazy(() => import('./pages/Login.jsx'))
 const Profil = lazy(() => import('./pages/Profil.jsx'))
+const QualiteModeleIa = lazy(() => import('./pages/QualiteModeleIa.jsx'))
 const Register = lazy(() => import('./pages/Register.jsx'))
 const Transactions = lazy(() => import('./pages/Transactions.jsx'))
 const VirementsHistorique = lazy(() => import('./pages/virements/Historique.jsx'))
@@ -81,6 +83,7 @@ export default function App() {
           <Route path="/affectations" element={<ProtectedRoute autorise={peutAffecter}><Affectations /></ProtectedRoute>} />
           <Route path="/societes" element={<ProtectedRoute autorise={peutGererSocietes}><Societes /></ProtectedRoute>} />
           <Route path="/xsd" element={<Xsd />} />
+          <Route path="/qualite-ia" element={<ProtectedRoute autorise={peutVoirQualiteIa}><QualiteModeleIa /></ProtectedRoute>} />
           <Route path="/audit" element={<ProtectedRoute autorise={peutConsulterAudit}><Audit /></ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute autorise={peutGererUtilisateurs}><Users /></ProtectedRoute>} />
           <Route path="/profil" element={<Profil />} />

@@ -23,14 +23,23 @@ import java.util.Map;
 public class AdminAiController {
 
     private final AiSupervisionService supervision;
+    private final QualiteModeleService qualite;
 
-    public AdminAiController(AiSupervisionService supervision) {
+    public AdminAiController(AiSupervisionService supervision, QualiteModeleService qualite) {
         this.supervision = supervision;
+        this.qualite = qualite;
     }
 
     @GetMapping("/health")
     public Map<String, Object> health() {
         return supervision.etat();
+    }
+
+    /** Qualité du modèle (état en service + résultats du dernier banc d'essai) : réservé à l'administrateur. */
+    @GetMapping("/qualite")
+    @PreAuthorize(Roles.ADMIN)
+    public Map<String, Object> qualite() {
+        return qualite.qualite();
     }
 
     @GetMapping("/metrics")

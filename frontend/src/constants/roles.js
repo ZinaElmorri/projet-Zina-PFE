@@ -40,5 +40,7 @@ export const peutVoirDashboard = est('EXPERT_RH', 'MANAGER', 'ADMIN')
 export const peutVoirKpi = est('EXPERT_RH', 'MANAGER', 'ADMIN')
 /** Les montants globaux sont affichés au Manager et à l'administrateur ; l'Expert RH a une version limitée. */
 export const peutVoirKpiComplet = est('MANAGER', 'ADMIN')
+/** Page « Qualité du modèle IA » : supervision technique du modèle, sans donnée de salarié (administrateur seul). */
+export const peutVoirQualiteIa = estAdmin
 /** Page d'accueil des rôles sans tableau de bord. */
 export const PAGE_ACCUEIL_ADMIN = '/users'

@@ -12,6 +12,7 @@ import {
   MinusOutlined,
   PercentageOutlined,
   ReloadOutlined,
+  RobotOutlined,
 } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import api from '../api/client'
@@ -218,6 +219,7 @@ export default function KpiDashboard() {
   const [clientId, setClientId] = useState('')
   const [kpi, setKpi] = useState(null)
   const [precedent, setPrecedent] = useState(null)
+  const [kpiIa, setKpiIa] = useState(null)
   const [periodeAffichee, setPeriodeAffichee] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -230,10 +232,13 @@ export default function KpiDashboard() {
     Promise.all([
       api.get('/dashboard/kpi', { params: params(periode) }),
       api.get('/dashboard/kpi', { params: params(moisPrecedent(periode)), silent: true }).then((r) => r.data).catch(() => null),
+      // Indicateurs IA : leur absence n'empêche pas l'affichage des autres indicateurs.
+      api.get('/dashboard/kpi/ia', { params: params(periode), silent: true }).then((r) => r.data).catch(() => null),
     ])
-      .then(([courant, prec]) => {
+      .then(([courant, prec, ia]) => {
         setKpi(courant.data)
         setPrecedent(prec)
+        setKpiIa(ia)
         setPeriodeAffichee(periode)
       })
       .catch(() => setError('Impossible de charger les indicateurs'))
@@ -318,6 +323,18 @@ export default function KpiDashboard() {
               <Indicateur icone={<AlertOutlined />} couleur={COULEURS.orange} libelle="Anomalies de la période"
                 valeur={<span>{nf.format(statuts.ouvertes)}<span className="kpi-sep"> / </span>{nf.format(statuts.corrigees)}<span className="kpi-sep"> / </span>{nf.format(statuts.ignorees)}</span>}
                 detail={`ouvertes / corrigées / ignorées — ${libelleMois(periodeAffichee)}`} />
+            </Col>
+            <Col xs={24} sm={12} lg={8} xxl={6}>
+              <Indicateur icone={<RobotOutlined />} couleur={COULEURS.vert} libelle="Anomalies détectées par l'IA"
+                valeur={kpiIa ? nf.format(kpiIa.anomaliesIa) : '—'}
+                detail={kpiIa ? `fiches signalées par l'IA — ${libelleMois(periodeAffichee)}` : 'Donnée non disponible'} />
+            </Col>
+            <Col xs={24} sm={12} lg={8} xxl={6}>
+              <Indicateur icone={<RobotOutlined />} couleur={COULEURS.primaire} libelle="Part détectée par l'IA seule"
+                valeur={kpiIa && kpiIa.partIaSeule != null ? `${nf1.format(kpiIa.partIaSeule)} %` : '—'}
+                detail={!kpiIa ? 'Donnée non disponible'
+                  : kpiIa.anomaliesIa === 0 ? 'Aucune fiche signalée par l\'IA sur la période'
+                    : `${nf.format(kpiIa.anomaliesIaSeule)} sur ${nf.format(kpiIa.anomaliesIa)} non vues par les contrôles métier`} />
             </Col>
           </Row>
 

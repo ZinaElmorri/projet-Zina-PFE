@@ -1,0 +1,3 @@
+**Légende proposée** : Sous-page « Contrôle IA » : fiches suspectes triées par score, avec niveau, type probable, explication et recommandation.
+
+**Interprétation** : Pour chaque fiche suspecte, la sous-page affiche le score et son niveau (faible, moyen ou élevé), le type d'anomalie probable, une explication en langage clair (par exemple « Montant 3,1× la moyenne des 6 derniers mois » ou « IBAN modifié ce mois-ci ») et une recommandation de correction adaptée au type. Le tableau est trié par score décroissant et peut être filtré par niveau. L'explication traduit les variables qui ont conduit le modèle à signaler la fiche : l'utilisateur sait quoi vérifier et pourquoi, ce qui rend la décision (corriger, confirmer ou ignorer) rapide et traçable.

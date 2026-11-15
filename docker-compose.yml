@@ -44,11 +44,15 @@ services:
       SPRING_DATASOURCE_PASSWORD: sepa_pwd
       AI_MODULE_URL: http://ai-module:8000
       AI_ENABLED: "true"
+      # Résultats du banc d'essai IA (page « Qualité du modèle IA »), montés en lecture seule.
+      AI_BENCHMARK_FILE: /app/ia-rapport/resultats.json
       MAIL_HOST: mailhog
       MAIL_PORT: 1025
       OTP_ENABLED: "true"
     ports:
       - "8080:8080"
+    volumes:
+      - ./ai-module/benchmark/rapport:/app/ia-rapport:ro
     depends_on:
       postgres:
         condition: service_healthy

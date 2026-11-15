@@ -2367,5 +2367,24 @@
       "fpPour1000": 2.0119
     },
     "avertissement": "Entraîné et évalué sur des données synthétiques ; à confirmer sur des données réelles."
+  },
+  "scenarioSoutenanceMesure": {
+    "date": "2026-11-15",
+    "modele": "iforest-2026-09-25 (modèle en service)",
+    "fiches": 1100,
+    "anomaliesConnues": 12,
+    "suspectsIa": 9,
+    "detecteesParIa": 5,
+    "fauxPositifsIa": 4,
+    "fauxPositifsSurCasNormauxAtypiques": 4,
+    "niveaux": {
+      "eleve": 7,
+      "moyen": 2,
+      "faible": 0
+    },
+    "metier": {
+      "erreurs": 1,
+      "avertissements": 1
+    }
   }
 }
