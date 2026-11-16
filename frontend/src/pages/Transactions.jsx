@@ -182,7 +182,7 @@ export default function Transactions() {
               <td style={{ whiteSpace: 'nowrap' }}>{t.clientId || '—'}</td>
               <td>{t.employeId}</td>
               <td>{t.nomBeneficiaire}</td>
-              <td style={{ whiteSpace: 'nowrap' }}>{masquerIban(t.iban)}</td>
+              <td>{masquerIban(t.iban)}</td>
               <td>{afficherMontant(t)}</td>
               <td>
                 {(() => {
