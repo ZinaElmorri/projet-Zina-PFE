@@ -4,9 +4,12 @@ import com.zina.sepa.domain.entity.Transaction;
 import com.zina.sepa.domain.enums.AuditAction;
 import com.zina.sepa.domain.enums.TransactionStatus;
 import com.zina.sepa.repository.TransactionRepository;
+import com.zina.sepa.dto.TransactionRequest;
+import com.zina.sepa.masse.AccesSocietes;
 import com.zina.sepa.service.AuditService;
 import com.zina.sepa.service.BusinessControlService;
 import com.zina.sepa.service.XmlGenerationService;
+import com.zina.sepa.societe.SocieteService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -16,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,10 +39,12 @@ class TransactionControllerTest {
     @Mock TransactionRepository repository;
     @Mock XmlGenerationService xmlGenerationService;
     @Mock AuditService auditService;
+    @Mock AccesSocietes acces;
+    @Mock SocieteService societeService;
 
     private TransactionController controller() {
         return new TransactionController(repository, new BusinessControlService(), xmlGenerationService,
-                auditService);
+                auditService, acces, societeService);
     }
 
     private Transaction paiement() {
@@ -54,6 +60,32 @@ class TransactionControllerTest {
         assertThat(paiement.getStatut()).isEqualTo(TransactionStatus.BROUILLON);
         verify(repository, never()).save(any());
         verifyNoInteractions(auditService, xmlGenerationService);
+    }
+
+    private TransactionRequest requete(String societe) {
+        return new TransactionRequest("EMP1", "Alice", "FR7630006000011234567890189", "AGRIFRPP",
+                new BigDecimal("100.00"), null, "Salaire", societe);
+    }
+
+    @Test
+    void creation_rattache_la_fiche_a_la_societe_choisie() {
+        when(societeService.codesActifs()).thenReturn(List.of("SOC-001"));
+        when(repository.save(any(Transaction.class))).thenAnswer(appel -> appel.getArgument(0));
+
+        Transaction cree = controller().create(requete(" SOC-001 "), null).getBody();
+
+        assertThat(cree.getClientId()).isEqualTo("SOC-001");
+        assertThat(cree.getStatut()).isEqualTo(TransactionStatus.BROUILLON);
+        verify(acces).verifier("SOC-001");
+    }
+
+    @Test
+    void creation_refuse_une_societe_inconnue_ou_inactive() {
+        when(societeService.codesActifs()).thenReturn(List.of("SOC-001"));
+
+        assertThatThrownBy(() -> controller().create(requete("SOC-999"), null))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("SOC-999");
+        verify(repository, never()).save(any());
     }
 
     @ParameterizedTest

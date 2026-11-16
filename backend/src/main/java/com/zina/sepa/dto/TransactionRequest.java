@@ -13,5 +13,6 @@ public record TransactionRequest(
         String bic,
         @NotNull @DecimalMin("0.01") BigDecimal montant,
         String devise,
-        String libelle
+        String libelle,
+        @NotBlank(message = "Sélectionnez la société débitrice de ce paiement.") String clientId
 ) {}

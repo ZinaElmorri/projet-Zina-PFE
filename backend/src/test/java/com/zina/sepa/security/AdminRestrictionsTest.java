@@ -45,7 +45,8 @@ class AdminRestrictionsTest {
     static class Config {
         @Bean TransactionController transactions() {
             return new TransactionController(mock(TransactionRepository.class), new BusinessControlService(),
-                    mock(XmlGenerationService.class), mock(AuditService.class));
+                    mock(XmlGenerationService.class), mock(AuditService.class),
+                    mock(com.zina.sepa.masse.AccesSocietes.class), mock(com.zina.sepa.societe.SocieteService.class));
         }
         @Bean AiDetectionController aiDetection() {
             return new AiDetectionController(mock(AiAnomalyService.class), mock(TransactionRepository.class),

@@ -5,8 +5,10 @@ import com.zina.sepa.domain.enums.AuditAction;
 import com.zina.sepa.domain.enums.TransactionStatus;
 import com.zina.sepa.dto.TransactionRequest;
 import com.zina.sepa.dto.ValidationResult;
+import com.zina.sepa.masse.AccesSocietes;
 import com.zina.sepa.repository.TransactionRepository;
 import com.zina.sepa.service.*;
+import com.zina.sepa.societe.SocieteService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
@@ -25,15 +27,21 @@ public class TransactionController {
     private final BusinessControlService businessControlService;
     private final XmlGenerationService xmlGenerationService;
     private final AuditService auditService;
+    private final AccesSocietes acces;
+    private final SocieteService societeService;
 
     public TransactionController(TransactionRepository repository,
                                  BusinessControlService businessControlService,
                                  XmlGenerationService xmlGenerationService,
-                                 AuditService auditService) {
+                                 AuditService auditService,
+                                 AccesSocietes acces,
+                                 SocieteService societeService) {
         this.repository = repository;
         this.businessControlService = businessControlService;
         this.xmlGenerationService = xmlGenerationService;
         this.auditService = auditService;
+        this.acces = acces;
+        this.societeService = societeService;
     }
 
     @GetMapping
@@ -46,8 +54,15 @@ public class TransactionController {
     @PreAuthorize(Roles.PREPARATION)
     public ResponseEntity<Transaction> create(@Valid @RequestBody TransactionRequest req,
                                               HttpServletRequest request) {
+        String societe = req.clientId().trim();
+        acces.verifier(societe);
+        if (!societeService.codesActifs().contains(societe)) {
+            throw new IllegalArgumentException("La société « " + societe
+                    + " » est inconnue ou inactive. Choisissez une société active dans la liste.");
+        }
         Transaction t = Transaction.builder()
                 .employeId(req.employeId())
+                .clientId(societe)
                 .nomBeneficiaire(req.nomBeneficiaire())
                 .iban(req.iban())
                 .bic(req.bic())
@@ -58,7 +73,7 @@ public class TransactionController {
                 .build();
         Transaction saved = repository.save(t);
         auditService.log(AuditAction.TRANSACTION_CREEE,
-                "Transaction #" + saved.getId(), "SUCCES", request);
+                "Transaction #" + saved.getId() + " (société " + societe + ")", "SUCCES", request);
         return ResponseEntity.ok(saved);
     }
 

@@ -51,7 +51,8 @@ class RolesAccessTest {
         @Bean MassController masse() { return new MassController(mock(MassPaymentService.class), mock(FichierWorkflowService.class)); }
         @Bean TransactionController transactions() {
             return new TransactionController(mock(TransactionRepository.class), new BusinessControlService(),
-                    mock(XmlGenerationService.class), mock(AuditService.class));
+                    mock(XmlGenerationService.class), mock(AuditService.class),
+                    mock(com.zina.sepa.masse.AccesSocietes.class), mock(com.zina.sepa.societe.SocieteService.class));
         }
     }
 

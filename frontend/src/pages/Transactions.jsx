@@ -6,7 +6,7 @@ import { peutPreparer, peutValider } from '../constants/roles.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { formatMontant, masquerIban } from '../utils/format.js'
 
-const empty = { employeId: '', nomBeneficiaire: '', iban: '', bic: '', montant: '', libelle: '' }
+const empty = { employeId: '', clientId: '', nomBeneficiaire: '', iban: '', bic: '', montant: '', libelle: '' }
 
 const STATUTS = {
   BROUILLON: { label: 'Non approuvé', color: 'default' },
@@ -25,18 +25,33 @@ export default function Transactions() {
   const [message, setMessage] = useState('')
   const [iaResult, setIaResult] = useState(null)
   const [approbationEnCours, setApprobationEnCours] = useState(null)
+  const [societes, setSocietes] = useState([])
 
   const load = () => api.get('/transactions').then(({ data }) => setTransactions(data))
 
   useEffect(() => { load() }, [])
 
+  // Sociétés proposées à la saisie : actives et accessibles à l'utilisateur (Expert RH : celles qui lui sont affectées).
+  useEffect(() => {
+    if (!peutPreparer(user?.role)) return
+    Promise.all([api.get('/societes'), api.get('/masse/filtres')]).then(([{ data: toutes }, { data: filtres }]) => {
+      const accessibles = new Set(filtres.societes)
+      setSocietes(toutes.filter((s) => s.actif && accessibles.has(s.code)))
+    })
+  }, [user?.role])
+
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
 
   const handleCreate = async (e) => {
     e.preventDefault()
-    await api.post('/transactions', { ...form, montant: parseFloat(form.montant) })
-    setForm(empty)
-    load()
+    setMessage('')
+    try {
+      await api.post('/transactions', { ...form, montant: parseFloat(form.montant) })
+      setForm(empty)
+      load()
+    } catch (erreur) {
+      setMessage(erreur.response?.data?.erreur || 'Ajout impossible : vérifiez les champs saisis et réessayez.')
+    }
   }
 
   const approuver = async (id) => {
@@ -105,6 +120,10 @@ export default function Transactions() {
 
       {peutPreparer(user?.role) && (
         <form className="inline-form" onSubmit={handleCreate}>
+          <select name="clientId" value={form.clientId} onChange={handleChange} required>
+            <option value="">{societes.length ? 'Société' : 'Aucune société affectée'}</option>
+            {societes.map((s) => <option key={s.code} value={s.code}>{s.code} — {s.nom}</option>)}
+          </select>
           <input name="employeId" placeholder="ID employé" value={form.employeId} onChange={handleChange} required />
           <input name="nomBeneficiaire" placeholder="Bénéficiaire" value={form.nomBeneficiaire} onChange={handleChange} required />
           <input name="iban" placeholder="IBAN" value={form.iban} onChange={handleChange} required />
@@ -152,7 +171,7 @@ export default function Transactions() {
       <table>
         <thead>
           <tr>
-            <th>ID</th><th>Employé</th><th>Bénéficiaire</th><th>IBAN</th>
+            <th>ID</th><th>Société</th><th>Employé</th><th>Bénéficiaire</th><th>IBAN</th>
             <th>Montant</th><th>Statut</th><th>Risque</th><th>Score</th><th>Source</th><th>Actions</th>
           </tr>
         </thead>
@@ -160,6 +179,7 @@ export default function Transactions() {
           {transactions.map((t) => (
             <tr key={t.id} className={t.sourceAnomalie === 'IA' ? 'row-suspect' : undefined}>
               <td>{t.id}</td>
+              <td style={{ whiteSpace: 'nowrap' }}>{t.clientId || '—'}</td>
               <td>{t.employeId}</td>
               <td>{t.nomBeneficiaire}</td>
               <td>{masquerIban(t.iban)}</td>
