@@ -4,6 +4,7 @@ import com.zina.sepa.ai.AiAnomalyService;
 import com.zina.sepa.ai.dto.AnalyseResult;
 import com.zina.sepa.ai.dto.ResultatDto;
 import com.zina.sepa.domain.entity.Transaction;
+import com.zina.sepa.masse.AccesSocietes;
 import com.zina.sepa.recommendation.dto.AnomalieDto;
 import com.zina.sepa.recommendation.dto.DetectionResume;
 import com.zina.sepa.repository.TransactionRepository;
@@ -37,17 +38,20 @@ public class AnomalieService {
     private final AiAnomalyService aiAnomalyService;
     private final RecommendationEngine recommendationEngine;
     private final AnomalieRepository anomalieRepository;
+    private final AccesSocietes acces;
 
     public AnomalieService(TransactionRepository transactionRepository,
                            BusinessControlService businessControlService,
                            AiAnomalyService aiAnomalyService,
                            RecommendationEngine recommendationEngine,
-                           AnomalieRepository anomalieRepository) {
+                           AnomalieRepository anomalieRepository,
+                           AccesSocietes acces) {
         this.transactionRepository = transactionRepository;
         this.businessControlService = businessControlService;
         this.aiAnomalyService = aiAnomalyService;
         this.recommendationEngine = recommendationEngine;
         this.anomalieRepository = anomalieRepository;
+        this.acces = acces;
     }
 
     /** (Re)lance la détection et réconcilie le registre d'anomalies. */
@@ -64,6 +68,14 @@ public class AnomalieService {
         }
 
         int nouvelles = reconcilier(courantes, typesNonEvalues);
+        if (acces.perimetre().isPresent()) {
+            // Un Expert RH ne reçoit que les effectifs de son périmètre.
+            List<Anomalie> visibles = visibles(anomalieRepository.findAll());
+            return new DetectionResume(nouvelles,
+                    compter(visibles, AnomalieStatut.OUVERTE),
+                    compter(visibles, AnomalieStatut.CORRIGEE),
+                    compter(visibles, AnomalieStatut.IGNOREE));
+        }
         return new DetectionResume(
                 nouvelles,
                 anomalieRepository.countByStatut(AnomalieStatut.OUVERTE),
@@ -71,18 +83,42 @@ public class AnomalieService {
                 anomalieRepository.countByStatut(AnomalieStatut.IGNOREE));
     }
 
+    private static long compter(List<Anomalie> anomalies, AnomalieStatut statut) {
+        return anomalies.stream().filter(a -> a.getStatut() == statut).count();
+    }
+
+    /** Anomalies des fiches de la société accessible à l'utilisateur ; tout pour le Manager et l'administrateur. */
+    private List<Anomalie> visibles(List<Anomalie> anomalies) {
+        if (acces.perimetre().isEmpty()) {
+            return anomalies;
+        }
+        java.util.Set<Long> idsVisibles = acces.filtrerTransactions(transactionRepository.findAll()).stream()
+                .map(Transaction::getId).collect(Collectors.toSet());
+        return anomalies.stream()
+                .filter(a -> a.getTransactionId() != null && idsVisibles.contains(a.getTransactionId()))
+                .collect(Collectors.toList());
+    }
+
     /** Liste les anomalies, filtrées par statut si fourni. */
     public List<AnomalieDto> lister(String statut) {
         List<Anomalie> anomalies = (statut == null || statut.isBlank())
                 ? anomalieRepository.findAll()
                 : anomalieRepository.findByStatut(AnomalieStatut.valueOf(statut.toUpperCase()));
-        return anomalies.stream().map(this::toDto).collect(Collectors.toList());
+        return visibles(anomalies).stream().map(this::toDto).collect(Collectors.toList());
     }
 
     /** Change le statut d'une anomalie (commentaire obligatoire pour IGNOREE). */
     public AnomalieDto changerStatut(Long id, String statut, String commentaire) {
         Anomalie a = anomalieRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Anomalie introuvable : " + id));
+        if (a.getTransactionId() != null) {
+            transactionRepository.findById(a.getTransactionId()).ifPresent(t -> {
+                if (!acces.autorise(t.getClientId())) {
+                    throw new org.springframework.security.access.AccessDeniedException(
+                            "Cette anomalie concerne une société qui ne vous est pas affectée.");
+                }
+            });
+        }
         AnomalieStatut cible;
         try {
             cible = AnomalieStatut.valueOf(statut == null ? "" : statut.toUpperCase());

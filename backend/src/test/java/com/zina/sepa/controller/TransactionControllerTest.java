@@ -80,6 +80,19 @@ class TransactionControllerTest {
     }
 
     @Test
+    void suppression_refusee_hors_perimetre_de_l_expert() {
+        Transaction autre = paiement();
+        autre.setClientId("SOC-002");
+        when(repository.findById(1L)).thenReturn(Optional.of(autre));
+        org.mockito.Mockito.doThrow(new org.springframework.security.access.AccessDeniedException("hors périmètre"))
+                .when(acces).verifier("SOC-002");
+
+        assertThatThrownBy(() -> controller().supprimer(1L, null))
+                .isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
+        verify(repository, never()).deleteById(any());
+    }
+
+    @Test
     void creation_refuse_une_societe_inconnue_ou_inactive() {
         when(societeService.codesActifs()).thenReturn(List.of("SOC-001"));
 

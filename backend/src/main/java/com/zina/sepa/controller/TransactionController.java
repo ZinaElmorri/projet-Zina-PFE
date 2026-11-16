@@ -47,7 +47,7 @@ public class TransactionController {
     @GetMapping
     @PreAuthorize(Roles.METIER)
     public List<Transaction> list() {
-        return repository.findAll();
+        return acces.filtrerTransactions(repository.findAll());
     }
 
     @PostMapping
@@ -97,6 +97,9 @@ public class TransactionController {
     @DeleteMapping("/{id}")
     @PreAuthorize(Roles.PREPARATION)
     public ResponseEntity<Void> supprimer(@PathVariable Long id, HttpServletRequest request) {
+        Transaction t = repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Transaction introuvable"));
+        acces.verifier(t.getClientId());
         repository.deleteById(id);
         auditService.log(AuditAction.TRANSACTION_SUPPRIMEE,
                 "Transaction #" + id, "SUCCES", request);
@@ -108,7 +111,7 @@ public class TransactionController {
     @PreAuthorize(Roles.METIER)
     public ValidationResult controler(HttpServletRequest request) {
         var result = businessControlService.controle(
-                repository.findByStatut(TransactionStatus.BROUILLON));
+                acces.filtrerTransactions(repository.findByStatut(TransactionStatus.BROUILLON)));
         auditService.log(AuditAction.VALIDATION_EFFECTUEE,
                 "Contrôles métier : " + result.erreurs().size() + " erreur(s)",
                 result.valide() ? "SUCCES" : "ECHEC", request);
@@ -121,7 +124,7 @@ public class TransactionController {
     public ResponseEntity<String> generer(@RequestParam String nomDebiteur,
                                           @RequestParam String ibanDebiteur,
                                           HttpServletRequest request) {
-        var transactions = repository.findByStatut(TransactionStatus.APPROUVEE);
+        var transactions = acces.filtrerTransactions(repository.findByStatut(TransactionStatus.APPROUVEE));
         String xml = xmlGenerationService.genererPain001(transactions, nomDebiteur, ibanDebiteur);
         auditService.log(AuditAction.XML_GENERE,
                 transactions.size() + " transaction(s)", "SUCCES", request);

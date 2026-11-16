@@ -2,6 +2,7 @@ package com.zina.sepa.ai;
 
 import com.zina.sepa.ai.dto.AnalyseResult;
 import com.zina.sepa.domain.enums.AuditAction;
+import com.zina.sepa.masse.AccesSocietes;
 import com.zina.sepa.repository.TransactionRepository;
 import com.zina.sepa.service.AuditService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,19 +23,22 @@ public class AiDetectionController {
     private final AiAnomalyService aiAnomalyService;
     private final TransactionRepository transactionRepository;
     private final AuditService auditService;
+    private final AccesSocietes acces;
 
     public AiDetectionController(AiAnomalyService aiAnomalyService,
                                  TransactionRepository transactionRepository,
-                                 AuditService auditService) {
+                                 AuditService auditService,
+                                 AccesSocietes acces) {
         this.aiAnomalyService = aiAnomalyService;
         this.transactionRepository = transactionRepository;
         this.auditService = auditService;
+        this.acces = acces;
     }
 
     @PostMapping("/detect")
     @PreAuthorize(Roles.METIER)
     public AnalyseResult detect(HttpServletRequest request) {
-        AnalyseResult resultat = aiAnomalyService.analyser(transactionRepository.findAll());
+        AnalyseResult resultat = aiAnomalyService.analyser(acces.filtrerTransactions(transactionRepository.findAll()));
         long suspects = resultat.resultats() == null ? 0
                 : resultat.resultats().stream().filter(r -> r.isAnomaly()).count();
         auditService.log(AuditAction.ANOMALIE_DETECTEE,

@@ -50,7 +50,7 @@ class AdminRestrictionsTest {
         }
         @Bean AiDetectionController aiDetection() {
             return new AiDetectionController(mock(AiAnomalyService.class), mock(TransactionRepository.class),
-                    mock(AuditService.class));
+                    mock(AuditService.class), mock(com.zina.sepa.masse.AccesSocietes.class));
         }
         @Bean AnomalieController anomalies() { return new AnomalieController(mock(AnomalieService.class)); }
         @Bean MassController masse() { return new MassController(mock(MassPaymentService.class), mock(FichierWorkflowService.class)); }

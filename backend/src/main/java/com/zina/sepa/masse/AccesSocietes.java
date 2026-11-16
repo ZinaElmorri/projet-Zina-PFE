@@ -1,6 +1,7 @@
 package com.zina.sepa.masse;
 
 import com.zina.sepa.affectation.AffectationService;
+import com.zina.sepa.domain.entity.Transaction;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -80,5 +81,15 @@ public class AccesSocietes {
             return true;
         }
         return societe != null && affectations.societesDe(auth.getName()).contains(societe);
+    }
+
+    /** Garde les fiches des sociétés accessibles ; une fiche sans société n'est visible que hors périmètre Expert RH. */
+    public List<Transaction> filtrerTransactions(List<Transaction> transactions) {
+        Optional<Set<String>> perimetre = perimetre();
+        if (perimetre.isEmpty()) {
+            return transactions;
+        }
+        Set<String> autorisees = perimetre.get();
+        return transactions.stream().filter(t -> t.getClientId() != null && autorisees.contains(t.getClientId())).toList();
     }
 }

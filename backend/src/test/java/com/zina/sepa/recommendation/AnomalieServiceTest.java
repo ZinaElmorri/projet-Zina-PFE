@@ -3,6 +3,7 @@ package com.zina.sepa.recommendation;
 import com.zina.sepa.ai.AiAnomalyService;
 import com.zina.sepa.ai.dto.AnalyseResult;
 import com.zina.sepa.domain.entity.Transaction;
+import com.zina.sepa.masse.AccesSocietes;
 import com.zina.sepa.recommendation.dto.AnomalieDto;
 import com.zina.sepa.repository.TransactionRepository;
 import com.zina.sepa.service.BusinessControlService;
@@ -14,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -34,13 +36,57 @@ class AnomalieServiceTest {
     RecommendationEngine recommendationEngine;
     @Mock
     AnomalieRepository anomalieRepository;
+    @Mock
+    AccesSocietes acces;
 
     // Règles métier réelles (IBAN/BIC) — pas de mock nécessaire.
     BusinessControlService businessControlService = new BusinessControlService();
 
     private AnomalieService service() {
         return new AnomalieService(transactionRepository, businessControlService,
-                aiAnomalyService, recommendationEngine, anomalieRepository);
+                aiAnomalyService, recommendationEngine, anomalieRepository, acces);
+    }
+
+    private void expertDeSoc001() {
+        when(acces.perimetre()).thenReturn(Optional.of(Set.of("SOC-001")));
+        when(acces.filtrerTransactions(any())).thenAnswer(i -> ((List<Transaction>) i.getArgument(0)).stream()
+                .filter(t -> "SOC-001".equals(t.getClientId())).toList());
+    }
+
+    @Test
+    void un_expert_ne_voit_que_les_anomalies_de_ses_societes() {
+        Transaction mienne = new Transaction();
+        mienne.setId(1L);
+        mienne.setClientId("SOC-001");
+        Transaction autre = new Transaction();
+        autre.setId(2L);
+        autre.setClientId("SOC-002");
+        Anomalie a1 = Anomalie.builder().id(11L).type(AnomalieType.IBAN_INVALIDE).transactionId(1L)
+                .statut(AnomalieStatut.OUVERTE).build();
+        Anomalie a2 = Anomalie.builder().id(12L).type(AnomalieType.IBAN_INVALIDE).transactionId(2L)
+                .statut(AnomalieStatut.OUVERTE).build();
+        expertDeSoc001();
+        when(transactionRepository.findAll()).thenReturn(List.of(mienne, autre));
+        when(anomalieRepository.findAll()).thenReturn(List.of(a1, a2));
+        when(recommendationEngine.recommander(any())).thenReturn("reco");
+
+        assertThat(service().lister(null)).extracting(AnomalieDto::id).containsExactly(11L);
+    }
+
+    @Test
+    void un_expert_ne_peut_pas_changer_le_statut_d_une_anomalie_d_une_autre_societe() {
+        Anomalie a = Anomalie.builder().id(12L).type(AnomalieType.IBAN_INVALIDE).transactionId(2L)
+                .statut(AnomalieStatut.OUVERTE).build();
+        Transaction autre = new Transaction();
+        autre.setId(2L);
+        autre.setClientId("SOC-002");
+        when(anomalieRepository.findById(12L)).thenReturn(Optional.of(a));
+        when(transactionRepository.findById(2L)).thenReturn(Optional.of(autre));
+        when(acces.autorise("SOC-002")).thenReturn(false);
+
+        assertThatThrownBy(() -> service().changerStatut(12L, "CORRIGEE", ""))
+                .isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
+        assertThat(a.getStatut()).isEqualTo(AnomalieStatut.OUVERTE);
     }
 
     private Transaction transactionIbanInvalide() {
