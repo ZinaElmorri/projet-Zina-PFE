@@ -171,7 +171,7 @@ export default function Transactions() {
       <table>
         <thead>
           <tr>
-            <th>ID</th><th>Société</th><th>Employé</th><th>Bénéficiaire</th><th>IBAN</th>
+            <th>ID</th><th>Employé / société</th><th>Bénéficiaire</th><th>IBAN</th>
             <th>Montant</th><th>Statut</th><th>Risque</th><th>Score</th><th>Source</th><th>Actions</th>
           </tr>
         </thead>
@@ -179,8 +179,10 @@ export default function Transactions() {
           {transactions.map((t) => (
             <tr key={t.id} className={t.sourceAnomalie === 'IA' ? 'row-suspect' : undefined}>
               <td>{t.id}</td>
-              <td style={{ whiteSpace: 'nowrap' }}>{t.clientId || '—'}</td>
-              <td>{t.employeId}</td>
+              <td style={{ whiteSpace: 'nowrap' }}>
+                {t.employeId}
+                <div style={{ fontSize: 12, color: '#8C99AB' }}>{t.clientId || 'Sans société'}</div>
+              </td>
               <td>{t.nomBeneficiaire}</td>
               <td>{masquerIban(t.iban)}</td>
               <td>{afficherMontant(t)}</td>
