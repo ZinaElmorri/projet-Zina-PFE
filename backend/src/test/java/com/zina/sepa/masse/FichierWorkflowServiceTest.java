@@ -76,6 +76,18 @@ class FichierWorkflowServiceTest {
     }
 
     @Test
+    void un_fichier_avec_erreur_metier_ne_peut_pas_etre_soumis() {
+        connecte("expert1");
+        FichierSepaGenere f = fichier("BROUILLON", "expert1");
+        when(massPaymentService.nbErreursMetier(f)).thenReturn(1);
+
+        assertThatThrownBy(() -> service().soumettre(7L, null))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("contrôle métier");
+        assertThat(f.getStatutFichier()).isEqualTo("BROUILLON");
+        verifyNoInteractions(auditService);
+    }
+
+    @Test
     void le_manager_valide_un_fichier_soumis_par_un_autre() {
         connecte("manager1");
         FichierSepaGenere f = fichier("SOUMIS", "expert1");

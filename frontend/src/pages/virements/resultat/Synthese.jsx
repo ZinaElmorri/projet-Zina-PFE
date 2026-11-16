@@ -54,7 +54,7 @@ export default function Synthese() {
   const statutCode = resume.statutFichier
   const statut = STATUTS_FICHIER[statutCode] || { label: statutCode, color: 'default' }
   const estValide = statutCode === 'VALIDE'
-  const peutSoumettreFichier = peutSoumettre(user?.role) && statutCode === 'BROUILLON' && resume.valideXsd
+  const peutSoumettreFichier = peutSoumettre(user?.role) && statutCode === 'BROUILLON' && resume.valideXsd && nbErreursMetier === 0
   const peutDecider = peutValider(user?.role) && statutCode === 'SOUMIS'
   // Quatre yeux : celui qui a généré ou soumis le fichier ne peut pas décider.
   const quatreYeux = !!user?.username && (user.username === resume.generePar || user.username === resume.soumisPar)
@@ -246,6 +246,11 @@ export default function Synthese() {
         {peutDecider && quatreYeux && (
           <div style={{ marginTop: 8 }}>
             <Typography.Text type="secondary">Principe des quatre yeux : vous ne pouvez pas valider un fichier que vous avez généré ou soumis.</Typography.Text>
+          </div>
+        )}
+        {resume.valideXsd && nbErreursMetier > 0 && statutCode === 'BROUILLON' && peutSoumettre(user?.role) && (
+          <div style={{ marginTop: 8 }}>
+            <Typography.Text type="secondary">La soumission est bloquée tant que des erreurs de contrôle métier subsistent : corrigez les paiements concernés ou excluez-les de la sélection, puis relancez le contrôle.</Typography.Text>
           </div>
         )}
         {!resume.valideXsd && (

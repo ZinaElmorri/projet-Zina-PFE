@@ -35,6 +35,11 @@ public class FichierWorkflowService {
         if (!f.isValideXsd()) {
             throw new IllegalStateException("Le XML n'est pas conforme au XSD : il ne peut pas être soumis. Corrigez les erreurs puis relancez le contrôle.");
         }
+        int erreursMetier = massPaymentService.nbErreursMetier(f);
+        if (erreursMetier > 0) {
+            throw new IllegalStateException("Le fichier contient " + erreursMetier + " erreur(s) de contrôle métier : il ne peut pas être soumis. "
+                    + "Corrigez les paiements concernés ou excluez-les de la sélection, puis relancez le contrôle.");
+        }
         exigerStatut(f, MassPaymentService.STATUT_BROUILLON, "soumis");
         f.setStatutFichier(MassPaymentService.STATUT_SOUMIS);
         f.setSoumisPar(utilisateur());

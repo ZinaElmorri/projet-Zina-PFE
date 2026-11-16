@@ -279,6 +279,13 @@ public class MassPaymentService {
     }
 
     /** Tout ce qu'il faut pour les sous-pages du résultat ; les fichiers antérieurs au parcours ont des sections vides. */
+    /** Nombre d'erreurs de contrôle métier enregistrées pour ce fichier (0 pour un fichier antérieur au parcours). */
+    public int nbErreursMetier(FichierSepaGenere f) {
+        ResultatMetier metier = lireObjet(f.getResultatControleMetier(), ResultatMetier.class,
+                new ResultatMetier(List.of(), List.of(), List.of(), List.of()));
+        return metier.erreurs() == null ? 0 : metier.erreurs().size();
+    }
+
     public ResultatFichier resultat(Long id) {
         FichierSepaGenere f = fichierRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Le fichier SEPA n° " + id + " n'est plus disponible. Actualisez l'historique et sélectionnez un fichier existant."));
