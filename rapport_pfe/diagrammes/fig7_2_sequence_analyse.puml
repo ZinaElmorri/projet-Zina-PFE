@@ -1,0 +1,23 @@
+@startuml fig7_2_sequence_analyse
+!include style.puml
+hide footbox
+
+participant "Backend\nSpring Boot" as B
+database "PostgreSQL" as DB
+participant "Service Python\nFastAPI" as S
+
+B -> DB : Lit l'historique des paiements\nde chaque salarié du lot
+B -> B : Construit la requête :\npaiements, historique (6 mois),\nindicateur de changement d'IBAN
+B -> S : POST /anomalies/detect
+
+alt Module désactivé, injoignable\nou réponse vide
+  S --> B : (aucune réponse exploitable)
+  B -> B : Analyse déclarée « indisponible »,\nle contrôle se poursuit
+else Réponse reçue
+  S -> S : Calcule les variables du lot
+  S -> S : Score et décision\n(modèle + règle IBAN modifié)
+  S -> S : Explications, type probable\net recommandation des fiches signalées
+  S --> B : Résultat par fiche :\nscore, signalement, raisons,\ntype probable, recommandation
+  B -> DB : Enregistre le score, le niveau, les raisons\net la recommandation de chaque fiche signalée
+end
+@enduml

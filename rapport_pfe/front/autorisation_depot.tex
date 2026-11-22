@@ -1,0 +1,31 @@
+\thispagestyle{empty}
+
+\begin{tikzpicture}[remember picture, overlay]
+  % Cadre 1 : Encadrant professionnel
+  \draw[line width=1.8pt, rounded corners=12pt, draw=black!85]
+    ($(current page.north west) + (2.0cm, -1.0cm)$) rectangle ($(current page.north east) + (-2.0cm, -11.5cm)$);
+
+  \node[anchor=north west, align=left, text width=15cm] at ($(current page.north west) + (2.7cm, -3.2cm)$) {
+    {\large J'autorise l'étudiant à faire le dépôt de son rapport de stage en vue d'une soutenance.}\\[1.2cm]
+    {\large\textbf{Encadrant professionnel}, \companySupervisor}
+  };
+
+  \node[anchor=south east, font=\large] at ($(current page.north east) + (-2.8cm, -10.5cm)$) {
+    Signature et cachet
+  };
+
+  % Cadre 2 : Encadrant académique
+  \draw[line width=1.8pt, rounded corners=12pt, draw=black!85]
+    ($(current page.north west) + (2.0cm, -13.5cm)$) rectangle ($(current page.north east) + (-2.0cm, -24.0cm)$);
+
+  \node[anchor=north west, align=left, text width=15cm] at ($(current page.north west) + (2.7cm, -15.7cm)$) {
+    {\large J'autorise l'étudiant à faire le dépôt de son rapport de stage en vue d'une soutenance.}\\[1.2cm]
+    {\large\textbf{Encadrant académique}, \schoolSupervisor}
+  };
+
+  \node[anchor=south east, font=\large] at ($(current page.north east) + (-2.8cm, -23.0cm)$) {
+    Signature
+  };
+\end{tikzpicture}
+
+\clearpage

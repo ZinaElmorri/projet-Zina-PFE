@@ -1,0 +1,44 @@
+\chapter{Réalisation de la plateforme : sécurité, fiches de paie et virements de masse}
+\label{ch:realisation}
+
+Ce chapitre présente la réalisation des trois premiers sprints, qui construisent le socle fonctionnel de SEPAPaie. Le premier met en place les comptes, l'authentification, les sociétés débitrices et le journal d'audit ; le deuxième livre la saisie des fiches de paie, la gestion des schémas XSD et la génération du fichier \texttt{pain.001} ; le troisième assemble ces briques dans un parcours de virement de masse avec contrôles métier et circuit de validation. Chaque sprint est présenté selon la même démarche : conception, puis réalisation, puis écrans obtenus. Les tests automatisés des trois sprints sont regroupés en fin de chapitre.
+
+\input{chapters/chapter4}
+\input{chapters/chapter5}
+\input{chapters/chapter6}
+
+\section{Bilan des tests automatisés}
+
+Les trois sprints sont couverts par 132 tests unitaires du backend, tous réussis (tableau~\ref{tab:tests-s123}). Ils utilisent des substituts pour la messagerie et le service Python afin d'éprouver les cas d'échec sans dépendance externe. Ils portent notamment sur les règles qui conditionnent la sécurité : un mot de passe correct n'ouvre jamais de session sans code, un service facial indisponible ne laisse jamais passer, un fichier non conforme ou comportant une erreur métier ne peut ni être soumis ni être téléchargé, et la validation exige un autre utilisateur que l'auteur. Ces tests vérifient la logique du backend ; ils ne remplacent pas la recette de l'application complète présentée au chapitre~\ref{ch:sprint5}.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.1}
+\tablestyle
+\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{3.9cm}|Y|>{\centering\arraybackslash}p{1.1cm}|>{\centering\arraybackslash}p{1.3cm}|}
+\hline
+\rowcolor{appMarine}\entete{Domaine} & \entete{Comportements vérifiés} & \entete{Sprint} & \entete{Tests} \\
+\hline
+Authentification et code à usage unique & Session ouverte seulement après un code correct ; mot de passe, code ou visage erroné refusé ; code expiré, trop de tentatives, renvoi trop rapide, échec d'envoi & 1 & 15 \\
+\hline
+Inscription et reconnaissance faciale & Compte créé inactif ; adresse déjà utilisée ; approbation et rejet ; empreinte enregistrée ; visage différent, compte inactif ou sans visage refusé & 1 & 9 \\
+\hline
+Sociétés, affectations et droits & IBAN invalide refusé et masqué ; réaffectation avec historique ; droits propres à chaque profil, anciens rôles refusés & 1 & 15 \\
+\hline
+Fiches de paie & Société obligatoire et active ; approbation refusée pour un IBAN, un BIC ou un montant invalide ; approbation tracée & 2 & 14 \\
+\hline
+Schéma, génération et validation XSD & Analyse du schéma officiel ; nombre de virements et somme de contrôle ; versions du message ; collecte de toutes les erreurs avec leur ligne ; XML mal formé & 2 & 19 \\
+\hline
+Parcours de contrôle et circuit de validation & Paiements approuvés uniquement ; fichier non conforme conservé mais non téléchargeable ; soumission, validation et rejet selon les quatre yeux ; motif de rejet obligatoire & 3 & 36 \\
+\hline
+Contrôles de données et anomalies & Messages métier par paiement ; doublon en avertissement ; clé modulo~97 ; commentaire pour ignorer une anomalie ; anomalies d'IA conservées si l'IA est indisponible & 3 & 20 \\
+\hline
+Accès par société et supervision & Un Expert RH ne voit que ses sociétés ; vue de supervision limitée aux informations agrégées & 3 & 4 \\
+\hline
+\rowcolor{appClair}\textbf{Total} & & & \textbf{132} \\
+\hline
+\end{tabularx}
+\caption{Tests automatisés des sprints 1 à 3}
+\label{tab:tests-s123}
+\end{table}

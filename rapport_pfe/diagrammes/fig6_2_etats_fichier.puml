@@ -1,0 +1,25 @@
+@startuml fig6_2_etats_fichier
+!include style.puml
+skinparam StateBackgroundColor #EEF3FA
+skinparam StateBorderColor #1F3A5F
+skinparam StateFontColor #1F3A5F
+skinparam StateStartColor #1F3A5F
+skinparam StateEndColor #1F3A5F
+skinparam StateAttributeFontColor #1F3A5F
+left to right direction
+
+state "Brouillon" as BRO
+state "Non conforme" as NC
+state "Soumis à validation" as SOU
+state "Validé par le Manager" as VAL
+state "Rejeté" as REJ
+
+[*] --> BRO : Contrôle réussi\n(XSD conforme)
+[*] --> NC : Contrôle\nnon conforme
+BRO --> SOU : Soumission par l'Expert RH\n(aucune erreur métier)
+SOU --> VAL : Validation par le Manager\n(quatre yeux)
+SOU --> REJ : Rejet avec motif\n(quatre yeux)
+REJ --> [*] : Nouveau contrôle\ndepuis la préparation
+NC --> [*] : Nouveau contrôle\ndepuis la préparation
+VAL --> [*]
+@enduml

@@ -1,0 +1,116 @@
+@startuml fig2_2_classes_analyse
+!include style.puml
+hide circle
+skinparam classAttributeIconSize 0
+left to right direction
+
+class Utilisateur {
+  - nomUtilisateur : String
+  - nomComplet : String
+  - email : String
+  - role : Role
+  - actif : Boolean
+  - approuve : Boolean
+  --
+  + sAuthentifier(motDePasse) : Boolean
+  + verifierOtp(code) : Boolean
+  + activer() : void
+  + desactiver() : void
+}
+
+class Societe <<société débitrice>> {
+  - code : String
+  - nom : String
+  - iban : String
+  - bic : String
+  - actif : Boolean
+  --
+  + verifierIban() : Boolean
+  + verifierBic() : Boolean
+  + masquerIban() : String
+  + estActive() : Boolean
+}
+
+class AffectationSociete {
+  - debutLe : Date
+  - finLe : Date
+  - affectePar : String
+  --
+  + estEnCours() : Boolean
+  + cloturer(dateFin) : void
+}
+
+class FichePaie <<transaction>> {
+  - matricule : String
+  - beneficiaire : String
+  - iban : String
+  - bic : String
+  - montant : Double
+  - statut : StatutFiche
+  - scoreRisque : Float
+  - niveauRisque : NiveauRisque
+  --
+  + approuver(manager) : void
+  + verifierDonnees() : Boolean
+  + assignerScoreIA(score, niveau) : void
+  + estEligible() : Boolean
+}
+
+class Anomalie {
+  - type : TypeAnomalie
+  - periode : String
+  - details : String
+  - recommandation : String
+  - statut : StatutAnomalie
+  --
+  + marquerCorrigee() : void
+  + ignorer(commentaire) : void
+  + rouvrir() : void
+  + estBloquante() : Boolean
+}
+
+class FichierSepa {
+  - identifiantMessage : String
+  - periode : String
+  - nbTransactions : Integer
+  - sommeControle : Double
+  - valideXsd : Boolean
+  - statutFichier : StatutFichier
+  - motifRejet : String
+  --
+  + genererXml() : String
+  + validerXsd(schema) : Boolean
+  + soumettre(expert) : void
+  + valider(manager) : void
+  + rejeter(manager, motif) : void
+  + telecharger() : Fichier
+}
+
+class SchemaXsd {
+  - nom : String
+  - version : String
+  --
+  + chargerValidateur() : Validator
+  + verifierConformite(xml) : List<ErreurXsd>
+}
+
+class JournalAudit {
+  - action : String
+  - resultat : String
+  - adresseIp : String
+  - horodatage : DateTime
+  --
+  + enregistrerEvenement(action, user, res) : void
+  + formaterLigne() : String
+}
+
+Utilisateur "1" -- "0..*" AffectationSociete : expert
+Societe "1" -- "0..*" AffectationSociete
+Societe "1" -- "0..*" FichePaie : paie pour
+Societe "1" -- "0..*" FichierSepa : débitrice de
+FichePaie "1" -- "0..*" Anomalie : porte
+FichierSepa "0..*" -- "1..*" FichePaie : regroupe
+FichierSepa "0..*" -- "1" SchemaXsd : respecte
+Utilisateur "1" -- "0..*" FichierSepa : prépare / valide
+Utilisateur "1" -- "0..*" JournalAudit : génère
+@enduml

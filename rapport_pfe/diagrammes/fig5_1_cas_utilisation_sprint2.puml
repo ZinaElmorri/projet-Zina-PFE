@@ -1,0 +1,41 @@
+@startuml fig5_1_cas_utilisation_sprint2
+!include style.puml
+left to right direction
+
+actor "Expert RH" as EXP
+actor "Manager" as MGR
+actor "Administrateur" as ADM
+
+rectangle "Sprint 2 : données de paie, schémas XSD et génération du fichier" {
+
+  rectangle "Périmètre Expert RH" {
+    usecase "Saisir une fiche de paie\nrattachée à une société" as UC1
+    usecase "Supprimer une fiche de paie" as UC2
+    usecase "Générer le fichier pain.001" as UC5
+    usecase "Analyser le schéma XSD choisi" as UC6
+    usecase "Valider le fichier contre le XSD" as UC7
+    usecase "Prévisualiser le XML" as UC8
+    usecase "Télécharger un fichier conforme" as UC9
+  }
+
+  rectangle "Périmètre Manager" {
+    usecase "Approuver une fiche de paie" as UC3
+  }
+
+  rectangle "Périmètre Référentiel Schémas" {
+    usecase "Gérer les schémas XSD\n(importer, mettre à jour, supprimer)" as UC4
+  }
+}
+
+EXP --> UC1
+EXP --> UC2
+EXP --> UC5
+EXP --> UC8
+EXP --> UC9
+MGR --> UC3
+MGR --> UC4
+ADM --> UC4
+
+UC5 ..> UC6 : <<include>>
+UC5 ..> UC7 : <<include>>
+@enduml

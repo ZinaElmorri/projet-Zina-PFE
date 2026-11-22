@@ -1,0 +1,32 @@
+@startuml fig6_3_sequence_validation
+!include style.puml
+hide footbox
+
+actor "Expert RH" as E
+participant "Interface\nReact" as UI
+participant "Backend\nSpring Boot" as B
+actor "Manager" as M
+
+E -> UI : Soumettre le fichier
+UI -> B : Demande de soumission
+B -> B : Vérifie l'accès à la société,\nla conformité XSD, l'absence d'erreur\nmétier et le statut Brouillon
+alt Contrôle refusé
+  B --> UI : Refus avec explication
+else Fichier éligible
+  B -> B : Statut « Soumis », auteur\net date enregistrés
+  B -> B : Trace dans le journal d'audit
+  B --> UI : Fichier soumis
+end
+
+M -> UI : Ouvre « Fichiers à valider », puis le résultat
+M -> UI : Valider ou rejeter (motif obligatoire)
+UI -> B : Demande de décision
+B -> B : Vérifie le statut « Soumis »\net le principe des quatre yeux
+alt Même personne que l'auteur\nou le soumetteur
+  B --> UI : Refus
+else Décideur distinct
+  B -> B : Statut « Validé » ou « Rejeté »,\nauteur, date et motif conservés
+  B -> B : Trace dans le journal d'audit
+  B --> UI : Décision enregistrée
+end
+@enduml

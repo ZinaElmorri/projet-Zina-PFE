@@ -1,0 +1,14 @@
+\chapter*{Résumé}
+\addcontentsline{toc}{chapter}{Résumé}
+\markboth{Résumé}{}
+
+Chaque mois, le versement des salaires repose sur un fichier de virements au format SEPA, défini par la norme ISO~20022 (message \texttt{pain.001}). Une erreur dans ce fichier (identifiant bancaire invalide, montant erroné, doublon) entraîne un rejet bancaire ou un paiement incorrect, souvent découvert trop tard. Les pratiques actuelles reposent sur des scripts internes et un contrôle manuel limité à la validité technique du fichier, sans circuit de validation systématique.
+
+Ce travail, réalisé au sein de l'équipe internationale de recherche et développement de Sopra HR Software, répond à ce besoin par la conception et la réalisation de \textbf{SEPAPaie}, une plateforme web de préparation, de contrôle et de validation des virements de salaires. Elle combine trois niveaux de contrôle : la conformité structurelle au schéma XSD, des règles métier explicites et un module d'intelligence artificielle (Isolation Forest) qui signale les montants atypiques sans se substituer à l'utilisateur. Une séparation stricte des rôles (Administrateur, Expert~RH, Manager), un circuit de validation à quatre yeux et un journal d'audit encadrent le processus.
+
+La plateforme associe une interface React, un backend Spring~Boot, un service d'IA en Python et une base PostgreSQL, déployés par conteneurs. L'évaluation du module d'IA, menée sur un jeu de données synthétique reproductible, montre que le gain provient surtout du choix des variables et de leur combinaison avec les règles métier : l'approche hybride atteint un F1 de~0,75. La solution a été validée par 178~tests du backend, 27~tests du module d'IA et une recette de bout en bout de 40~vérifications sur l'application déployée.
+
+\vspace{0.4cm}
+\noindent\textbf{Mots-clés :} SEPA, ISO~20022, \texttt{pain.001}, validation XSD, détection d'anomalies, Isolation Forest, paie, Spring~Boot, React.
+
+\clearpage

@@ -1,0 +1,21 @@
+@startuml fig8_2_demarrage_conteneurs
+!include style.puml
+left to right direction
+skinparam componentStyle rectangle
+skinparam rectangleBackgroundColor #EEF3FA
+skinparam rectangleBorderColor #1F3A5F
+skinparam rectangleFontColor #1F3A5F
+skinparam nodesep 25
+skinparam ranksep 55
+
+rectangle "postgres\nbase de données\n(contrôle de santé)" as DB
+rectangle "ai-module\nservice d'IA" as AI
+rectangle "mailhog\nmessagerie de test" as MAIL
+rectangle "backend\nAPI métier" as BACK
+rectangle "frontend\ninterface web" as FRONT
+
+DB --> BACK : attendre l'état « sain »
+AI --> BACK : attendre le démarrage
+MAIL --> BACK : attendre le démarrage
+BACK --> FRONT : attendre le démarrage
+@enduml

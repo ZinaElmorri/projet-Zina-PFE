@@ -1,0 +1,21 @@
+@startuml fig4_4_etats_compte
+!include style.puml
+skinparam StateBackgroundColor #EEF3FA
+skinparam StateBorderColor #1F3A5F
+skinparam StateFontColor #1F3A5F
+skinparam StateStartColor #1F3A5F
+skinparam StateEndColor #1F3A5F
+skinparam StateAttributeFontColor #1F3A5F
+left to right direction
+
+state "En attente\nd'approbation" as ATT
+state "Actif" as ACT
+state "Désactivé" as DES
+
+[*] --> ATT : Inscription publique
+[*] --> ACT : Création par\nl'administrateur
+ATT --> ACT : Approbation
+ATT --> [*] : Rejet\n(demande supprimée)
+ACT --> DES : Désactivation
+DES --> ACT : Réactivation
+@enduml

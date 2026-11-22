@@ -1,0 +1,79 @@
+@startuml fig2_1_cas_utilisation_global
+!include style.puml
+left to right direction
+
+actor "Administrateur" as ADM
+actor "Manager" as MGR
+actor "Expert RH" as EXP
+actor "Utilisateur\nauthentifié" as USR
+actor "Visiteur" as VIS
+actor "Module IA" as IA <<système>>
+
+USR <|-- ADM
+USR <|-- MGR
+USR <|-- EXP
+
+rectangle "SEPAPaie" {
+
+  rectangle "Périmètre Administrateur" {
+    usecase "Gérer les utilisateurs" as UC3a
+    usecase "Valider les inscriptions" as UC3b
+    usecase "Gérer les sociétés\ndébitrices" as UC4
+    usecase "Gérer les schémas XSD" as UC6
+    usecase "Consulter le journal d'audit" as UC16
+  }
+
+  rectangle "Périmètre Manager" {
+    usecase "Affecter les sociétés\naux Experts RH" as UC5
+    usecase "Approuver les\nfiches de paie" as UC8
+    usecase "Valider un fichier SEPA" as UC11a
+    usecase "Rejeter un fichier SEPA" as UC11b
+    usecase "Traiter les anomalies" as UC12
+  }
+
+  rectangle "Périmètre Expert RH" {
+    usecase "Gérer les fiches de paie" as UC7
+    usecase "Contrôler un virement\nde masse" as UC9a
+    usecase "Générer un fichier SEPA" as UC9b
+    usecase "Soumettre le fichier\nau Manager" as UC10
+    usecase "Analyser les montants\npar IA" as UC13
+  }
+
+  rectangle "Fonctions Communes" {
+    usecase "Créer un compte" as UC2
+    usecase "S'authentifier" as UC1
+    usecase "Consulter l'historique\ndes fichiers" as UC14
+    usecase "Consulter le tableau de bord" as UC15a
+    usecase "Consulter les indicateurs KPI" as UC15b
+  }
+}
+
+ADM --> UC3a
+ADM --> UC3b
+ADM --> UC4
+ADM --> UC6
+ADM --> UC16
+
+MGR --> UC5
+MGR --> UC8
+MGR --> UC11a
+MGR --> UC11b
+MGR --> UC12
+MGR --> UC6
+
+EXP --> UC7
+EXP --> UC9a
+EXP --> UC9b
+EXP --> UC10
+EXP --> UC12
+
+VIS --> UC2
+
+USR --> UC1
+USR --> UC14
+USR --> UC15a
+USR --> UC15b
+
+UC9a ..> UC13 : <<include>>
+UC13 -- IA
+@enduml

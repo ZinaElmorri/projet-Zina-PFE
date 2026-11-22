@@ -1,0 +1,34 @@
+@startuml fig4_3_sequence_inscription
+!include style.puml
+hide footbox
+
+actor "Visiteur" as V
+participant "Interface\nReact" as UI
+participant "Backend\nSpring Boot" as B
+participant "Service Python\n(visage)" as IA
+actor "Administrateur" as A
+
+V -> UI : Renseigne le formulaire\net capture son visage
+UI -> B : Demande d'inscription
+B -> B : Contrôle l'unicité de l'identifiant\net de l'adresse, ainsi que le rôle demandé
+B -> IA : Demande l'empreinte du visage
+
+alt Visage exploitable
+  IA --> B : Empreinte numérique
+  B -> B : Enregistre le compte\n(inactif, mot de passe haché)
+  B --> UI : Compte créé, en attente d'approbation
+else Aucun visage, plusieurs visages\nou service indisponible
+  IA --> B : Erreur
+  B --> UI : Inscription refusée avec explication
+end
+
+A -> UI : Consulte les demandes en attente
+
+alt Approbation
+  UI -> B : Approuver la demande
+  B -> B : Compte approuvé et actif
+else Rejet
+  UI -> B : Rejeter la demande
+  B -> B : Demande supprimée
+end
+@enduml

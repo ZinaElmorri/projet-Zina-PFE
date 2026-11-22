@@ -1,0 +1,16 @@
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+\markboth{Abstract}{}
+
+\begin{otherlanguage}{english}
+Every month, salary payments rely on a batch transfer file in the SEPA format defined by the ISO~20022 standard (the \texttt{pain.001} message). An error in this file---an invalid bank identifier, a wrong amount, a duplicate---leads to a bank rejection or an incorrect payment, often discovered too late. Current practices rely on in-house scripts and manual checks limited to the technical validity of the file, without a systematic validation workflow.
+
+This work, carried out within the international research and development team of Sopra HR Software, addresses this need through the design and implementation of \textbf{SEPAPaie}, a web platform for preparing, checking and validating salary transfers. It combines three levels of control: structural conformance to the XSD schema, explicit business rules, and an artificial intelligence module (Isolation Forest) that flags atypical amounts without replacing the user's decision. A strict separation of roles (Administrator, HR~Expert, Manager), a four-eyes validation workflow and an audit log frame the whole process.
+
+The platform integrates a React front end, a Spring~Boot back end, a Python AI service and a PostgreSQL database, deployed as containers. The evaluation of the AI module, conducted on a reproducible synthetic data set, shows that the gain comes mainly from the choice of features and their combination with business rules: the hybrid approach reaches an F1 score of~0.75. The solution was validated by 178~back-end tests, 27~AI-module tests and an end-to-end acceptance run of 40~checks on the deployed application.
+
+\vspace{0.4cm}
+\noindent\textbf{Keywords:} SEPA, ISO~20022, \texttt{pain.001}, XSD validation, anomaly detection, Isolation Forest, payroll, Spring~Boot, React.
+\end{otherlanguage}
+
+\clearpage

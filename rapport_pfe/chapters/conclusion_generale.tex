@@ -1,0 +1,33 @@
+\chapter*{Conclusion générale et perspectives}
+\addcontentsline{toc}{chapter}{Conclusion générale et perspectives}
+\markboth{Conclusion générale et perspectives}{}
+
+Ce projet de fin d'études, mené au sein de l'équipe internationale de recherche et développement de Sopra HR Software, avait pour ambition de fiabiliser et de moderniser la préparation des virements de salaires SEPA. Face aux limites des pratiques traditionnelles, reposant sur des scripts isolés et des vérifications manuelles fastidieuses, ce travail a abouti à la conception et à la réalisation de \textbf{SEPAPaie}, une plateforme web complète, sécurisée et intelligente, dédiée à la gestion, au contrôle et à la validation des flux de paiement conformes à la norme internationale ISO~20022 (message \texttt{pain.001}).
+
+\section*{Bilan des réalisations}
+
+Développée selon la méthodologie agile Scrum, la plateforme intègre l'ensemble des exigences fonctionnelles et techniques réparties sur cinq sprints. Elle propose une chaîne de traitement complète qui répond de manière pragmatique à la problématique posée :
+
+\begin{itemize}
+    \item \textbf{Un contrôle à trois niveaux complémentaires} : la validation structurelle garantit la stricte conformité du fichier XML au schéma XSD sélectionné ; les règles métier détectent et bloquent immédiatement les anomalies critiques (IBAN ou BIC invalides, montants nuls ou négatifs, doublons) ; enfin, le module d'intelligence artificielle fondé sur l'algorithme \textit{Isolation Forest} apporte une surveillance préventive en détectant les montants atypiques, tout en fournissant une explication claire et une recommandation d'action à l'utilisateur.
+    \item \textbf{Une gouvernance rigoureuse et traçable} : l'application applique une séparation stricte des responsabilités entre l'Expert~RH, le Manager et l'Administrateur. Le principe des quatre yeux interdit toute auto-validation d'un fichier de virement, chaque décision de rejet est motivée, et l'intégralité des actions sensibles est consignée de manière inaltérable dans un journal d'audit centralisé.
+    \item \textbf{Une ergonomie orientée action et pilotage} : chaque profil bénéficie d'un tableau de bord personnalisé et d'indicateurs de performance (KPI) clairement définis, permettant de suivre en temps réel la qualité des données de paie et la conformité des fichiers générés.
+    \item \textbf{Une architecture robuste et modulaire} : associant une interface React réactive, une API métier Spring~Boot, un microservice d'IA en Python (FastAPI) et une base relationnelle PostgreSQL, la solution est entièrement conteneurisée via Docker Compose, documentée par OpenAPI/Swagger et validée par une suite complète de tests automatisés et une recette de bout en bout.
+\end{itemize}
+
+L'évaluation approfondie du module d'intelligence artificielle a par ailleurs démontré la pertinence d'une approche hybride : l'IA ne se substitue pas aux règles métier ni au jugement humain, mais constitue une aide à la décision précieuse qui met en lumière des anomalies subtiles qu'aucune règle déterministe ne pouvait anticiper.
+
+\section*{Perspectives d'avenir}
+
+Bien que la plateforme soit pleinement opérationnelle dans son environnement de validation, plusieurs perspectives prometteuses permettront d'étendre son périmètre vers une exploitation industrielle à grande échelle :
+
+\begin{itemize}
+    \item \textbf{Intégration directe aux écosystèmes amont et aval} : interconnecter nativement SEPAPaie avec la solution de paie HR Access pour automatiser l'import des fiches de paie, et raccorder la sortie de la plateforme aux protocoles bancaires sécurisés (tels qu'EBICS ou des API bancaires directes) pour télétransmettre automatiquement les ordres validés.
+    \item \textbf{Évolution continue du modèle d'IA} : déployer lors d'une phase pilote l'approche hybride optimisée, et mettre en place une boucle d'apprentissage actif (\textit{active learning}) où les décisions prises au quotidien par les gestionnaires RH affinent continuellement la précision du modèle.
+    \item \textbf{Élargissement du catalogue de flux ISO~20022} : étendre le moteur de génération à d'autres messages financiers, notamment les virements instantanés (\textit{SCT Inst}), les prélèvements SEPA (\textit{SDD}) ou les flux de reporting de statut bancaire (\texttt{pain.002}).
+    \item \textbf{Renforcement de la sécurité opérationnelle} : intégrer la signature électronique des fichiers XML générés et un archivage à valeur probante conforme aux exigences réglementaires du secteur bancaire.
+\end{itemize}
+
+\section*{Bilan personnel}
+
+Sur le plan personnel et professionnel, ce stage de fin d'études a constitué une expérience extrêmement enrichissante. Il m'a permis de mobiliser et de perfectionner un large éventail de compétences en ingénierie informatique : la maîtrise des normes bancaires internationales, la conception d'architectures orientées services, la mise en \oe uvre pratique de modèles de \textit{Machine Learning} en environnement de production, ainsi que la rigueur de la démarche d'ingénierie logicielle. Mener ce projet de sa conception théorique jusqu'à une démonstration concrète et vérifiée au sein d'un grand éditeur de logiciels comme Sopra HR Software confirme ma vocation d'ingénieure en informatique.

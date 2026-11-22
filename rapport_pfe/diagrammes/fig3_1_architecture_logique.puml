@@ -1,0 +1,30 @@
+@startuml
+!include style.puml
+top to bottom direction
+skinparam componentStyle rectangle
+skinparam componentBackgroundColor #EEF3FA
+skinparam componentBorderColor #1F3A5F
+skinparam componentFontColor #1F3A5F
+skinparam databaseBackgroundColor #EEF3FA
+skinparam databaseBorderColor #1F3A5F
+skinparam nodesep 35
+skinparam ranksep 35
+
+actor "Utilisateurs\nAdmin. / Manager / Expert RH" as user
+component "Interface web - React\nNavigation, saisie et résultats\n(exécution dans le navigateur)" as ui
+package "Backend" {
+  component "API REST - Spring Boot\nContrôleurs, JWT, autorisations" as api
+  component "Services métier\nPaie, lots, XML / XSD,\nvalidation, anomalies, KPI, audit" as services
+  component "Accès aux données\nDépôts Spring Data JPA" as repos
+  api -down-> services
+  services -down-> repos
+}
+database "PostgreSQL\nDonnées applicatives" as db
+component "Service Python - FastAPI\nMontants suspects\net reconnaissance faciale" as ai
+component "Messagerie de test\nMailHog" as mail
+user -down-> ui
+ui -down-> api : HTTP / JSON
+repos -down-> db : Persistance
+services -right-> ai : Requêtes / résultats\nHTTP / JSON
+services -left-> mail : Codes OTP\nSMTP
+@enduml

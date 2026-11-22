@@ -1,0 +1,43 @@
+@startuml fig8_1_cas_utilisation_sprint5
+!include style.puml
+left to right direction
+
+actor "Expert RH" as EXP
+actor "Manager" as MGR
+actor "Administrateur" as ADM
+actor "Équipe technique" as TECH
+
+rectangle "Sprint 5 : pilotage, déploiement et recette" {
+
+  rectangle "Périmètre Pilotage" {
+    usecase "Consulter le tableau de bord\nde son profil" as UC1
+    usecase "Suivre les indicateurs KPI" as UC2
+  }
+
+  rectangle "Périmètre Supervision (Administrateur)" {
+    usecase "Superviser les fichiers SEPA" as UC3a
+    usecase "Superviser les sociétés débitrices" as UC3b
+  }
+
+  rectangle "Périmètre Déploiement et Recette" {
+    usecase "Déployer la plateforme\npar conteneurs" as UC4
+    usecase "Consulter la documentation\ninteractive de l'API" as UC5
+    usecase "Dérouler la recette\nde bout en bout" as UC6
+  }
+}
+
+EXP --> UC1
+EXP --> UC2
+
+MGR --> UC1
+MGR --> UC2
+
+ADM --> UC1
+ADM --> UC2
+ADM --> UC3a
+ADM --> UC3b
+
+TECH --> UC4
+TECH --> UC5
+TECH --> UC6
+@enduml

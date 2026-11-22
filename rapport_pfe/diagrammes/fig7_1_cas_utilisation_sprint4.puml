@@ -1,0 +1,40 @@
+@startuml fig7_1_cas_utilisation_sprint4
+!include style.puml
+left to right direction
+
+actor "Expert RH" as EXP
+actor "Manager" as MGR
+actor "Administrateur" as ADM
+actor "Service Python\n(IA)" as IA <<système>>
+
+rectangle "Sprint 4 : détection intelligente d'anomalies" {
+
+  rectangle "Périmètre Métier (Expert RH & Manager)" {
+    usecase "Analyser les montants\ndes paiements d'un fichier" as UC1
+    usecase "Consulter les fiches suspectes\navec explications" as UC2
+    usecase "Traiter une anomalie signalée" as UC3
+    usecase "Suivre l'apport de l'IA\n(indicateurs)" as UC4
+  }
+
+  rectangle "Périmètre Administration de l'IA" {
+    usecase "Superviser le module\n(état, métriques)" as UC5
+    usecase "Réentraîner le modèle" as UC6
+  }
+}
+
+EXP --> UC1
+EXP --> UC2
+EXP --> UC3
+EXP --> UC4
+
+MGR --> UC2
+MGR --> UC3
+MGR --> UC4
+
+ADM --> UC5
+ADM --> UC6
+
+UC1 -- IA
+UC5 -- IA
+UC6 -- IA
+@enduml

@@ -1,0 +1,55 @@
+@startuml fig4_1_cas_utilisation_sprint1
+!include style.puml
+left to right direction
+
+actor "Visiteur" as VIS
+actor "Utilisateur\nauthentifié" as USR
+actor "Administrateur" as ADM
+actor "Manager" as MGR
+actor "Expert RH" as EXP
+actor "Service Python\n(visage)" as IA <<système>>
+actor "Messagerie" as MAIL <<système>>
+
+USR <|-- ADM
+USR <|-- MGR
+USR <|-- EXP
+
+rectangle "Sprint 1 : socle sécurisé et administration" {
+
+  rectangle "Périmètre Administrateur" {
+    usecase "Approuver une inscription" as UC5a
+    usecase "Rejeter une inscription" as UC5b
+    usecase "Gérer les utilisateurs" as UC6
+    usecase "Gérer les sociétés\ndébitrices" as UC7
+    usecase "Consulter le journal\nd'audit" as UC8
+  }
+
+  rectangle "Périmètre Manager" {
+    usecase "Affecter les sociétés\naux Experts RH" as UC9
+  }
+
+  rectangle "Périmètre Accès & Profil" {
+    usecase "Créer un compte" as UC1
+    usecase "S'authentifier par mot de passe\net code OTP" as UC2
+    usecase "S'authentifier par\nreconnaissance faciale" as UC3
+    usecase "Gérer son visage\nde référence" as UC4
+  }
+}
+
+VIS --> UC1
+USR --> UC2
+USR --> UC3
+USR --> UC4
+
+ADM --> UC5a
+ADM --> UC5b
+ADM --> UC6
+ADM --> UC7
+ADM --> UC8
+MGR --> UC9
+
+UC1 -- IA
+UC3 -- IA
+UC4 -- IA
+UC2 -- MAIL
+@enduml

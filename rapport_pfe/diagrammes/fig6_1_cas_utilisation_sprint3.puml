@@ -1,0 +1,57 @@
+@startuml fig6_1_cas_utilisation_sprint3
+!include style.puml
+left to right direction
+
+actor "Expert RH" as EXP
+actor "Manager" as MGR
+actor "Administrateur" as ADM
+actor "Service Python\n(IA)" as IA <<système>>
+
+rectangle "Sprint 3 : virements de masse, contrôles et circuit de validation" {
+
+  rectangle "Périmètre Expert RH" {
+    usecase "Préparer un virement\n(société, période, schéma, fiches)" as UC1
+    usecase "Contrôler le virement" as UC2a
+    usecase "Générer le fichier SEPA" as UC2b
+    usecase "Soumettre le fichier" as UC6
+  }
+
+  rectangle "Périmètre Contrôles" {
+    usecase "Contrôles métier" as UC3
+    usecase "Analyse des montants par IA" as UC4
+    usecase "Consulter le résultat\ndu contrôle" as UC5
+  }
+
+  rectangle "Périmètre Manager" {
+    usecase "Valider un fichier soumis" as UC7a
+    usecase "Rejeter un fichier soumis" as UC7b
+  }
+
+  rectangle "Périmètre Suivi & Historique" {
+    usecase "Traiter les anomalies" as UC8
+    usecase "Consulter l'historique\ndes fichiers" as UC9
+    usecase "Superviser l'historique\n(lecture seule)" as UC10
+  }
+}
+
+EXP --> UC1
+EXP --> UC2a
+EXP --> UC2b
+EXP --> UC5
+EXP --> UC6
+EXP --> UC8
+EXP --> UC9
+
+MGR --> UC5
+MGR --> UC7a
+MGR --> UC7b
+MGR --> UC8
+MGR --> UC9
+
+ADM --> UC10
+
+UC2a ..> UC3 : <<include>>
+UC2a <.. UC4 : <<extend>>
+UC3 -[hidden]right- IA
+UC4 -right- IA
+@enduml

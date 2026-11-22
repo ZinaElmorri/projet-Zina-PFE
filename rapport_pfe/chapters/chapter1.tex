@@ -1,0 +1,208 @@
+\chapter{Cadre général du projet}
+\label{ch:cadre}
+\startcontents[chapters]
+\chapterplan
+
+\section{Introduction}
+
+Ce premier chapitre situe notre projet dans son contexte. Nous présentons d'abord l'organisme d'accueil, Sopra HR Software, ainsi que la solution de paie HR Access autour de laquelle s'articule le sujet. Nous exposons ensuite le projet lui-même : le contexte métier, la problématique à laquelle il répond, l'analyse des solutions existantes, la solution proposée et les objectifs visés. Nous terminons par la présentation de la méthodologie de conduite de projet retenue pour mener ce travail de bout en bout.
+
+\section{Présentation de l'organisme d'accueil}
+
+\subsection{Sopra Steria}
+
+Sopra Steria est un groupe européen du numérique, spécialisé dans le conseil, les services numériques et l'édition de logiciels métiers. Il accompagne de grandes organisations des secteurs de la banque, de l'assurance, de l'industrie et de l'administration publique dans leur transformation numérique. Présent dans une trentaine de pays, le groupe réunit plus de cinquante mille collaborateurs~\cite{soprasteria}. Son activité d'édition de logiciels couvre notamment les domaines de la banque et des ressources humaines.
+
+\subsection{Sopra HR Software et la solution HR Access}
+
+Sopra HR Software est la filiale du groupe dédiée à l'édition de solutions de gestion des ressources humaines et de paie. Elle s'adresse aux grandes et moyennes organisations des secteurs privé et public, en France comme à l'international, et dispose d'une implantation en Tunisie~\cite{soprahr}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.28\textwidth]{logo_sopra}
+    \caption{Logo de Sopra HR Software (source : site institutionnel de l'éditeur)}
+    \label{fig:logo-sopra}
+\end{figure}
+
+Sa solution phare, \textbf{HR Access}, est une suite intégrée qui couvre l'ensemble du cycle de vie du salarié dans l'entreprise. Elle regroupe un moteur de paie paramétrable, la gestion administrative des dossiers du personnel, la gestion des temps et des activités, ainsi que la production des flux destinés aux organismes tiers : banques, organismes sociaux et fiscaux, mutuelles. Le versement effectif des salaires passe par un fichier de virements au format SEPA, transmis à la banque de l'entreprise cliente pour exécution. C'est précisément à la préparation, au contrôle et à la validation de ce fichier que s'intéresse notre projet.
+
+\subsection{Service d'accueil et cadre du stage}
+
+Notre projet de fin d'études a été réalisé au sein de l'équipe internationale de Recherche et Développement (R\&D) de Sopra HR Software. Cette équipe a pour mission d'étudier, de concevoir et de proposer des solutions qui répondent aux besoins, en évolution permanente, des directions des ressources humaines, et d'anticiper les tendances du domaine. C'est dans ce cadre d'innovation que s'inscrit notre sujet, qui explore l'apport de l'intelligence artificielle au contrôle des flux de paie.
+
+Le stage a débuté le 1\textsuperscript{er} mars 2026 pour une durée de sept mois. Il a été encadré, côté entreprise, par M.~Mohamed Zied Fiouel et, côté universitaire, par M.~Malek Bouzaiene, de l'École Supérieure Privée des Sciences Appliquées et de Management (SESAME). La société a mis à notre disposition un environnement de développement complet et un accompagnement technique tout au long du stage.
+
+\section{Présentation du projet}
+
+\subsection{Contexte}
+
+Chaque mois, un système de paie transforme les données de rémunération en ordres de virement à destination des salariés. Ces ordres sont regroupés dans un fichier de paiement structuré, échangé avec la banque. Au sein de la zone euro, cet échange repose sur la norme européenne \textbf{SEPA} (\textit{Single Euro Payments Area}), déclinée selon le standard \textbf{ISO~20022} : un virement de salaires prend la forme d'un message XML de type \texttt{pain.001} (\textit{Customer Credit Transfer Initiation}), dont la structure est fixée par un schéma XSD publié par le Conseil européen des paiements~\cite{epc,iso20022}. Plusieurs versions de ce schéma coexistent en production, par exemple \texttt{pain.001.001.03}, encore très répandue, et \texttt{pain.001.001.09}, plus récente. Chaque version a ses propres éléments, ses propres contraintes de longueur et de format.
+
+Une solution de paie telle que HR Access produit ainsi, chaque mois, plusieurs centaines ou milliers de lignes de paiement. L'enjeu est double : le fichier doit être accepté par la banque, et surtout chaque salarié doit recevoir le bon montant sur le bon compte.
+
+\subsection{Problématique}
+
+Un fichier de virements doit respecter trois niveaux de conformité :
+\begin{itemize}
+    \item \textbf{la conformité structurelle} : le fichier XML doit respecter le schéma XSD de la version choisie, faute de quoi la banque le rejette ;
+    \item \textbf{la conformité réglementaire} : les identifiants bancaires doivent être valides, c'est-à-dire un IBAN dont la clé de contrôle est correcte et un BIC au format normalisé ;
+    \item \textbf{la conformité métier} : les montants doivent être cohérents (strictement positifs, plausibles au regard de l'historique du salarié), le net ne doit pas dépasser le brut, et un même salarié ne doit pas être payé deux fois pour une même période.
+\end{itemize}
+
+Dans les pratiques actuelles, la génération et le contrôle du fichier reposent largement sur des scripts internes et sur une vérification manuelle par les gestionnaires RH. Les contrôles automatiques se limitent le plus souvent à la validité technique du fichier. Les anomalies d'ordre métier ne sont donc découvertes qu'après l'envoi, parfois lorsque le salarié constate que son virement est erroné ou absent. Ces scripts ciblent par ailleurs une version figée du schéma, ce qui oblige à modifier le code à chaque changement de version exigé par une banque.
+
+À ces limites techniques s'ajoute une limite d'organisation. Le circuit qui mène du salaire calculé au fichier transmis à la banque n'est pas encadré de façon systématique : rien n'impose qu'une personne différente de celle qui prépare le fichier le valide, et il n'existe ni historique fiable des actions réalisées, ni indicateur permettant de mesurer la qualité du processus mensuel.
+
+Ce constat nous conduit à formuler la problématique suivante :
+
+\begin{quote}
+\textit{Comment fiabiliser la préparation et la validation des virements de salaires SEPA, en combinant des contrôles automatiques (structurels, réglementaires, métier et statistiques) et un circuit de validation traçable, avant tout envoi à la banque ?}
+\end{quote}
+
+\subsection{Analyse de l'existant}
+
+Avant de concevoir la solution, nous avons examiné les trois grandes familles d'outils utilisées pour produire ou contrôler des fichiers SEPA. Le tableau~\ref{tab:existant} les compare au regard des besoins exprimés.
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.25}
+\tablestyle
+\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{4.4cm}|Y|Y|Y|}
+\hline
+\rowcolor{appMarine}\entete{Critère} & \entete{Scripts internes} & \entete{Modules SEPA d'ERP} & \entete{Validateurs XSD génériques} \\
+\hline
+Génération multi-versions du fichier & Non (version figée) & Oui, mais fermée & Non \\
+\hline
+Validation XSD & Manuelle & Intégrée & Oui \\
+\hline
+Contrôle des IBAN et des BIC & Non systématique & Oui & Non \\
+\hline
+Détection des doublons de paiement & Non & Limitée & Non \\
+\hline
+Détection des montants atypiques & Non & Non & Non \\
+\hline
+Circuit de validation et traçabilité & Non & Partielle & Non \\
+\hline
+Tableau de bord de suivi & Non & Partiel & Non \\
+\hline
+Coût et ouverture & Coût interne, faible ouverture & Licence élevée, SI verrouillé & Gratuits, sans lien avec la paie \\
+\hline
+\end{tabularx}
+\caption{Comparaison des familles d'outils existantes}
+\label{tab:existant}
+\end{table}
+
+Cette comparaison fait apparaître trois constats. Les scripts internes produisent le fichier mais laissent les contrôles à la charge des gestionnaires. Les modules des ERP offrent des contrôles plus riches, mais ils sont propriétaires, coûteux et liés à un environnement fermé. Enfin, les validateurs XSD publics vérifient la structure du fichier et ignorent totalement la dimension métier. Aucun des outils examinés ne réunit à la fois une génération adaptée à la version du schéma, des contrôles métier, une détection des montants atypiques, un circuit de validation et un suivi par indicateurs. Cette analyse porte sur les outils effectivement examinés et ne prétend pas constituer une étude exhaustive du marché.
+
+\subsection{Solution proposée}
+
+Pour répondre à ces limites, nous avons conçu et développé \textbf{SEPAPaie}, une plateforme web de contrôle et de validation des virements de salaires SEPA, destinée aux utilisateurs de HR Access. Elle organise le traitement d'un virement de masse en étapes successives, qui associent des contrôles automatiques et des décisions humaines (figure~\ref{fig:circuit}).
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    etape/.style={draw, rounded corners=3pt, minimum width=3.9cm, minimum height=1.15cm, align=center, font=\small, thick, fill=white},
+    fleche/.style={-{Stealth[length=2.5mm]}, thick}
+]
+\node[etape, draw=acteurRH]      (a) {1. Préparation des\\fiches de paie\\{\scriptsize Expert RH}};
+\node[etape, draw=acteurManager, right=0.9cm of a] (b) {2. Approbation\\des fiches\\{\scriptsize Manager}};
+\node[etape, draw=acteurRH, right=0.9cm of b] (c) {3. Génération du\\fichier \texttt{pain.001}\\{\scriptsize Expert RH}};
+\node[etape, draw=acteurSysteme, below=1.3cm of a] (d) {4. Contrôles automatiques\\métier, IA et XSD\\{\scriptsize Système}};
+\node[etape, draw=acteurRH, below=1.3cm of b] (e) {5. Soumission\\au Manager\\{\scriptsize Expert RH}};
+\node[etape, draw=acteurManager, below=1.3cm of c] (f) {6. Validation\\ou rejet du fichier\\{\scriptsize Manager}};
+\draw[fleche] (a) -- (b);
+\draw[fleche] (b) -- (c);
+\draw[fleche] (c.south) -- ++(0,-0.65) -| (d.north);
+\draw[fleche] (d) -- (e);
+\draw[fleche] (e) -- (f);
+\end{tikzpicture}
+\caption{Circuit de traitement d'un virement de salaires dans SEPAPaie (bleu : Expert RH, vert : Manager, orange : traitements automatiques)}
+\label{fig:circuit}
+\end{figure}
+
+La plateforme s'appuie sur trois profils : l'\textbf{Expert RH}, qui prépare les virements et soumet les fichiers ; le \textbf{Manager}, qui approuve les fiches de paie puis valide ou rejette les fichiers ; et l'\textbf{Administrateur}, qui gère les comptes, les sociétés et les schémas, et supervise l'activité sans accéder aux données individuelles de paie. Le fichier ne peut être validé que par une personne différente de celle qui l'a préparé.
+
+Ses principales fonctionnalités sont les suivantes :
+\begin{itemize}
+    \item la gestion dynamique des schémas XSD et la génération du fichier \texttt{pain.001} selon la version choisie ;
+    \item une détection hybride des anomalies, qui combine des règles métier explicites (IBAN, BIC, montants, doublons) et un module d'intelligence artificielle dédié aux montants atypiques ;
+    \item pour chaque anomalie, une explication lisible et une recommandation d'action ;
+    \item un circuit de validation en deux temps, appuyé sur un journal d'audit qui trace les actions sensibles ;
+    \item des tableaux de bord et des indicateurs de pilotage adaptés à chaque profil.
+\end{itemize}
+
+Un principe guide la conception de la détection : \textbf{l'intelligence artificielle signale, l'humain décide}. Le module d'IA attribue à chaque fiche un niveau de risque accompagné d'une explication, mais il ne bloque ni ne corrige jamais un paiement de lui-même. Son indisponibilité ne doit pas interrompre le traitement.
+
+Sur le plan technique, la plateforme se compose d'une application web, d'un serveur applicatif, d'un module d'intelligence artificielle indépendant et d'une base de données relationnelle, tous exécutés dans des conteneurs. Cette architecture est détaillée au chapitre~\ref{ch:architecture}.
+
+\subsection{Objectifs du projet}
+
+L'objectif général est de fiabiliser le processus de virement de masse des salaires, depuis les fiches de paie approuvées jusqu'au fichier prêt à être transmis à la banque. Il se décline en objectifs spécifiques :
+\begin{itemize}
+    \item produire un fichier SEPA conforme à la version du schéma choisie, et le valider systématiquement avant toute transmission ;
+    \item détecter les anomalies métier avant l'envoi, par des règles explicites et par un modèle statistique ;
+    \item évaluer de façon rigoureuse l'apport et les limites du module d'intelligence artificielle ;
+    \item instaurer un circuit de validation fondé sur la séparation des rôles, avec une traçabilité complète des actions ;
+    \item mettre à disposition des indicateurs de pilotage clairs, adaptés à chaque profil ;
+    \item livrer une plateforme sécurisée, testée et déployable de façon reproductible.
+\end{itemize}
+
+\section{Choix méthodologique}
+
+La réalisation d'une plateforme qui touche à des domaines aussi variés que la paie, la norme ISO~20022, les règles métier, l'intelligence artificielle et l'interface web ne peut pas être entièrement spécifiée à l'avance. Nous avons donc comparé une démarche classique en cascade à une démarche agile (tableau~\ref{tab:methodes}).
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.25}
+\tablestyle
+\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{3.6cm}|Y|Y|}
+\hline
+\rowcolor{appMarine}\entete{Critère} & \entete{Cascade} & \entete{Agile (Scrum)} \\
+\hline
+Déroulement & Phases séquentielles uniques & Itérations courtes (sprints) \\
+\hline
+Gestion des exigences & Figées au départ & Évolutives, priorisées \\
+\hline
+Retour de l'encadrant métier & En début et en fin de projet & À la fin de chaque sprint \\
+\hline
+Livraison & Produit final unique & Incréments fonctionnels réguliers \\
+\hline
+Gestion des risques & Tardive & Continue \\
+\hline
+\end{tabularx}
+\caption{Comparaison des démarches en cascade et Scrum}
+\label{tab:methodes}
+\end{table}
+
+Nous avons retenu \textbf{Scrum}~\cite{scrumguide}. Ce cadre itératif et incrémental organise le travail en sprints, à l'issue desquels un incrément fonctionnel est présenté pour validation. Il convient bien à notre projet pour trois raisons : il permet de livrer rapidement des fonctionnalités démontrables, d'obtenir des retours réguliers de l'encadrant métier, et d'ajuster progressivement les règles de détection au vu des résultats observés.
+
+Scrum suppose normalement une équipe. Notre projet étant individuel, nous avons adapté les rôles comme l'indique le tableau~\ref{tab:roles-scrum}. Les cérémonies ont été conservées sous une forme allégée : planification en début de sprint, point d'avancement régulier avec l'encadrant et démonstration en fin de sprint, suivie d'un bilan.
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.25}
+\tablestyle
+\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{4cm}|Y|}
+\hline
+\rowcolor{appMarine}\entete{Rôle Scrum} & \entete{Tenu par} \\
+\hline
+\textit{Product Owner} & M.~Mohamed Zied Fiouel, encadrant professionnel : il exprime le besoin métier, priorise le backlog et valide chaque incrément \\
+\hline
+\textit{Scrum Master} et équipe de développement & Zina Elmorri : conception, développement, tests et organisation du travail \\
+\hline
+Suivi académique & M.~Malek Bouzaiene, encadrant universitaire : suivi méthodologique et relecture du travail \\
+\hline
+\end{tabularx}
+\caption{Adaptation des rôles Scrum au projet}
+\label{tab:roles-scrum}
+\end{table}
+
+Le projet a été découpé en une phase d'étude préalable, consacrée au domaine métier et aux choix techniques, suivie de cinq sprints de réalisation. Le backlog produit et la planification détaillée sont présentés au chapitre suivant.
+
+\section{Conclusion}
+
+Dans ce chapitre, nous avons présenté Sopra HR Software, sa solution HR Access et le cadre de notre stage. Nous avons ensuite exposé le contexte du projet : la préparation mensuelle des virements de salaires SEPA, dont les contrôles actuels laissent passer des anomalies métier et ne s'accompagnent d'aucun circuit de validation structuré. Après avoir constaté l'absence d'outil réunissant l'ensemble des fonctions attendues, nous avons présenté la solution proposée, SEPAPaie, et ses objectifs. La démarche Scrum, adaptée à un projet individuel, a été retenue pour conduire le travail. Le chapitre suivant précise les besoins auxquels la plateforme doit répondre et la planification des sprints.
+

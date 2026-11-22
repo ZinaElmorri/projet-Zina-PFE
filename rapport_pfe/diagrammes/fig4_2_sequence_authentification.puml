@@ -1,0 +1,31 @@
+@startuml fig4_2_sequence_authentification
+!include style.puml
+hide footbox
+
+actor "Utilisateur" as U
+participant "Interface\nReact" as UI
+participant "Backend\nSpring Boot" as B
+participant "Messagerie" as M
+
+U -> UI : Saisit identifiant et mot de passe
+UI -> B : Demande de connexion
+B -> B : Vérifie le mot de passe haché\net l'état du compte
+
+alt Identifiants invalides ou compte inactif
+  B --> UI : Refus avec message adapté
+  note right of B : L'échec est tracé\ndans le journal d'audit
+else Mot de passe valide
+  B -> B : Génère un code à 6 chiffres\n(conservé sous forme hachée)
+  B -> M : Envoie le code par courriel
+  B --> UI : Défi OTP (adresse masquée)
+  U -> UI : Saisit le code reçu
+  UI -> B : Vérification du code
+
+  alt Code correct et non expiré
+    B --> UI : Jeton JWT et profil de l'utilisateur
+    note right of B : Aucune session n'est ouverte\navant cette étape
+  else Code incorrect, expiré ou tentatives épuisées
+    B --> UI : Refus (tentatives restantes\nou nouvelle connexion demandée)
+  end
+end
+@enduml

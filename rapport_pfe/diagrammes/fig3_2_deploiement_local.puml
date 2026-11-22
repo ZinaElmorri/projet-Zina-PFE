@@ -1,0 +1,31 @@
+@startuml
+!include style.puml
+top to bottom direction
+skinparam componentStyle rectangle
+skinparam nodeBackgroundColor #EEF3FA
+skinparam nodeBorderColor #1F3A5F
+skinparam nodeFontColor #1F3A5F
+skinparam databaseBackgroundColor #EEF3FA
+skinparam databaseBorderColor #1F3A5F
+skinparam nodesep 35
+skinparam ranksep 40
+
+node "Navigateur\nInterface React exécutée côté client" as browser
+frame "Docker Compose" {
+  node "frontend\nServeur web statique : 5173" as front
+  node "backend\nSpring Boot : 8080" as back
+  node "ai-module\nFastAPI / Uvicorn : 8000" as ai
+  database "postgres\nPostgreSQL : 5432" as db
+  node "mailhog\nSMTP : 1025\nInterface de test : 8025" as mail
+  artifact "Volume pgdata\nDonnées persistantes" as pgvol
+  artifact "Volume ai-models\nModèle et métriques" as aivol
+  front -[hidden]down-> back
+  back -left-> db : JDBC
+  back -right-> ai : HTTP / JSON
+  back -down-> mail : SMTP
+  db -down-> pgvol
+  ai -down-> aivol
+}
+browser -down-> front : HTTP\nRessources web
+browser -down-> back : HTTP / JSON\nAPI + JWT après connexion
+@enduml

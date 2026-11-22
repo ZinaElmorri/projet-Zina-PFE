@@ -1,0 +1,86 @@
+\appendix
+
+\chapter{Types d'anomalie probables, critères et recommandations}
+\label{ann:recommandations}
+
+À chaque type d'anomalie probable correspond une recommandation de correction affichée à l'utilisateur. Le type est le premier critère satisfait dans l'ordre du tableau~\ref{tab:ann-reco}, qui va du plus certain au plus général. Les critères et les recommandations sont déduits de seuils explicites appliqués aux variables du paiement, et non d'un modèle de langage, ce qui les rend prévisibles et vérifiables. La moyenne désigne la moyenne des paiements précédents du salarié.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.15}
+\tablestyle
+\begin{tabularx}{\textwidth}{|>{\centering\arraybackslash}p{0.8cm}|>{\raggedright\arraybackslash}p{3.3cm}|>{\raggedright\arraybackslash}p{3.7cm}|Y|}
+\hline
+\rowcolor{appMarine}\entete{N\textsuperscript{o}} & \entete{Type probable} & \entete{Critère déclencheur} & \entete{Recommandation affichée} \\
+\hline
+1 & Montant nul ou négatif & Montant inférieur ou égal à zéro & Corriger le montant dans la fiche de paie : un virement doit être strictement positif. \\
+\hline
+2 & Doublon probable & Plusieurs fiches identiques dans le lot & Vérifier si le salarié figure deux fois dans le fichier et supprimer la fiche en double. \\
+\hline
+3 & IBAN partagé & Un même IBAN pour plusieurs salariés & Vérifier que l'IBAN n'appartient pas à un autre salarié (risque de fraude ou d'erreur de saisie). \\
+\hline
+4 & IBAN modifié et montant élevé & Changement d'IBAN et montant $\geq$ 1,5 fois la moyenne & Demander au salarié un justificatif du nouvel IBAN (RIB signé) avant tout virement, puis confirmer le montant. \\
+\hline
+5 & IBAN modifié & Changement d'IBAN seul & Demander au salarié un justificatif du nouvel IBAN (RIB signé) avant le virement. \\
+\hline
+6 & Salarié sans historique & Aucun paiement antérieur & Vérifier l'existence et l'embauche du salarié (contrat, registre du personnel) avant le virement. \\
+\hline
+7 & Erreur de virgule probable & Montant $\geq$ 50 fois ou $\leq$ 3~\% de la moyenne & Contrôler la saisie du montant : un décalage de virgule ($\times$100 ou $\div$100) est probable. \\
+\hline
+8 & Montant très supérieur à l'habituel & Montant $\geq$ 3 fois la moyenne & Vérifier primes, rappels ou erreur de saisie, puis confirmer ou corriger le montant. \\
+\hline
+9 & Hausse inhabituelle & Montant $\geq$ 1,25 fois la moyenne & Vérifier s'il existe une prime, un rappel, une promotion ou un 13\textsuperscript{e} mois justifiant la hausse. \\
+\hline
+10 & Baisse inhabituelle & Montant $\leq$ 60~\% de la moyenne & Vérifier absences, solde de tout compte ou erreur de saisie. \\
+\hline
+11 & Profil de paiement inhabituel & Cas général, sans critère particulier & Vérifier la fiche de paie dans son ensemble, puis confirmer ou corriger le montant. \\
+\hline
+\end{tabularx}
+\caption{Types probables d'anomalie, critères déclencheurs et recommandations}
+\label{tab:ann-reco}
+\end{table}
+
+\chapter{Principaux points d'accès de l'API}
+\label{ann:api}
+
+L'API du backend expose au total cinquante-deux chemins, documentés de manière interactive (chapitre~\ref{ch:sprint5}). Le tableau~\ref{tab:ann-api} en présente un extrait représentatif, regroupé par domaine. Tous les chemins sont préfixés par \texttt{/api}.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.2}
+\tablestyle
+\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{2.6cm}|Y|}
+\hline
+\rowcolor{appMarine}\entete{Domaine} & \entete{Principaux points d'accès} \\
+\hline
+Authentification & \texttt{POST /auth/login}, \texttt{POST /auth/verify-otp}, \texttt{POST /auth/resend-otp}, \texttt{POST /auth/face-login}, \texttt{POST /auth/register} \\
+\hline
+Utilisateurs & \texttt{POST /users/\{id\}/approuver}, \texttt{POST /users/\{id\}/rejeter}, \texttt{DELETE /users/\{id\}} \\
+\hline
+Sociétés et affectations & \texttt{PUT /societes/\{id\}}, \texttt{GET /societes/\{code\}/coordonnees}, \texttt{GET /affectations/experts}, \texttt{PUT /affectations/\{societeCode\}} \\
+\hline
+Fiches de paie & \texttt{POST /transactions/controler}, \texttt{PUT /transactions/\{id\}/approuver}, \texttt{DELETE /transactions/\{id\}} \\
+\hline
+Virements de masse & \texttt{GET /masse/paiements}, \texttt{POST /masse/controle}, \texttt{POST /masse/fichiers/\{id\}/soumettre}, \texttt{POST /masse/fichiers/\{id\}/valider}, \texttt{POST /masse/fichiers/\{id\}/rejeter}, \texttt{GET /masse/fichiers/\{id\}/telecharger} \\
+\hline
+Schémas XSD & \texttt{POST /xsd/import}, \texttt{GET /xsd/\{id\}/elements}, \texttt{PUT /xsd/\{id\}}, \texttt{DELETE /xsd/\{id\}} \\
+\hline
+Anomalies et IA & \texttt{POST /anomalies/detecter}, \texttt{PATCH /anomalies/\{id\}/statut}, \texttt{POST /ai/detect} \\
+\hline
+Pilotage & \texttt{GET /dashboard/stats}, \texttt{GET /dashboard/kpi}, \texttt{GET /dashboard/kpi/ia}, \texttt{GET /audit} \\
+\hline
+Supervision de l'IA & \texttt{GET /admin/ai/health}, \texttt{GET /admin/ai/metrics}, \texttt{POST /admin/ai/train} \\
+\hline
+\end{tabularx}
+\caption{Extrait des points d'accès de l'API, par domaine}
+\label{tab:ann-api}
+\end{table}
+
+\chapter{Scénario de démonstration}
+\label{ann:scenario}
+
+Pour illustrer le comportement de l'application sur un cas concret et reproductible, un scénario de démonstration a été constitué. Il correspond à une société unique de 1\,100 salariés, accompagnée de six mois d'historique de virements corrects, puis d'un fichier à contrôler contenant douze anomalies connues réparties sur plusieurs types. Les montants reproduisent les trois profils de salaire (employé, cadre, dirigeant) et les identifiants bancaires générés sont valides.
+
+Ce scénario est importé en base par un utilitaire dédié et retiré en fin de démonstration. Il sert au chapitre~\ref{ch:sprint4} à présenter l'analyse par l'IA (tableau~\ref{tab:scenario}) et au chapitre~\ref{ch:sprint5} à dérouler la recette de bout en bout. Les chiffres qui en découlent (par exemple neuf fiches signalées sur 1\,100) ont une valeur d'illustration et ne constituent pas une mesure de performance : celle-ci est établie séparément sur le jeu de données de référence (chapitre~\ref{ch:sprint4}).

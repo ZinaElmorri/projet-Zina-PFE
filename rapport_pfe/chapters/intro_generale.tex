@@ -1,0 +1,24 @@
+\chapter*{Introduction générale}
+\addcontentsline{toc}{chapter}{Introduction générale}
+\markboth{Introduction générale}{}
+
+Chaque mois, une entreprise doit verser leur salaire à ses employés. Lorsque l'effectif se compte en centaines ou en milliers de personnes, ce versement passe par un \textbf{fichier de virements} remis à la banque, dont le format est défini par la norme ISO~20022 dans le cadre de l'espace unique de paiement en euros (SEPA). Une erreur dans ce fichier n'est jamais anodine : un IBAN invalide fait rejeter l'ensemble du lot, un montant erroné ou un doublon ne sont souvent découverts que lorsque le salarié constate l'anomalie sur son compte. Fiabiliser cette étape est donc un enjeu à la fois financier, réglementaire et humain.
+
+Les pratiques actuelles reposent largement sur des scripts internes et sur une vérification manuelle. Les contrôles automatiques se limitent le plus souvent à la validité technique du fichier, et le circuit qui mène du salaire calculé au fichier transmis n'est pas toujours encadré : rien n'impose qu'une personne différente de celle qui prépare le fichier le valide, et la traçabilité des actions reste partielle. Ce constat, exposé au chapitre~\ref{ch:cadre}, conduit à la problématique suivante : \emph{comment fiabiliser la préparation et la validation des virements de salaires SEPA, en combinant des contrôles automatiques et un circuit de validation traçable, avant tout envoi à la banque ?}
+
+Le présent travail, réalisé au sein de l'équipe internationale de recherche et développement de Sopra HR Software, éditeur de la solution de paie HR Access, y répond par la conception et la réalisation de \textbf{SEPAPaie}, une plateforme web de préparation, de contrôle et de validation des virements de salaires. Elle associe trois niveaux de contrôle : la conformité structurelle du fichier au schéma XSD, des règles métier explicites, et un module d'intelligence artificielle qui signale les paiements atypiques sans jamais décider à la place de l'utilisateur. Elle encadre le tout par une séparation stricte des rôles entre l'administrateur, l'Expert RH qui prépare et le Manager qui valide, avec un journal d'audit des actions sensibles.
+
+La démarche suivie est celle de la méthode agile Scrum, adaptée à un projet individuel : un backlog de vingt-quatre récits utilisateur, réparti en cinq sprints précédés d'une phase d'étude. Une attention particulière a été portée à la cohérence entre ce que le rapport décrit et ce que l'application fait réellement. Les chiffres cités proviennent de mesures effectuées sur l'application déployée, et les limites sont indiquées au même titre que les résultats.
+
+Ce rapport est organisé en huit chapitres.
+\begin{itemize}
+    \item Le \textbf{chapitre~\ref{ch:cadre}} présente l'organisme d'accueil, le contexte et la problématique du projet, l'analyse des solutions existantes, la solution proposée, les objectifs et la méthodologie retenue.
+    \item Le \textbf{chapitre~\ref{ch:besoins}} spécifie les besoins : acteurs, besoins fonctionnels et non fonctionnels, backlog du produit et planification des sprints.
+    \item Le \textbf{chapitre~\ref{ch:architecture}} constitue l'étude préalable : domaine SEPA et ISO~20022, démarche de détection d'anomalies, architecture et choix technologiques.
+    \item Le \textbf{chapitre~\ref{ch:sprint1}} (sprint~1) présente le socle sécurisé : authentification, inscription, administration des sociétés et des affectations, journal d'audit.
+    \item Le \textbf{chapitre~\ref{ch:sprint2}} (sprint~2) traite de la saisie et du contrôle des fiches de paie, avec leur circuit d'approbation.
+    \item Le \textbf{chapitre~\ref{ch:sprint3}} (sprint~3) décrit la génération du fichier SEPA, sa validation XSD, les contrôles métier et le circuit de validation par le Manager.
+    \item Le \textbf{chapitre~\ref{ch:sprint4}} (sprint~4) est consacré à la détection intelligente d'anomalies : conception du module d'IA, intégration et évaluation rigoureuse sur un jeu de données reproductible.
+    \item Le \textbf{chapitre~\ref{ch:sprint5}} (sprint~5) présente les tableaux de bord, les indicateurs, le déploiement par conteneurs et la recette de bout en bout.
+\end{itemize}
+Le rapport s'achève par une conclusion générale qui dresse le bilan du travail et en présente les perspectives.

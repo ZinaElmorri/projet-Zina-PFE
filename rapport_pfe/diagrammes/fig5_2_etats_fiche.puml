@@ -1,0 +1,18 @@
+@startuml fig5_2_etats_fiche
+!include style.puml
+skinparam StateBackgroundColor #EEF3FA
+skinparam StateBorderColor #1F3A5F
+skinparam StateFontColor #1F3A5F
+skinparam StateStartColor #1F3A5F
+skinparam StateEndColor #1F3A5F
+skinparam StateAttributeFontColor #1F3A5F
+left to right direction
+
+state "Brouillon\n(non approuvée)" as BRO
+state "Approuvée" as APP
+
+[*] --> BRO : Saisie par l'Expert RH
+BRO --> APP : Approbation par le Manager\n(contrôles de données réussis)
+BRO --> [*] : Suppression
+APP --> [*] : Suppression
+@enduml
